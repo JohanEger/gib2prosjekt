@@ -1,0 +1,34 @@
+name: Build and publish client image to docker registry
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - client/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{vars.DOCKER_USERNAME}}
+          password: ${{secrets.DOCKER_ACCESS_TOKEN}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: ${{github.event_name != 'pull_request'}}
+          context: ./client/
+          file: ./client/Dockerfile
+          build-args: |
+            VITE_BACKEND_BASE_URL=${{vars.BACKEND_BASE_URL}}
+          tags: |
+            ${{vars.DOCKER_USERNAME}}/tba4250-gib-2-client:latest
+            ${{vars.DOCKER_USERNAME}}/tba4250-gib-2-client:${{github.sha}}
