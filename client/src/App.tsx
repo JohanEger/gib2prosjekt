@@ -1,7 +1,9 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import { Map } from "./components/Map";
+import 'leaflet/dist/leaflet.css'
 
-type HealthResponse = Record<string, string>;
+type HealthResponse = Record<string, string>; 
 
 function App() {
   const [response, setResponse] = useState<HealthResponse>();
@@ -37,8 +39,13 @@ function App() {
 
   return (
     <>
-      <h1>TBA4250 Template project</h1>
+      {response ? 
+      <div className="w-full h-screen">
+  <Map />
+</div>
+      :
       <h3>{response ? JSON.stringify(response) : "Loading..."}</h3>
+    }
     </>
   );
 }
