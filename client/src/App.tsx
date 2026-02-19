@@ -1,7 +1,7 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import { Map } from "./components/Map";
-import 'leaflet/dist/leaflet.css'
+
 
 type HealthResponse = Record<string, string>; 
 
@@ -38,15 +38,9 @@ function App() {
   }, []);
 
   return (
-    <>
-      {response ? 
-      <div className="w-full h-screen">
-  <Map />
-</div>
-      :
-      <h3>{response ? JSON.stringify(response) : "Loading..."}</h3>
-    }
-    </>
+    
+      <Map/>
+  
   );
 }
 

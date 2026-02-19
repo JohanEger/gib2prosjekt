@@ -4,7 +4,7 @@ import { MapContainer, TileLayer} from 'react-leaflet'
 export const Map = () => {
 
     return (
-    <MapContainer
+     <MapContainer
       center={[60.39, 5.32]}
       zoom={16}
       style={{ height: "100vh", width: "100%" }}
