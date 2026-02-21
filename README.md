@@ -1,8 +1,7 @@
-# TBA4250 GIB 2 Template project
+# TBA4250 GIB 2 Utstyrsoversikt
 
 > [!NOTE]
-> This is a template project that configures a React + Vite frontend, Python FastAPI backend with a PostgreSQL database.
-> The project can be used as a template for the project in TBA4250 GIB 2.
+> This is a project that configures a React + Vite frontend, Python FastAPI backend with a PostgreSQL database based on the [template project](https://github.com/jathavaan/tba4250-gib-2-template.git/) published by jathavaan.
 
 The following resources can be found in this repository
 
@@ -10,9 +9,8 @@ The following resources can be found in this repository
 - [How to work with the server/backend](/.github/docs/SERVER.md)
 - [How to configure automated deployments in the GitHub repository](/.github/docs/CI-CD.md)
 - [How to use the virtual machine (VM)](/.github/docs/VIRTUAL_MACHINE.md)
+- [How to work with the database](/.github/docs/DB.md)
 
-There is also another template repository to pull the published images on the VM. It can be
-found [here](https://github.com/jathavaan/tba4250-gib-2-vm-template).
 
 ### Setup
 
@@ -23,10 +21,16 @@ frontend can be found in the [client](./client)-directory, and the backend sourc
 #### Environment files
 
 We will use env-files to ensure that secrets are not published. These files are ignored in the [
-`.gitignore`](./.gitignore). The directories `client` and `server` will have one env-file each. Both these files have to
+`.gitignore`](./.gitignore). The directories ,`db`, `client` and `server` will have one env-file each. All of these files have to
 be named `.env`. developer have to create this as this defines the local credentials on their computer.
 
-`server/.env` contains database connection credentials and looks something like this.
+`server/.env` contains database connection URL and looks something like this.
+
+```.dotenv
+DATABASE_URL=postgresql+asyncpg://postgres:password@db:port/db_name
+```
+
+`db/.env` contains connection credentials and looks something like this.
 
 ```.dotenv
 POSTGRES_DB=templatedb
