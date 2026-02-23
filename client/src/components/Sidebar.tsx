@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function Sidebar() {
+export const Sidebar = ()=> {
   const [open, setOpen] = useState(true);
 
   return (
