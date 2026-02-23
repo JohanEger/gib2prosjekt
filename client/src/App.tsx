@@ -1,15 +1,14 @@
 import { Map } from "./components/Map";
-import {NavBar} from "./components/NavBar"
-
+import { NavBar } from "./components/NavBar";
+import Sidebar from "./components/Sidebar";
 
 function App() {
-  
   return (
-    <>
-    <NavBar/>
-    <Map/>
-
-    </>
+    <div className="relative h-screen w-screen overflow-hidden">
+      <NavBar />
+      <Sidebar />
+      <Map />
+    </div>
   );
 }
 

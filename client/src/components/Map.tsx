@@ -8,6 +8,8 @@ export const Map = () => {
       center={[63.43, 10.40]}
       zoom={16}
       style={{ height: "100vh", width: "100%" }}
+      zoomControl = {false}
+      className="absolute  z-0"
     >
       <TileLayer
         attribution="© OpenStreetMap contributors"
