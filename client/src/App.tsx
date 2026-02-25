@@ -1,5 +1,12 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import WelcomePage from "./pages/WelcomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import theme from "./theme";
 
 type HealthResponse = Record<string, string>;
 
@@ -36,10 +43,23 @@ function App() {
   }, []);
 
   return (
-    <>
-      <h1>TBA4250 Template project</h1>
-      <h3>{response ? JSON.stringify(response) : "Loading..."}</h3>
-    </>
+    <ThemeProvider theme={theme}>
+      <CssBaseline /> {/* resetter browser-stiler */}
+      <BrowserRouter> 
+      <Routes>
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    </BrowserRouter>
+    {/* Kan fjerne/legge til denne sjekken etter behov: */}
+      <div style={{ textAlign: "center", padding: "10px" }}>
+        <small>
+          Backend status:{" "}
+          {response ? JSON.stringify(response) : "Checking..."}
+        </small>
+      </div> 
+    </ThemeProvider>
   );
 }
 
