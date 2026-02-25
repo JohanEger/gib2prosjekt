@@ -9,8 +9,7 @@ export const Sidebar = ()=> {
         onClick={() => setOpen(!open)}
         className="fixed top-20 left-4 z-50 p-2 bg-blue-600 text-white rounded"
       >
-        {open ? <h1>Close</h1> : <h1>Show
-        </h1> }
+        {open ? <h1>Close</h1> : <h1>Show</h1>}
       </button>
 
       <div
