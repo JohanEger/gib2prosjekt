@@ -1,6 +1,6 @@
 import { Map } from "./components/Map";
 import { NavBar } from "./components/NavBar";
-import {Sidebar} from "./components/Sidebar";
+import { Sidebar } from "./components/Sidebar";
 
 function App() {
   return (
