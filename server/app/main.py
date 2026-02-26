@@ -2,6 +2,7 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -9,8 +10,7 @@ from datetime import datetime, timedelta
 import logging
 from starlette.middleware.cors import CORSMiddleware
 
-from server.app.database import get_database, wait_for_database, engine
-from server.app.models import Base, User, Task, Priority, Status
+from .database import get_database, wait_for_db, engine, Base
 
 app = FastAPI()
 
@@ -34,18 +34,20 @@ app.add_middleware(
 )
 
 @app.on_event("startup")
-def startup():
-    if not wait_for_database():
+async def startup():
+    ok = await wait_for_db()
+    if not ok:
         raise Exception("Database not available")
 
     # Create tables if they don’t exist
-    Base.metadata.create_all(bind=engine)
-
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 @app.get("/health")
-def health(db: Session = Depends(get_database)):
+async def health(db: AsyncSession = Depends(get_database)):
     try:
-        db.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 1"))
         return {"status": "ok", "database": "connected"}
-    except Exception as e:
+    except Exception:
+        # 503 = Service Unavailable (tjenesten kjører, men avhengighet feiler)
         raise HTTPException(status_code=503, detail="Database connection failed")
