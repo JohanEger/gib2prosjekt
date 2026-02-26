@@ -135,7 +135,7 @@ files
 -I DOCKER-USER -p tcp -m conntrack --ctorigdstport 5432 -j permit_ntnu
 ```
 
-These settings will expose `port 80` (frontend) to everyone, `port 5000` (backend) and `port 5432` (database) to people
+These settings will expose `port 80` (frontend) to everyone, `port 5000` (backend) and `port 5432/port5823` (database) to people
 connected to a NTNU network. After the files have been created run the script `install-firewall.sh` with the command
 
 ```powershell
