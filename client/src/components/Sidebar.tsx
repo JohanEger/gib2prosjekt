@@ -11,7 +11,6 @@ export const Sidebar = () => {
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
       />
-
       <button
         onClick={() => setOpen(!open)}
         className={`fixed top-1/2 -translate-y-1/2 z-50 p-2
