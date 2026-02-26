@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import user from "../assets/user.svg";
 
 export const NavBar = () => {
@@ -13,9 +14,11 @@ export const NavBar = () => {
       </div>
 
       <div>
+        <Link to="/welcome">
         <a href="#myprofile">
           <img src={user} alt="User" className="w-5 h-5 cursor-pointer" />
         </a>
+        </Link>
       </div>
     </nav>
   );

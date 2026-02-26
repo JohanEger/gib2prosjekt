@@ -1,11 +1,15 @@
-import { Map } from "./components/Map";
-import { NavBar } from "./components/NavBar";
-import { Sidebar } from "./components/Sidebar";
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import WelcomePage from "./pages/WelcomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import theme from "./theme";
+import { HomePage } from "./pages/HomePage";
 
-type HealthResponse = Record<string, string>;
 
 function App() {
+  /*
   const [response, setResponse] = useState<HealthResponse>();
 
   const getBackendApiStatus = async () => {
@@ -36,17 +40,28 @@ function App() {
   useEffect(() => {
     getBackendApiStatus();
   }, []);
-
-  useEffect(() => {
-    console.log("Response changed:", response);
-  }, [response]);
+  */
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
-      <NavBar />
-      <Sidebar />
-      <Map />
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline /> {/* resetter browser-stiler */}
+      <BrowserRouter> 
+      <Routes>
+        <Route path="/" element={<HomePage /> } />
+        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    </BrowserRouter>
+    {/* Kan fjerne/legge til denne sjekken etter behov: 
+      <div style={{ textAlign: "center", padding: "10px" }}>
+        <small>
+          Backend status:{" "}
+          {response ? JSON.stringify(response) : "Checking..."}
+        </small>
+      </div> 
+      */}
+    </ThemeProvider>
   );
 }
 
