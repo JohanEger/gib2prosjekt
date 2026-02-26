@@ -14,8 +14,13 @@
       - server/.env
     ports:
       - "5000:5000"
+    networks: 
+      - gib2-network
+    restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
 
   db:
     image: postgis/postgis:16-3.4
@@ -27,6 +32,17 @@
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
+    networks: 
+      - gib2-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d utstyrsoversikt -h localhost -p 5432"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
   db-data:
+networks:
+  gib2-network:
+    external: true
