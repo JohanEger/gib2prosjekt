@@ -56,7 +56,7 @@ export default function LoginPage() {
       >
         <Paper elevation={3} sx={{ p: 4, width: "100%", position: "relative" }}>
           <Button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/welcome")}
             variant="text"
             sx={{
               position: "absolute",
@@ -97,6 +97,7 @@ export default function LoginPage() {
             />
 
             <Button
+              onClick={() => navigate("/")}
               type="submit"
               variant="contained"
               fullWidth

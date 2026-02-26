@@ -63,7 +63,7 @@ export default function RegisterPage() {
             <Box sx={{ mt: 6, display: "flex", justifyContent: "center" }}>
                 <Paper elevation={3} sx={{ p: 4, position: "relative" }}>
                     <Button
-                        onClick={() => navigate("/")}
+                        onClick={() => navigate("/welcome")}
                         variant="text"
                         sx={{
                             position: "absolute",
