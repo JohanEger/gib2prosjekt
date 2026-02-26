@@ -15,9 +15,9 @@ export const NavBar = () => {
 
       <div>
         <Link to="/welcome">
-        <a href="#myprofile">
-          <img src={user} alt="User" className="w-5 h-5 cursor-pointer" />
-        </a>
+          <a href="#myprofile">
+            <img src={user} alt="User" className="w-5 h-5 cursor-pointer" />
+          </a>
         </Link>
       </div>
     </nav>
