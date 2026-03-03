@@ -55,6 +55,3 @@
 
 volumes:
   db-data:
-networks:
-  gib2-network:
-    external: true
