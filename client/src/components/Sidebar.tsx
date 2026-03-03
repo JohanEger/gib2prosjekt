@@ -1,5 +1,6 @@
 import { useState } from "react";
 import arrow from "../assets/arrow.svg";
+import { Equipment } from "./Equipment";
 
 export const Sidebar = () => {
   const [open, setOpen] = useState(true);
@@ -10,7 +11,8 @@ export const Sidebar = () => {
         className={`fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
-      />
+      ></div>
+
       <button
         onClick={() => setOpen(!open)}
         className={`fixed top-1/2 -translate-y-1/2 z-50 p-2
