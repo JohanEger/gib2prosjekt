@@ -1,10 +1,11 @@
 import { MapContainer, TileLayer, GeoJSON, Popup } from "react-leaflet";
-import { useState, useRef, act } from "react";
+import { useState, useRef } from "react";
 import type { FeatureCollection, Point } from "geojson";
-import L, { latLng, Layer, marker, popup } from "leaflet";
+import L from "leaflet";
+import { UserLocationMarker } from "./UserLocationMarker";
 
 export const Map = () => {
-  const [data, setData] = useState<FeatureCollection<Point>>({
+  const [data] = useState<FeatureCollection<Point>>({
     type: "FeatureCollection",
     features: [
       {
@@ -38,7 +39,7 @@ export const Map = () => {
   });
 
   const [hovered, setHovered] = useState<{
-    feature: any;
+    feature: GeoJSON.Feature;
     latLng: L.LatLng;
   } | null>(null);
 
@@ -58,7 +59,7 @@ export const Map = () => {
       />
       <GeoJSON
         data={data}
-        pointToLayer={(feature, latLng) =>
+        pointToLayer={(_feature, latLng) =>
           L.circleMarker(latLng, {
             radius: 8,
             fillColor: "#acacacff",
@@ -116,9 +117,10 @@ export const Map = () => {
       ></GeoJSON>
       {hovered && (
         <Popup position={hovered.latLng} closeButton={false}>
-          {hovered.feature.properties.name}
+          {hovered.feature.properties?.name}
         </Popup>
       )}
+      <UserLocationMarker />
     </MapContainer>
   );
 };
