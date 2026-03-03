@@ -9,21 +9,33 @@ import {
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterPage() {
     const navigate = useNavigate();
+    const { register } = useAuth();
 
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errors, setErrors] = useState<{
+        username?: string;
         email?: string;
         password?: string;
         confirmPassword?: string;
     }>({});
+    const [serverError, setServerError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     const validate = () => {
         const newErrors: typeof errors = {};
+
+        if (!username) {
+            newErrors.username = "Brukernavn kreves";
+        } else if (username.length < 3) {
+            newErrors.username = "Brukernavnet må ha minst 3 tegn";
+        }
 
         if (!email) {
             newErrors.email = "Email kreves";
@@ -50,12 +62,23 @@ export default function RegisterPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setServerError("");
 
         if (!validate()) return;
 
-        console.log("Register submitted", { email, password });
+        setSubmitting(true);
+        try {
+            await register(username, email, password);
+            navigate("/");
+        } catch (err) {
+            setServerError(
+                err instanceof Error ? err.message : "Noe gikk galt",
+            );
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -80,7 +103,23 @@ export default function RegisterPage() {
                         Opprett bruker
                     </Typography>
 
+                    {serverError && (
+                        <Typography color="error" align="center" sx={{ mb: 1 }}>
+                            {serverError}
+                        </Typography>
+                    )}
+
                     <Box component="form" onSubmit={handleSubmit} noValidate>
+                        <TextField
+                            label="Brukernavn"
+                            fullWidth
+                            margin="normal"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            error={!!errors.username}
+                            helperText={errors.username}
+                        />
+
                         <TextField
                             label="Email"
                             fullWidth
@@ -118,8 +157,9 @@ export default function RegisterPage() {
                             variant="contained"
                             fullWidth
                             sx={{ mt: 2 }}
+                            disabled={submitting}
                         >
-                            Opprett bruker
+                            {submitting ? "Oppretter..." : "Opprett bruker"}
                         </Button>
                     </Box>
                 </Paper>
