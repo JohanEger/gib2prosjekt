@@ -1,8 +1,47 @@
 import { useState } from "react";
+import React from "react";
 import arrow from "../assets/arrow.svg";
+import {
+  Container,
+  Box,
+  Button,
+  Typography,
+  Slider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  ListItemText,
+  Select,
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
+import TuneIcon from "@mui/icons-material/Tune";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+
+const comiteeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 export const Sidebar = () => {
   const [open, setOpen] = useState(true);
+  const [showFilter, setShowfilter] = useState(false);
+  const [comitee, setComitee] = React.useState<string[]>([]);
+
+  const handleChange = (event: SelectChangeEvent<typeof comiteeNames>) => {
+    const {
+      target: { value },
+    } = event;
+    setComitee(typeof value === "string" ? value.split(",") : value);
+  };
 
   return (
     <>
@@ -10,12 +49,28 @@ export const Sidebar = () => {
         className={`fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
-      />
+      >
+        <Container maxWidth="sm" className="relative top-20 right-0">
+          <Box className="flex justify-end">
+            <Button
+              onClick={() => {
+                setShowfilter(!showFilter);
+              }}
+            >
+              <TuneIcon color="primary"></TuneIcon>
+            </Button>
+          </Box>
+        </Container>
+      </div>
+
       <button
-        onClick={() => setOpen(!open)}
-        className={`fixed top-1/2 -translate-y-1/2 z-50 p-2
-        transition-all duration-300
-        ${open ? "left-64" : "left-0"}`}
+        onClick={() => {
+          setOpen(!open);
+          setShowfilter(false);
+        }}
+        className={`fixed top-1/2  z-50 p-1
+        transition-all duration-300 cursor-pointer
+        ${open ? "left-62" : "left-0"}`}
       >
         <img
           src={arrow}
@@ -24,6 +79,56 @@ export const Sidebar = () => {
           ${open ? "rotate-90" : "rotate-270"}`}
         />
       </button>
+      {showFilter && (
+        <Box
+          className=" fixed z-30 top-20 left-70 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
+          sx={{ borderRadius: "0.5rem" }}
+        >
+          <Typography variant="h6">Filtre</Typography>
+
+          <Box className="flex flex-col">
+            <FormControl sx={{ m: 1, width: 200 }}>
+              <InputLabel id="demo-multiple-checkbox-label">Komité</InputLabel>
+              <Select
+                labelId="demo-multiple-checkbox-label"
+                id="demo-multiple-checkbox"
+                multiple
+                value={comitee}
+                input={<OutlinedInput label="Komité" />}
+                renderValue={(selected) => selected.join(", ")}
+                MenuProps={MenuProps}
+                onChange={handleChange}
+              >
+                {comiteeNames.map((name) => {
+                  const selected = comitee.includes(name);
+                  const SelectionIcon = selected
+                    ? CheckBoxIcon
+                    : CheckBoxOutlineBlankIcon;
+
+                  return (
+                    <MenuItem key={name} value={name}>
+                      <SelectionIcon
+                        fontSize="small"
+                        style={{
+                          marginRight: 8,
+                          padding: 9,
+                          boxSizing: "content-box",
+                        }}
+                      />
+                      <ListItemText primary={name} />
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          </Box>
+
+          <Box className="flex flex-col">
+            <Typography>Avstand</Typography>
+            <Slider defaultValue={0} aria-label="Default"></Slider>
+          </Box>
+        </Box>
+      )}
     </>
   );
 };
