@@ -1,11 +1,47 @@
 import { useState } from "react";
+import React from "react";
 import arrow from "../assets/arrow.svg";
-import { Container, Box, Button, Typography } from "@mui/material";
+import {
+  Container,
+  Box,
+  Button,
+  Typography,
+  Slider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  ListItemText,
+  Select,
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+
+const comiteeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 export const Sidebar = () => {
   const [open, setOpen] = useState(true);
   const [showFilter, setShowfilter] = useState(false);
+  const [comitee, setComitee] = React.useState<string[]>([]);
+
+  const handleChange = (event: SelectChangeEvent<typeof comiteeNames>) => {
+    const {
+      target: { value },
+    } = event;
+    setComitee(typeof value === "string" ? value.split(",") : value);
+  };
 
   return (
     <>
@@ -32,9 +68,9 @@ export const Sidebar = () => {
           setOpen(!open);
           setShowfilter(false);
         }}
-        className={`fixed top-1/2  z-50 p-2
+        className={`fixed top-1/2  z-50 p-1
         transition-all duration-300 cursor-pointer
-        ${open ? "left-64" : "left-0"}`}
+        ${open ? "left-62" : "left-0"}`}
       >
         <img
           src={arrow}
@@ -44,14 +80,54 @@ export const Sidebar = () => {
         />
       </button>
       {showFilter && (
-        <Container className="fixed z-30 top-20 left-64">
-          <Box
-            className="flex bg-white shadow-lg max-w-1/2"
-            sx={{ borderRadius: "0.5rem" }}
-          >
-            <Typography className="">Hei</Typography>
+        <Box
+          className=" fixed z-30 top-20 left-70 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
+          sx={{ borderRadius: "0.5rem" }}
+        >
+          <Typography variant="h6">Filtre</Typography>
+
+          <Box className="flex flex-col">
+            <FormControl sx={{ m: 1, width: 200 }}>
+              <InputLabel id="demo-multiple-checkbox-label">Komité</InputLabel>
+              <Select
+                labelId="demo-multiple-checkbox-label"
+                id="demo-multiple-checkbox"
+                multiple
+                value={comitee}
+                input={<OutlinedInput label="Komité" />}
+                renderValue={(selected) => selected.join(", ")}
+                MenuProps={MenuProps}
+                onChange={handleChange}
+              >
+                {comiteeNames.map((name) => {
+                  const selected = comitee.includes(name);
+                  const SelectionIcon = selected
+                    ? CheckBoxIcon
+                    : CheckBoxOutlineBlankIcon;
+
+                  return (
+                    <MenuItem key={name} value={name}>
+                      <SelectionIcon
+                        fontSize="small"
+                        style={{
+                          marginRight: 8,
+                          padding: 9,
+                          boxSizing: "content-box",
+                        }}
+                      />
+                      <ListItemText primary={name} />
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </Box>
-        </Container>
+
+          <Box className="flex flex-col">
+            <Typography>Avstand</Typography>
+            <Slider defaultValue={0} aria-label="Default"></Slider>
+          </Box>
+        </Box>
       )}
     </>
   );
