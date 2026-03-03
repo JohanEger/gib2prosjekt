@@ -17,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // On mount (or when token changes), fetch the current user
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
 
     const fetchUser = async () => {
       if (!token) {

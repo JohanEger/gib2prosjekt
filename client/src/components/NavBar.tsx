@@ -1,4 +1,5 @@
 import { useAuth } from "../hooks/useAuth";
+import { Link } from "react-router-dom";
 
 export const NavBar = () => {
   const { logout, user: currentUser } = useAuth();
@@ -6,9 +7,9 @@ export const NavBar = () => {
   return (
     <nav className="bg-blue-900 text-white px-6 py-4 flex justify-between items-center z-50 absolute w-full shadow-lg">
       <div className="flex items-center space-x-6">
-        <a href="/" className="hover:text-gray-400 transition">
+        <Link to="/" className="hover:text-gray-400 transition">
           Home
-        </a>
+        </Link>
         <a href="#calendar" className="hover:text-gray-400 transition">
           Calendar
         </a>
