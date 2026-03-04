@@ -1,24 +1,21 @@
-﻿from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
+﻿from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, EmailStr
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
 import logging
 from starlette.middleware.cors import CORSMiddleware
 
 from .database import get_database, wait_for_db, engine, Base
+from .routers.auth import router as auth_router
 
 app = FastAPI()
+app.include_router(auth_router)
 
 origins = [
     "http://localhost",
     "http://localhost:80",
     "http://localhost:81",
-     "http://localhost:5173",
+    "http://localhost:5173",
+    "http://localhost:5174",
     "http://127.0.0.1",
     "http://127.0.0.1:80",
     "http://127.0.0.1:81",

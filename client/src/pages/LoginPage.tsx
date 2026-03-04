@@ -9,15 +9,19 @@ import {
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {},
   );
+  const [serverError, setServerError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -38,13 +42,23 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError("");
 
     if (!validate()) return;
 
-    console.log("Login submitted", { email, password });
-    // TODO senere: Sende request til backend her
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
+      setServerError(
+        err instanceof Error ? err.message : "Noe gikk galt",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -75,6 +89,12 @@ export default function LoginPage() {
             Logg inn
           </Typography>
 
+          {serverError && (
+            <Typography color="error" align="center" sx={{ mb: 1 }}>
+              {serverError}
+            </Typography>
+          )}
+
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
               label="Email"
@@ -99,13 +119,13 @@ export default function LoginPage() {
             />
 
             <Button
-              onClick={() => navigate("/")}
               type="submit"
               variant="contained"
               fullWidth
               sx={{ mt: 2 }}
+              disabled={submitting}
             >
-              Logg inn
+              {submitting ? "Logger inn..." : "Logg inn"}
             </Button>
           </Box>
         </Paper>

@@ -18,6 +18,6 @@ class Booking(Base):
     booking_destination: Mapped[Geography] = mapped_column(Geography(geometry_type='POINT', srid=4326), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     equipment : Mapped["Equipment"] = relationship("Equipment", back_populates="bookings")
-    user: Mapped["User"] = relationship("user.User", back_populates="bookings")    
+    user: Mapped["User"] = relationship("User", back_populates="bookings")    
 
     
