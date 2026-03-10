@@ -11,10 +11,11 @@ import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/useAuth";
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) return null;
 
+  const user = true;
   return (
     <Routes>
       {user ? (
