@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import arrow from "../assets/arrow.svg";
 import { Equipment } from "./Equipment";
@@ -32,9 +32,25 @@ const MenuProps = {
 };
 
 export const Sidebar = () => {
+  const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
   const [showFilter, setShowfilter] = useState(false);
   const [committee, setCommittee] = React.useState<string[]>([]);
+
+  useEffect(() => {
+    async function loadEquipment() {
+      const committeeParam = committee.length > 0 ? committee[0] : "";
+
+      const res = await fetch(
+        `http://localhost:5001/equipment/sidebar?committee=${committeeParam}`,
+      );
+
+      const data = await res.json();
+      setEquipment(data);
+    }
+
+    loadEquipment();
+  }, [committee]);
 
   const handleChange = (event: SelectChangeEvent<typeof committeeNames>) => {
     const {
@@ -60,42 +76,9 @@ export const Sidebar = () => {
           </Button>
         </Box>
         <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-1/2 overflow-y-auto scrollable-ul">
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
-          <li>
-            <Equipment name="Soundboks"></Equipment>
-          </li>
+          {equipment.map((item) => (
+            <li key={item.id}>{item.name}</li>
+          ))}
         </ul>
       </div>
 

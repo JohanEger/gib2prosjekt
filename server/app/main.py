@@ -3,9 +3,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 from starlette.middleware.cors import CORSMiddleware
-
+from seeds.seed_data import seed_groups, seed_equipment 
 from .database import get_database, wait_for_db, engine, Base
 from .routers.auth import router as auth_router
+from app.routers import equipment
 
 app = FastAPI()
 app.include_router(auth_router)
@@ -48,3 +49,10 @@ async def health(db: AsyncSession = Depends(get_database)):
     except Exception:
         # 503 = Service Unavailable (tjenesten kjører, men avhengighet feiler)
         raise HTTPException(status_code=503, detail="Database connection failed")
+
+@app.on_event("statup")
+async def startup():
+    await seed_groups()
+    await seed_equipment()
+
+app.include_router(equipment.router)
