@@ -59,7 +59,7 @@ export const Sidebar = () => {
             <TuneIcon color="primary"></TuneIcon>
           </Button>
         </Box>
-        <ul className="relative flex flex-col gap-4 p-4 justify-center top-25 max-h-1/2 overflow-y-auto scrollable-ul">
+        <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-1/2 overflow-y-auto scrollable-ul">
           <li>
             <Equipment name="Soundboks"></Equipment>
           </li>
