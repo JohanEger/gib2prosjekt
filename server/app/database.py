@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, async_sessi
 import os
 import time
 import logging
+from dotenv import load_dotenv
 
+load_dotenv()
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

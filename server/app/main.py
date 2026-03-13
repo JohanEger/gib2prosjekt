@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 from starlette.middleware.cors import CORSMiddleware
-from seeds.seed_data import seed_groups, seed_equipment 
+from app.seeds.seed_data import seed_groups, seed_equipment
 from .database import get_database, wait_for_db, engine, Base
 from .routers.auth import router as auth_router
 from app.routers import equipment
@@ -49,10 +49,25 @@ async def health(db: AsyncSession = Depends(get_database)):
     except Exception:
         # 503 = Service Unavailable (tjenesten kjører, men avhengighet feiler)
         raise HTTPException(status_code=503, detail="Database connection failed")
-
-@app.on_event("statup")
+    
+@app.on_event("startup")
 async def startup():
+    ok = await wait_for_db()
+    if not ok:
+        raise Exception("Database not available")
+
+    # Create tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Seed data
     await seed_groups()
     await seed_equipment()
 
 app.include_router(equipment.router)
+
+import os
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+print("DATABASE_URL:", DATABASE_URL)

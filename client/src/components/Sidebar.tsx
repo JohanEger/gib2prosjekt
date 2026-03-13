@@ -39,14 +39,18 @@ export const Sidebar = () => {
 
   useEffect(() => {
     async function loadEquipment() {
-      const committeeParam = committee.length > 0 ? committee[0] : "";
+      try {
+        const committeeParam = committee.join(",");
 
-      const res = await fetch(
-        `http://localhost:5001/equipment/sidebar?committee=${committeeParam}`,
-      );
+        const res = await fetch(
+          `http://localhost:5000/equipment/sidebar?committee=${committeeParam}`,
+        );
 
-      const data = await res.json();
-      setEquipment(data);
+        const data = await res.json();
+        setEquipment(data);
+      } catch (err) {
+        console.error("Error loading equipment:", err);
+      }
     }
 
     loadEquipment();

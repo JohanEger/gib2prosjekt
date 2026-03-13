@@ -9,7 +9,7 @@ async def equipment_for_sidebar(session, committee: str | None):
     else:
         result = await session.execute(
             select(Equipment)
-            .join(Group)
+            .join(Equipment.owner)
             .where(Group.name == committee)
         )
 
