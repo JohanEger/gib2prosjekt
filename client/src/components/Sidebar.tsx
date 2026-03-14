@@ -30,6 +30,7 @@ const MenuProps = {
     },
   },
 };
+import { Equipment } from "./Equipment";
 
 export const Sidebar = () => {
   const [open, setOpen] = useState(true);
@@ -49,19 +50,7 @@ export const Sidebar = () => {
         className={`fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <Container maxWidth="sm" className="relative top-20 right-0">
-          <Box className="flex justify-end">
-            <Button
-              onClick={() => {
-                setShowfilter(!showFilter);
-              }}
-            >
-              <TuneIcon color="primary"></TuneIcon>
-            </Button>
-          </Box>
-        </Container>
-      </div>
+      ></div>
 
       <button
         onClick={() => {
