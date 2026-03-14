@@ -30,6 +30,7 @@ const MenuProps = {
     },
   },
 };
+import { Equipment } from "./Equipment";
 
 export const Sidebar = () => {
   const [equipment, setEquipment] = useState<any[]>([]);

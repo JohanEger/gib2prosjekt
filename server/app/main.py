@@ -64,7 +64,7 @@ async def startup():
     await seed_groups()
     await seed_equipment()
 
-app.include_router(equipment.router)
+app.include_router(https://github.com/JohanEger/gib2prosjekt/pull/39/conflict?name=client%252Fsrc%252Fpages%252FRegisterPage.tsx&ancestor_oid=7924661403929bcd7551d8535c311a0e7d54f426&base_oid=730ccd5a95db54f7a5a4da1d067677d82b893a3c&head_oid=de4bb047cf0279b0bb130467f278f304bbf2722eequipment.router)
 
 import os
 

@@ -11,7 +11,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/useAuth";
 
 function AppRoutes() {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) return null;
 

@@ -53,7 +53,9 @@ export default function LoginPage() {
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Noe gikk galt");
+      setServerError(
+        err instanceof Error ? err.message : "Noe gikk galt",
+      );
     } finally {
       setSubmitting(false);
     }
