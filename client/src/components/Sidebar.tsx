@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import arrow from "../assets/arrow.svg";
+import { Equipment } from "./Equipment";
 import {
-  Container,
   Box,
   Button,
   Typography,
@@ -19,7 +19,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
-const comiteeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
@@ -33,15 +33,37 @@ const MenuProps = {
 import { Equipment } from "./Equipment";
 
 export const Sidebar = () => {
+  const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
   const [showFilter, setShowfilter] = useState(false);
-  const [comitee, setComitee] = React.useState<string[]>([]);
+  const [committee, setCommittee] = React.useState<string[]>([]);
 
-  const handleChange = (event: SelectChangeEvent<typeof comiteeNames>) => {
+  useEffect(() => {
+    async function loadEquipment() {
+      try {
+        const params = new URLSearchParams();
+        committee.forEach((c) => params.append("committee", c));
+
+        const res = await fetch(
+          `http://localhost:5001/equipment/sidebar?${params.toString()}`,
+        );
+
+        const data = await res.json();
+        setEquipment(data);
+        console.log(data);
+      } catch (err) {
+        console.error("Error loading equipment:", err);
+      }
+    }
+
+    loadEquipment();
+  }, [committee]);
+
+  const handleChange = (event: SelectChangeEvent<typeof committeeNames>) => {
     const {
       target: { value },
     } = event;
-    setComitee(typeof value === "string" ? value.split(",") : value);
+    setCommittee(typeof value === "string" ? value.split(",") : value);
   };
 
   return (
@@ -50,7 +72,22 @@ export const Sidebar = () => {
         className={`fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
-      ></div>
+      >
+        <Box className="flex justify-end relative top-20 right-0">
+          <Button
+            onClick={() => {
+              setShowfilter(!showFilter);
+            }}
+          >
+            <TuneIcon color="primary"></TuneIcon>
+          </Button>
+        </Box>
+        <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-3/4 overflow-y-auto scrollable-ul">
+          {equipment.map((item) => (
+            <Equipment name={item.name}></Equipment>
+          ))}
+        </ul>
+      </div>
 
       <button
         onClick={() => {
@@ -82,14 +119,14 @@ export const Sidebar = () => {
                 labelId="demo-multiple-checkbox-label"
                 id="demo-multiple-checkbox"
                 multiple
-                value={comitee}
+                value={committee}
                 input={<OutlinedInput label="Komité" />}
                 renderValue={(selected) => selected.join(", ")}
                 MenuProps={MenuProps}
                 onChange={handleChange}
               >
-                {comiteeNames.map((name) => {
-                  const selected = comitee.includes(name);
+                {committeeNames.map((name) => {
+                  const selected = committee.includes(name);
                   const SelectionIcon = selected
                     ? CheckBoxIcon
                     : CheckBoxOutlineBlankIcon;
