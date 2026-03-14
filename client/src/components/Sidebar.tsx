@@ -44,7 +44,7 @@ export const Sidebar = () => {
         committee.forEach((c) => params.append("committee", c));
 
         const res = await fetch(
-          `http://localhost:5000/equipment/sidebar?${params.toString()}`,
+          `http://localhost:5001/equipment/sidebar?${params.toString()}`,
         );
 
         const data = await res.json();
@@ -81,9 +81,9 @@ export const Sidebar = () => {
             <TuneIcon color="primary"></TuneIcon>
           </Button>
         </Box>
-        <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-1/2 overflow-y-auto scrollable-ul">
+        <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-3/4 overflow-y-auto scrollable-ul">
           {equipment.map((item) => (
-            <li key={item.id}>{item.name}</li>
+            <Equipment name={item.name}></Equipment>
           ))}
         </ul>
       </div>
