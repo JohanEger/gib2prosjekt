@@ -8,6 +8,10 @@ from shapely.geometry import Point
 
 async def seed_groups():
     async with SessionLocal() as session:
+        result = await session.execute(select(Group))
+        if result.scalars().first():
+            return
+
         groups = [
             Group(name="arrkom"),
             Group(name="turingen"),
@@ -23,50 +27,68 @@ async def seed_groups():
 
 async def seed_equipment():
     async with SessionLocal() as session:
+
         arrkom_result = await session.execute(select(Group).where(Group.name == "arrkom"))
         arrkom = arrkom_result.scalar_one()
+
         turingen_result = await session.execute(select(Group).where(Group.name == "turingen"))
         turingen = turingen_result.scalar_one()
-       
-        equipment = [
-        #arrkom
-        Equipment(name = "Soundboks 4", description= "Speaker", owner = arrkom,type_of_equipment="electronics", current_pos = from_shape(Point(10.403334, 63.418120), srid=4236)),
-        
-        #turingen
-        Equipment(name="Telt Fjellheimen Trek Camp", description="4 person telt", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Sovepose 3-sesong", description="Mountain Equipment sovepose", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Lakenpose", description="Mountain Equipment lakenpose", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Lavvo Helsport", description="Lavvo for 10 personer", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Hengekøye Original", description="Standard hengekøye", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Tau til hengekøye", description="3.2 meter tau", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Hengekøye Kingsize", description="Stor hengekøye", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Liggeunderlag tynt", description="Enkelt liggeunderlag", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Liggeunderlag tykt", description="Oppblåsbart liggeunderlag", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Jervenduk", description="Beskyttelsesduk for tur", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Tarp", description="4.35m x 2.90m tarp", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Storsekk", description="65 liter sekk", type_of_equipment="overnatting", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Stormkjøkken lite", description="Primus stormkjøkken lite", type_of_equipment="kjøkken", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Stormkjøkken stort", description="Primus stormkjøkken stort", type_of_equipment="kjøkken", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Førstehjelpssett", description="Førstehjelpsutstyr", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Termos", description="Termos for varm drikke", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Tursag", description="Sammenleggbar sag", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Kartlomme", description="Kartmappe A4", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Kompass", description="Navigasjonskompass", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Hodelykt", description="Hodelykt for tur", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Liten kniv", description="Turkniv", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Machete", description="Stor turkniv", type_of_equipment="annet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Pil og bue", description="Bue med piler og blink", type_of_equipment="aktivitet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Fiskestang", description="Fiskestang med snelle", type_of_equipment="aktivitet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Sluker", description="Diverse fiskesluker", type_of_equipment="aktivitet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Slackline", description="15 meter slackline", type_of_equipment="aktivitet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Gummibåt", description="Gummibåt med årer", type_of_equipment="aktivitet", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Discgolfsett", description="6 typer frisbeer", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Crashpads", description="Buldringsmatter", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Tennisracketer", description="Tennisracketer og baller", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Padelracketer", description="Padelracketer og baller", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Squashracketer", description="Squashracketer og baller", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Spikeball", description="Spikeball spill", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
-        Equipment(name="Kubb", description="Kubb spill", type_of_equipment="idrett", owner_id=turingen.id, current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)),
+
+        equipment_data = [
+            # arrkom
+            ("Soundboks 4", "Speaker", "electronics", arrkom.id),
+
+            # turingen
+            ("Telt Fjellheimen Trek Camp", "4 person telt", "overnatting", turingen.id),
+            ("Sovepose 3-sesong", "Mountain Equipment sovepose", "overnatting", turingen.id),
+            ("Lakenpose", "Mountain Equipment lakenpose", "overnatting", turingen.id),
+            ("Lavvo Helsport", "Lavvo for 10 personer", "overnatting", turingen.id),
+            ("Hengekøye Original", "Standard hengekøye", "overnatting", turingen.id),
+            ("Tau til hengekøye", "3.2 meter tau", "overnatting", turingen.id),
+            ("Hengekøye Kingsize", "Stor hengekøye", "overnatting", turingen.id),
+            ("Liggeunderlag tynt", "Enkelt liggeunderlag", "overnatting", turingen.id),
+            ("Liggeunderlag tykt", "Oppblåsbart liggeunderlag", "overnatting", turingen.id),
+            ("Jervenduk", "Beskyttelsesduk for tur", "overnatting", turingen.id),
+            ("Tarp", "4.35m x 2.90m tarp", "overnatting", turingen.id),
+            ("Storsekk", "65 liter sekk", "overnatting", turingen.id),
+
+            ("Stormkjøkken lite", "Primus stormkjøkken lite", "kjøkken", turingen.id),
+            ("Stormkjøkken stort", "Primus stormkjøkken stort", "kjøkken", turingen.id),
+
+            ("Førstehjelpssett", "Førstehjelpsutstyr", "annet", turingen.id),
+            ("Termos", "Termos for varm drikke", "annet", turingen.id),
+            ("Tursag", "Sammenleggbar sag", "annet", turingen.id),
+            ("Kartlomme", "Kartmappe A4", "annet", turingen.id),
+            ("Kompass", "Navigasjonskompass", "annet", turingen.id),
+            ("Hodelykt", "Hodelykt for tur", "annet", turingen.id),
+            ("Liten kniv", "Turkniv", "annet", turingen.id),
+            ("Machete", "Stor turkniv", "annet", turingen.id),
+
+            ("Pil og bue", "Bue med piler og blink", "aktivitet", turingen.id),
+            ("Fiskestang", "Fiskestang med snelle", "aktivitet", turingen.id),
+            ("Sluker", "Diverse fiskesluker", "aktivitet", turingen.id),
+            ("Slackline", "15 meter slackline", "aktivitet", turingen.id),
+            ("Gummibåt", "Gummibåt med årer", "aktivitet", turingen.id),
+
+            ("Discgolfsett", "6 typer frisbeer", "idrett", turingen.id),
+            ("Crashpads", "Buldringsmatter", "idrett", turingen.id),
+            ("Tennisracketer", "Tennisracketer og baller", "idrett", turingen.id),
+            ("Padelracketer", "Padelracketer og baller", "idrett", turingen.id),
+            ("Squashracketer", "Squashracketer og baller", "idrett", turingen.id),
+            ("Spikeball", "Spikeball spill", "idrett", turingen.id),
+            ("Kubb", "Kubb spill", "idrett", turingen.id),
         ]
+
+        equipment = [
+            Equipment(
+                name=name,
+                description=desc,
+                type_of_equipment=type_eq,
+                owner_id=owner_id,
+                current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)
+            )
+            for name, desc, type_eq, owner_id in equipment_data
+        ]
+
         session.add_all(equipment)
         await session.commit()

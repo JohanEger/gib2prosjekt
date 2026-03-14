@@ -40,14 +40,16 @@ export const Sidebar = () => {
   useEffect(() => {
     async function loadEquipment() {
       try {
-        const committeeParam = committee.join(",");
+        const params = new URLSearchParams();
+        committee.forEach((c) => params.append("committee", c));
 
         const res = await fetch(
-          `http://localhost:5000/equipment/sidebar?committee=${committeeParam}`,
+          `http://localhost:5000/equipment/sidebar?${params.toString()}`,
         );
 
         const data = await res.json();
         setEquipment(data);
+        console.log(data);
       } catch (err) {
         console.error("Error loading equipment:", err);
       }
