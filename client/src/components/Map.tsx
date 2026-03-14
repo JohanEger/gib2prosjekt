@@ -1,48 +1,63 @@
 import { MapContainer, TileLayer, GeoJSON, Popup } from "react-leaflet";
-import { useState, useRef, act } from "react";
-import type { FeatureCollection, Point } from "geojson";
-import L, { latLng, Layer, marker, popup } from "leaflet";
+import { useState, useRef, useEffect, useMemo } from "react";
+import type { Feature, FeatureCollection, Point } from "geojson";
+import L from "leaflet";
+import { UserLocationMarker } from "./UserLocationMarker";
+
+const API_BASE = import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+
+type EquipmentMarker = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+type EquipmentProperties = {
+  id: string
+  name: string;
+}
 
 export const Map = () => {
-  const [data, setData] = useState<FeatureCollection<Point>>({
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        id: "1",
-        properties: { name: "Soundboks 1" },
-        geometry: {
-          type: "Point",
-          coordinates: [10.4, 63.43],
-        },
-      },
-      {
-        type: "Feature",
-        id: "2",
-        properties: { name: "Soundboks 2" },
-        geometry: {
-          type: "Point",
-          coordinates: [10.3969, 63.4269],
-        },
-      },
-      {
-        type: "Feature",
-        id: "3",
-        properties: { name: "Soundboks 3" },
-        geometry: {
-          type: "Point",
-          coordinates: [10.3927, 63.4225],
-        },
-      },
-    ],
-  });
-
+  const [markers,setMarkers] = useState<EquipmentMarker[]>([]);
   const [hovered, setHovered] = useState<{
-    feature: any;
+    feature: Feature<Point, EquipmentProperties>;
     latLng: L.LatLng;
   } | null>(null);
 
   const activeRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const response = await fetch(`${API_BASE}/locations/`);  // Riktig endpoint?
+      if (!response.ok) {
+        console.error("Failed to fetch locations");
+        return;
+      }
+      const data: EquipmentMarker[] = await response.json();
+      setMarkers(data);
+    };
+
+    fetchLocations().catch((error) => {
+      console.error("Error fetching locations:", error);
+    });
+  }, []);
+
+  const data: FeatureCollection<Point, EquipmentProperties> = useMemo(() => ({
+    type: "FeatureCollection",
+    features: markers.map((marker) => ({
+      type: "Feature",
+      properties: {
+        id: marker.id,
+        name: marker.name,
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [marker.lng, marker.lat],
+      },
+    })),
+  }), [markers]);
+
 
   return (
     <MapContainer
@@ -58,7 +73,7 @@ export const Map = () => {
       />
       <GeoJSON
         data={data}
-        pointToLayer={(feature, latLng) =>
+        pointToLayer={(_feature, latLng) =>
           L.circleMarker(latLng, {
             radius: 8,
             fillColor: "#acacacff",
@@ -96,7 +111,7 @@ export const Map = () => {
               }
 
               setHovered({
-                feature,
+                feature: feature as Feature<Point, EquipmentProperties>,
                 latLng: e.latlng,
               });
             },
@@ -116,9 +131,10 @@ export const Map = () => {
       ></GeoJSON>
       {hovered && (
         <Popup position={hovered.latLng} closeButton={false}>
-          {hovered.feature.properties.name}
+          {hovered.feature.properties?.name}
         </Popup>
       )}
+      <UserLocationMarker />
     </MapContainer>
   );
 };

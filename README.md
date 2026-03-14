@@ -28,6 +28,12 @@ be named `.env`. developer have to create this as this defines the local credent
 
 ```.dotenv
 DATABASE_URL=postgresql+asyncpg://postgres:password@db:port/db_name
+JWT_SECRET_KEY=secret_key
+```
+
+Generate a 32bit key using openssl:
+```bash
+openssl rand -hex 32
 ```
 
 `db/.env` contains connection credentials and looks something like this.

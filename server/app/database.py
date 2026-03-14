@@ -45,5 +45,3 @@ async def wait_for_db(max_retries=5, delay=2) -> bool:
             retries += 1
     logger.error("Could not connect to the database after multiple attempts.")
     return False
-
-
