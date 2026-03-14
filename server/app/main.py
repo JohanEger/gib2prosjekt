@@ -1,4 +1,5 @@
 ﻿from fastapi import FastAPI, Depends, HTTPException
+from app.schemas import location
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
@@ -6,10 +7,9 @@ from starlette.middleware.cors import CORSMiddleware
 from app.seeds.seed_data import seed_groups, seed_equipment
 from .database import get_database, wait_for_db, engine, Base
 from .routers.auth import router as auth_router
-from app.routers import equipment
+from app.routers import location, equipment
 
 app = FastAPI()
-app.include_router(auth_router)
 
 origins = [
     "http://localhost",
@@ -31,15 +31,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def startup():
-    ok = await wait_for_db()
-    if not ok:
-        raise Exception("Database not available")
+app.include_router(auth_router)
+app.include_router(location.router)
+app.include_router(equipment.router)
 
-    # Create tables if they don’t exist
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 @app.get("/health")
 async def health(db: AsyncSession = Depends(get_database)):
@@ -64,7 +59,6 @@ async def startup():
     await seed_groups()
     await seed_equipment()
 
-app.include_router(https://github.com/JohanEger/gib2prosjekt/pull/39/conflict?name=client%252Fsrc%252Fpages%252FRegisterPage.tsx&ancestor_oid=7924661403929bcd7551d8535c311a0e7d54f426&base_oid=730ccd5a95db54f7a5a4da1d067677d82b893a3c&head_oid=de4bb047cf0279b0bb130467f278f304bbf2722eequipment.router)
 
 import os
 

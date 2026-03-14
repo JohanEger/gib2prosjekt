@@ -30,7 +30,6 @@ const MenuProps = {
     },
   },
 };
-import { Equipment } from "./Equipment";
 
 export const Sidebar = () => {
   const [equipment, setEquipment] = useState<any[]>([]);
@@ -49,7 +48,7 @@ export const Sidebar = () => {
         );
 
         const data = await res.json();
-        setEquipment(data);
+        setEquipment(Array.isArray(data) ? data : []);
         console.log(data);
       } catch (err) {
         console.error("Error loading equipment:", err);
@@ -84,7 +83,9 @@ export const Sidebar = () => {
         </Box>
         <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-3/4 overflow-y-auto scrollable-ul">
           {equipment.map((item) => (
-            <Equipment name={item.name}></Equipment>
+           <MenuItem key={item.id} value={item.id}>
+              {item.name}
+            </MenuItem>
           ))}
         </ul>
       </div>

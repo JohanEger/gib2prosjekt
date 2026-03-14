@@ -1,12 +1,12 @@
-from server.app.models.equipment import Equipment
-from server.app.models.booking import Booking
-from server.app.models.user import User
-from server.app.models.user import User
-from server.app.schemas.location import EquipmentMarker, LocationFilter
-from server.database import get_database
+from app.models.equipment import Equipment
+from app.models.booking import Booking
+from app.models.user import User
+from app.schemas.location import EquipmentMarker, LocationFilter
+from app.database import get_database
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from datetime import datetime
+from geoalchemy2 import Geometry
 
 async def get_locations(db: AsyncSession, filter: LocationFilter, current_user: User):
     stmt = select(
@@ -14,9 +14,8 @@ async def get_locations(db: AsyncSession, filter: LocationFilter, current_user: 
         Equipment.name,
         Equipment.type_of_equipment,
         Equipment.owner_id,
-        Equipment.current_pos,
-        func.ST_Y(Equipment.current_pos).label("lat"),
-        func.ST_X(Equipment.current_pos).label("lng")
+        func.ST_Y(Equipment.current_pos.cast(Geometry)).label("lat"),
+        func.ST_X(Equipment.current_pos.cast(Geometry)).label("lng")
         )
         
 
@@ -49,6 +48,7 @@ async def get_locations(db: AsyncSession, filter: LocationFilter, current_user: 
         EquipmentMarker(
             id = row.id,
             name = row.name,
+            type_of_equipment=row.type_of_equipment,
             lat = row.lat,
             lng = row.lng
         )

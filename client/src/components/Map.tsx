@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, GeoJSON, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, Popup, CircleMarker } from "react-leaflet";
 import { useState, useRef, useEffect, useMemo } from "react";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import L from "leaflet";
@@ -29,12 +29,18 @@ export const Map = () => {
 
   useEffect(() => {
     const fetchLocations = async () => {
-      const response = await fetch(`${API_BASE}/locations/`);  // Riktig endpoint?
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await fetch(`${API_BASE}/locations/`, {
+        headers
+      });  
       if (!response.ok) {
-        console.error("Failed to fetch locations");
+        const text = await response.text();
+        console.error("Failed to fetch locations:", response.status, text);
         return;
       }
       const data: EquipmentMarker[] = await response.json();
+      console.log("locations from backend:", data);
       setMarkers(data);
     };
 
@@ -42,22 +48,6 @@ export const Map = () => {
       console.error("Error fetching locations:", error);
     });
   }, []);
-
-  const data: FeatureCollection<Point, EquipmentProperties> = useMemo(() => ({
-    type: "FeatureCollection",
-    features: markers.map((marker) => ({
-      type: "Feature",
-      properties: {
-        id: marker.id,
-        name: marker.name,
-      },
-      geometry: {
-        type: "Point",
-        coordinates: [marker.lng, marker.lat],
-      },
-    })),
-  }), [markers]);
-
 
   return (
     <MapContainer
@@ -71,64 +61,71 @@ export const Map = () => {
         attribution="© OpenStreetMap contributors © Stadia Maps"
         url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
       />
-      <GeoJSON
-        data={data}
-        pointToLayer={(_feature, latLng) =>
-          L.circleMarker(latLng, {
-            radius: 8,
-            fillColor: "#acacacff",
-            fillOpacity: 1,
-            color: "#000",
-            weight: 2,
-          })
-        }
-        onEachFeature={(feature, layer) => {
-          layer.on({
-            click: (e) => {
-              const target = e.target as L.CircleMarker;
+        {markers.map((marker) => (
+          <CircleMarker
+            key={marker.id}
+            center={[marker.lat, marker.lng]}
+            radius={8}
+            pathOptions={{
+              fillColor: "#acacacff",
+              fillOpacity: 1,
+              color: "#000",
+              weight: 2,
+            }}
+            eventHandlers={{
+              click: (e) => {
+                const target = e.target as L.CircleMarker;
 
-              if (activeRef.current === target) {
-                target.setStyle({ fillColor: "#acacacff" });
-                activeRef.current = null;
-                return;
-              }
+                if (activeRef.current === target) {
+                  target.setStyle({ fillColor: "#acacacff" });
+                  activeRef.current = null;
+                  return;
+                }
 
-              if (activeRef.current) {
-                activeRef.current.setStyle({ fillColor: "#acacacff" });
-              }
+                if (activeRef.current) {
+                  activeRef.current.setStyle({ fillColor: "#acacacff" });
+                }
 
-              target.setStyle({ fillColor: "#0400ffff" });
-              activeRef.current = target;
-            },
+                target.setStyle({ fillColor: "#0400ffff" });
+                activeRef.current = target;
+              },
 
-            mouseover: (e) => {
-              const target = e.target as L.CircleMarker;
+              mouseover: (e) => {
+                const target = e.target as L.CircleMarker;
 
-              if (activeRef.current !== target) {
-                target.setStyle({
-                  fillColor: "#0400ffff",
+                if (activeRef.current !== target) {
+                  target.setStyle({ fillColor: "#0400ffff" });
+                }
+
+                setHovered({
+                  feature: {
+                    type: "Feature",
+                    properties: {
+                      id: marker.id,
+                      name: marker.name,
+                    },
+                    geometry: {
+                      type: "Point",
+                      coordinates: [marker.lng, marker.lat],
+                    },
+                  } as Feature<Point, EquipmentProperties>,
+                  latLng: e.latlng,
                 });
-              }
+              },
 
-              setHovered({
-                feature: feature as Feature<Point, EquipmentProperties>,
-                latLng: e.latlng,
-              });
-            },
+              mouseout: (e) => {
+                const target = e.target as L.CircleMarker;
 
-            mouseout: (e) => {
-              const target = e.target as L.CircleMarker;
+                target.setStyle({
+                  fillColor:
+                    activeRef.current === target ? "#0400ffff" : "#acacacff",
+                });
 
-              target.setStyle({
-                fillColor:
-                  activeRef.current === target ? "#0400ffff" : "#acacacff",
-              });
-
-              setHovered(null);
-            },
-          });
-        }}
-      ></GeoJSON>
+                setHovered(null);
+              },
+            }}
+          />
+        ))}
       {hovered && (
         <Popup position={hovered.latLng} closeButton={false}>
           {hovered.feature.properties?.name}

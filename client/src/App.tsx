@@ -15,7 +15,6 @@ function AppRoutes() {
 
   if (loading) return null;
 
-  const user = true;
   return (
     <Routes>
       {user ? (

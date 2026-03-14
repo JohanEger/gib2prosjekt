@@ -1,6 +1,6 @@
 from uuid import UUID
 from pydantic import BaseModel
-from server.app.models import group
+from app.models import group
 
 class LocationFilter(BaseModel):
     group_id: UUID | None = None
@@ -24,4 +24,3 @@ class EquopmentDetail(BaseModel):
     lat: float
     lng: float
 
-    
