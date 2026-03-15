@@ -6,6 +6,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme";
 import { HomePage } from "./pages/HomePage";
+import CalendarPage from "./pages/CalendarPage";
 
 
 function App() {
@@ -45,15 +46,19 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* resetter browser-stiler */}
-      <BrowserRouter> 
-      <Routes>
-        <Route path="/" element={<HomePage /> } />
-        <Route path="/welcome" element={<WelcomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Routes>
-    </BrowserRouter>
-    {/* Kan fjerne/legge til denne sjekken etter behov: 
+      <BrowserRouter>
+        <div className="min-h-screen bg-gray-800 pt-16">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/welcome" element={<WelcomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+
+      {/* Kan fjerne/legge til denne sjekken etter behov: 
       <div style={{ textAlign: "center", padding: "10px" }}>
         <small>
           Backend status:{" "}
@@ -61,6 +66,7 @@ function App() {
         </small>
       </div> 
       */}
+
     </ThemeProvider>
   );
 }
