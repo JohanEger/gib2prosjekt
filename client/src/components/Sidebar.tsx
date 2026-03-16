@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import React from "react";
+import { use, useEffect, useState } from "react";
 import arrow from "../assets/arrow.svg";
-import { Equipment } from "./Equipment";
+import { EquipmentPopUp } from "./EquipmentPopUp";
 import {
   Box,
   Button,
@@ -18,24 +17,30 @@ import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import type { LatLng } from "leaflet";
 
-const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
+type Equipment = {
+  id: string;
+  name: string;
+  description: string;
+  type_of_equipment: string;
+  owner_id: string;
+  current_pos: {
+    lat: number;
+    lng: number;
+  };
 };
+const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
 
 export const Sidebar = () => {
-  const [equipment, setEquipment] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [open, setOpen] = useState(true);
-  const [showFilter, setShowfilter] = useState(false);
-  const [committee, setCommittee] = React.useState<string[]>([]);
+  const [showFilter, setShowFilter] = useState(false);
+  const [committee, setCommittee] = useState<string[]>([]);
+  const [activeEquipment, setActiveEquipment] = useState<Equipment | null>(
+    null,
+  );
+  const [available, setAvailable] = useState(false);
 
   useEffect(() => {
     async function loadEquipment() {
@@ -48,6 +53,7 @@ export const Sidebar = () => {
         );
 
         const data = await res.json();
+        console.log(data);
         setEquipment(Array.isArray(data) ? data : []);
         console.log(data);
       } catch (err) {
@@ -58,10 +64,43 @@ export const Sidebar = () => {
     loadEquipment();
   }, [committee]);
 
+  useEffect(() => {
+    async function checkBooking(id: string) {
+      const res = await fetch(
+        `http://localhost:5001/equipment/checkbooking?id=${id}`,
+      );
+
+      const data = await res.json();
+      setAvailable(data);
+      console.log(data);
+    }
+
+    if (activeEquipment?.id) {
+      checkBooking(activeEquipment.id);
+    }
+  }, [activeEquipment?.id]);
+
+  async function getEquipment(id: string) {
+    try {
+      const res = await fetch(`http://localhost:5001/equipment/popup?id=${id}`);
+
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setActiveEquipment(data);
+      console.log(data);
+    } catch (err) {
+      console.error("Error loading equipment:", err);
+    }
+  }
+
   const handleChange = (event: SelectChangeEvent<typeof committeeNames>) => {
     const {
       target: { value },
     } = event;
+
     setCommittee(typeof value === "string" ? value.split(",") : value);
   };
 
@@ -73,18 +112,20 @@ export const Sidebar = () => {
         ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <Box className="flex justify-end relative top-20 right-0">
-          <Button
-            onClick={() => {
-              setShowfilter(!showFilter);
-            }}
-          >
-            <TuneIcon color="primary"></TuneIcon>
+          <Button onClick={() => setShowFilter(!showFilter)}>
+            <TuneIcon color="primary" />
           </Button>
         </Box>
-        <ul className="relative flex flex-col gap-4 p-4 mt-24 max-h-3/4 overflow-y-auto scrollable-ul">
+
+        <ul className="relative flex flex-col gap-2 p-4 mt-24 max-h-3/4 overflow-y-auto">
           {equipment.map((item) => (
-           <MenuItem key={item.id} value={item.id}>
-              {item.name}
+            <MenuItem key={item.id}>
+              <Box
+                className="bg-white shadow-lg rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer"
+                onClick={() => getEquipment(item.id)}
+              >
+                <Typography className="text-black p-2">{item.name}</Typography>
+              </Box>
             </MenuItem>
           ))}
         </ul>
@@ -93,66 +134,76 @@ export const Sidebar = () => {
       <button
         onClick={() => {
           setOpen(!open);
-          setShowfilter(false);
+          setShowFilter(false);
         }}
-        className={`fixed top-1/2  z-50 p-1
-        transition-all duration-300 cursor-pointer
-        ${open ? "left-62" : "left-0"}`}
+        className={`fixed top-1/2 z-50 p-1 transition-all duration-300 cursor-pointer ${
+          open ? "left-64" : "left-0"
+        }`}
       >
         <img
           src={arrow}
           alt="Toggle"
-          className={`w-7 h-7 transition-transform duration-300
-          ${open ? "rotate-90" : "rotate-270"}`}
+          className={`w-7 h-7 transition-transform duration-300 ${
+            open ? "rotate-90" : "rotate-270"
+          }`}
         />
       </button>
+
+      <div
+        className={`fixed top-0 right-0 w-[30rem] h-screen bg-white shadow-xl
+        transform transition-transform duration-300 z-40
+        ${activeEquipment ? "translate-x-0" : "translate-x-full"}`}
+      >
+        {activeEquipment && (
+          <EquipmentPopUp
+            name={activeEquipment.name}
+            latlng={activeEquipment.current_pos}
+            description={activeEquipment.description}
+            func={() => console.log("Booker")}
+            booked={available}
+          />
+        )}
+      </div>
+
       {showFilter && (
         <Box
-          className=" fixed z-30 top-20 left-70 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
+          className="fixed z-30 top-20 left-72 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
           sx={{ borderRadius: "0.5rem" }}
         >
           <Typography variant="h6">Filtre</Typography>
+          <FormControl sx={{ width: 200 }}>
+            <InputLabel>Komité</InputLabel>
 
-          <Box className="flex flex-col">
-            <FormControl sx={{ m: 1, width: 200 }}>
-              <InputLabel id="demo-multiple-checkbox-label">Komité</InputLabel>
-              <Select
-                labelId="demo-multiple-checkbox-label"
-                id="demo-multiple-checkbox"
-                multiple
-                value={committee}
-                input={<OutlinedInput label="Komité" />}
-                renderValue={(selected) => selected.join(", ")}
-                MenuProps={MenuProps}
-                onChange={handleChange}
-              >
-                {committeeNames.map((name) => {
-                  const selected = committee.includes(name);
-                  const SelectionIcon = selected
-                    ? CheckBoxIcon
-                    : CheckBoxOutlineBlankIcon;
+            <Select
+              multiple
+              value={committee}
+              input={<OutlinedInput label="Komité" />}
+              renderValue={(selected) => selected.join(", ")}
+              onChange={handleChange}
+            >
+              {committeeNames.map((name) => {
+                const selected = committee.includes(name);
 
-                  return (
-                    <MenuItem key={name} value={name}>
-                      <SelectionIcon
-                        fontSize="small"
-                        style={{
-                          marginRight: 8,
-                          padding: 9,
-                          boxSizing: "content-box",
-                        }}
-                      />
-                      <ListItemText primary={name} />
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
-          </Box>
+                const SelectionIcon = selected
+                  ? CheckBoxIcon
+                  : CheckBoxOutlineBlankIcon;
+
+                return (
+                  <MenuItem key={name} value={name}>
+                    <SelectionIcon
+                      fontSize="small"
+                      style={{ marginRight: 8 }}
+                    />
+                    <ListItemText primary={name} />
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
 
           <Box className="flex flex-col">
             <Typography>Avstand</Typography>
-            <Slider defaultValue={0} aria-label="Default"></Slider>
+            <Slider defaultValue={0} />
           </Box>
         </Box>
       )}

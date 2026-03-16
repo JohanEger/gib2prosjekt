@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from app.database import get_database
 from app.services.equipment_service import equipment_for_sidebar
+from app.services.equipment_service import equipment_for_popup
 from app.schemas.equipment import EquipmentSchema
 from typing import List
 
@@ -12,3 +13,11 @@ async def get_sidebar_equipment(
     session = Depends(get_database)
 ):
     return await equipment_for_sidebar(session, committee)
+
+
+@router.get("/popup", response_model=EquipmentSchema)
+async def get_popup_equipment(
+    id: str ,
+    session = Depends(get_database)
+):
+    return await equipment_for_popup(session, id)
