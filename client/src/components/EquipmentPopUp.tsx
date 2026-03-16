@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import LocationPinIcon from "@mui/icons-material/LocationPin";
+import { Icon } from "@mui/material";
 
 type Props = {
   name: string;
@@ -14,25 +16,6 @@ type Props = {
   func: () => void;
   booked: boolean;
 };
-
-async function getLocationName(lat: number, lng: number) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-      {
-        headers: {
-          "User-Agent": "equipment-map-app",
-        },
-      },
-    );
-
-    const data = await res.json();
-    return data.display_name ?? "Adresse ikke funnet";
-  } catch (err) {
-    console.error("Geocoding error:", err);
-    return "Kunne ikke hente adresse";
-  }
-}
 
 export const EquipmentPopUp = ({
   name,
@@ -46,6 +29,38 @@ export const EquipmentPopUp = ({
   const [loading, setLoading] = useState(true);
   console.log(lat, lng);
   console.log(name);
+  console.log(booked);
+
+  useEffect(() => {
+    async function loadAddress() {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          {
+            headers: {
+              "User-Agent": "equipment-map-app",
+            },
+          },
+        );
+
+        const data = await res.json();
+        console.log(data);
+
+        const addr = data.address;
+
+        setAddress(
+          `${addr.road ?? ""} ${addr.house_number ?? ""}, ${addr.suburb ?? addr.city ?? ""}`,
+        );
+      } catch (err) {
+        console.error("Geocoding error:", err);
+        setAddress("Kunne ikke hente adresse");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadAddress();
+  }, [lat, lng]);
 
   return (
     <Paper
@@ -57,23 +72,30 @@ export const EquipmentPopUp = ({
       <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
         {booked ? (
           <>
-            <CheckCircleIcon className="text-green-500" fontSize="small" />
-            <Typography className="text-green-500 font-semibold">
-              Ledig
+            <CancelIcon className="text-red-500" fontSize="small" />
+            <Typography className="text-red-500 font-semibold">
+              Booket
             </Typography>
           </>
         ) : (
           <>
-            <CancelIcon className="text-red-500" fontSize="small" />
-            <Typography className="text-red-500 font-semibold">
-              Booket
+            <CheckCircleIcon className="text-green-500" fontSize="small" />
+            <Typography className="text-green-500 font-semibold">
+              Ledig
             </Typography>
           </>
         )}
       </Paper>
 
       <Typography className="text-center px-6">
-        {loading ? "Laster adresse..." : address}
+        {loading ? (
+          "Laster adresse..."
+        ) : (
+          <>
+            <LocationPinIcon fontSize="small" className="mr-1" />
+            {address}
+          </>
+        )}
       </Typography>
       <Typography>{description}</Typography>
 

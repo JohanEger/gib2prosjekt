@@ -66,3 +66,45 @@ async def equipment_for_sidebar(session, filter: EquipmentFilter):
         }
         for row in rows
     ]
+
+async def get_equipment_popup(session, equipment_id: int):
+    stmt = select(
+        Equipment.id,
+        Equipment.name,
+        Equipment.description,
+        func.ST_Y(
+            cast(Equipment.current_pos, Geometry(geometry_type="POINT", srid=4326))
+        ).label("lat"),
+        func.ST_X(
+            cast(Equipment.current_pos, Geometry(geometry_type="POINT", srid=4326))
+        ).label("lng"),
+    ).where(Equipment.id == equipment_id)
+
+    result = await session.execute(stmt)
+    row = result.first()
+
+    if not row:
+        return None
+
+    current_time = datetime.utcnow()
+
+    booking_stmt = select(Booking.id).where(
+        and_(
+            Booking.equipment_id == equipment_id,
+            Booking.start_time <= current_time,
+            Booking.end_time >= current_time,
+        )
+    )
+
+    booking_result = await session.execute(booking_stmt)
+
+    booked = booking_result.first() is not None
+
+    return {
+        "id": row.id,
+        "name": row.name,
+        "description": row.description,
+        "lat": row.lat,
+        "lng": row.lng,
+        "booked": booked,
+    }
