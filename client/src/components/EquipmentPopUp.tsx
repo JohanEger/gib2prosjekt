@@ -8,10 +8,8 @@ import CancelIcon from "@mui/icons-material/Cancel";
 
 type Props = {
   name: string;
-  latlng: {
-    lat: number;
-    lng: number;
-  };
+  lat: number;
+  lng: number;
   description: string;
   func: () => void;
   booked: boolean;
@@ -38,26 +36,16 @@ async function getLocationName(lat: number, lng: number) {
 
 export const EquipmentPopUp = ({
   name,
-  latlng,
+  lat,
+  lng,
   description,
   func,
   booked,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadAddress() {
-      if (!latlng) return;
-
-      setLoading(true);
-      const addr = await getLocationName(latlng.lat, latlng.lng);
-      setAddress(addr);
-      setLoading(false);
-    }
-
-    loadAddress();
-  }, [latlng]);
+  console.log(lat, lng);
+  console.log(name);
 
   return (
     <Paper

@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import arrow from "../assets/arrow.svg";
 import { EquipmentPopUp } from "./EquipmentPopUp";
 import {
@@ -17,7 +17,6 @@ import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import type { LatLng } from "leaflet";
 
 type Equipment = {
   id: string;
@@ -25,10 +24,8 @@ type Equipment = {
   description: string;
   type_of_equipment: string;
   owner_id: string;
-  current_pos: {
-    lat: number;
-    lng: number;
-  };
+  lat: number;
+  lng: number;
 };
 const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
 
@@ -53,7 +50,7 @@ export const Sidebar = () => {
         );
 
         const data = await res.json();
-        console.log(data);
+
         setEquipment(Array.isArray(data) ? data : []);
         console.log(data);
       } catch (err) {
@@ -122,7 +119,9 @@ export const Sidebar = () => {
             <MenuItem key={item.id}>
               <Box
                 className="bg-white shadow-lg rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer"
-                onClick={() => getEquipment(item.id)}
+                onClick={() => {
+                  getEquipment(item.id);
+                }}
               >
                 <Typography className="text-black p-2">{item.name}</Typography>
               </Box>
@@ -157,7 +156,8 @@ export const Sidebar = () => {
         {activeEquipment && (
           <EquipmentPopUp
             name={activeEquipment.name}
-            latlng={activeEquipment.current_pos}
+            lat={activeEquipment.lat}
+            lng={activeEquipment.lng}
             description={activeEquipment.description}
             func={() => console.log("Booker")}
             booked={available}
