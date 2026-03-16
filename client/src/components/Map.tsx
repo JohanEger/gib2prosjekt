@@ -3,6 +3,8 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
+import type { EquipmentFilters } from "../types/equipmentFilters";
+import { useGeolocation } from "../hooks/useGeolocation";
 
 const API_BASE = import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
@@ -18,12 +20,17 @@ type EquipmentProperties = {
   name: string;
 }
 
-export const Map = () => {
+interface MapProps {
+  filters: EquipmentFilters;
+}
+
+export const Map = ({filters}: MapProps) => {
   const [markers,setMarkers] = useState<EquipmentMarker[]>([]);
   const [hovered, setHovered] = useState<{
     feature: Feature<Point, EquipmentProperties>;
     latLng: L.LatLng;
   } | null>(null);
+  const { latitude, longitude } = useGeolocation();
 
   const activeRef = useRef<L.CircleMarker | null>(null);
 
@@ -31,9 +38,34 @@ export const Map = () => {
     const fetchLocations = async () => {
       const token = localStorage.getItem("token");
       const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await fetch(`${API_BASE}/locations/`, {
+      
+      const params =  new URLSearchParams();
+      
+      if (filters.committee.length > 0) {
+        for (const committee of filters.committee) {
+          params.append("committee", committee);
+        } 
+      } 
+      if (filters.distance > 0 && latitude !== null && longitude !== null) {
+        params.append("euclidean_distance", filters.distance.toString());
+        params.append("latitude", latitude.toString());
+        params.append("longitude", longitude.toString());
+      } 
+      if (filters.typeOfEquipment) {
+        params.append("type_of_equipment", filters.typeOfEquipment);
+      }
+      if (filters.available) {
+        params.append("available", "true");
+      }
+
+      console.log("token from localStorage:", localStorage.getItem("token"));
+      console.log("request url:", `${API_BASE}/locations/?${params.toString()}`);
+      console.log("headers being sent:", headers);
+
+      const response = await fetch(`${API_BASE}/locations/?${params.toString()}`, {
         headers
       });  
+
       if (!response.ok) {
         const text = await response.text();
         console.error("Failed to fetch locations:", response.status, text);
@@ -47,7 +79,7 @@ export const Map = () => {
     fetchLocations().catch((error) => {
       console.error("Error fetching locations:", error);
     });
-  }, []);
+  }, [filters, latitude, longitude]);
 
   return (
     <MapContainer
