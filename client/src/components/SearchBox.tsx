@@ -5,14 +5,14 @@ export default function SearchBox({ }) {
     return (
         <TextField
             fullWidth
-            placeholder="Søk etter utstyr her..."
+            placeholder="Søk etter utstyr eller brukere her..."
             variant="outlined"
             id="searchField"
             sx={{
                 width: "22em",
                 "& .MuiOutlinedInput-root": {
                     borderRadius: "1em",
-                    backgroundColor: "#f7f7f8",
+                    backgroundColor: "#e8e8efff",
                     "& fieldset": {
                         borderColor: "transparent",
                     },

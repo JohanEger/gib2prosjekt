@@ -10,7 +10,7 @@ export const NavBar = () => {
         <Link to="/" className="hover:text-gray-400 transition">
           Hjem
         </Link>
-        <a href="#calendar" className="hover:text-gray-400 transition">
+        <a href="/calendar" className="hover:text-gray-400 transition">
           Kalender
         </a>
       </div>

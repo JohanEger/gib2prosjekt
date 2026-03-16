@@ -142,7 +142,7 @@ const CalendarCell = ({ className, ...props }: AriaCalendarCellProps) => {
           /* Current Date */
           renderProps.date.compare(today(getLocalTimeZone())) === 0 &&
           !renderProps.isSelected &&
-          "bg-accent text-accent-foreground",
+          "bg-blue-100 text-blue-900",
           /* Unavailable Date */
           renderProps.isUnavailable && "cursor-default text-destructive ",
           renderProps.isInvalid &&
@@ -158,7 +158,7 @@ const CalendarCell = ({ className, ...props }: AriaCalendarCellProps) => {
 interface JollyCalendarProps<T extends AriaDateValue>
   extends AriaCalendarProps<T> {
   errorMessage?: string;
-  defaultVisibleMonth?: T;
+  visibleMonth?: T;
 }
 
 function JollyCalendar<T extends AriaDateValue>({
