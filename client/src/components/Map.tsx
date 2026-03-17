@@ -43,6 +43,14 @@ export const Map = ({ filters }: MapProps) => {
 
   useEffect(() => {
     const fetchLocations = async () => {
+      const data1 = fetch(
+        "http://localhost:5001/route/?start_lat=63.432467&start_lng=10.413654&end_lat=63.418120&end_lng=10.403334",
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Route:", data.coordinates);
+        });
+
       const token = localStorage.getItem("token");
       const headers: HeadersInit = token
         ? { Authorization: `Bearer ${token}` }

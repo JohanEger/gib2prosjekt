@@ -7,7 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.seeds.seed_data import seed_groups, seed_equipment
 from .database import get_database, wait_for_db, engine, Base
 from .routers.auth import router as auth_router
-from app.routers import location, equipment, booking
+from app.routers import location, equipment, route
 
 app = FastAPI()
 
@@ -34,7 +34,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(location.router)
 app.include_router(equipment.router)
-app.include_router(booking.router)
+app.include_router(route.router)
 
 
 

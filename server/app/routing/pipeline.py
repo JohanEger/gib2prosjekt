@@ -25,20 +25,20 @@ def load_graph():
         ox.save_graphml(_graph, GRAPH_PATH)
     return _graph
 
-def compute_shortest_patH(start_lat, start_lng, end_lat, end_lng):
+def compute_shortest_path(start_lat, start_lng, end_lat, end_lng):
     G = load_graph()
 
     orig = ox.distance.nearest_nodes(G, start_lng, start_lat)
     dest = ox.distance.nearest_nodes(G, end_lng, end_lat)
 
     try:
-        route = nx.astar_path(G, orig, dest)
+        route = nx.astar_path(G, orig, dest, weight="length")
     except nx.NetworkXNoPath:
-        return None
+        return {"type": "LineString", "coordinates": []}
 
     return {
-        "type": "Linestring",
+        "type": "LineString",
         "coordinates": [
-            [G.nodes[node]["x"], [G.nodes[node]["y"]]] for node in route 
+            [G.nodes[node]["x"], G.nodes[node]["y"]] for node in route
         ]
     }
