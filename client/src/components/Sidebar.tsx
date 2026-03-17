@@ -15,6 +15,7 @@ import {
   Checkbox,
   TextField,
   FormControlLabel,
+  Paper,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -160,15 +161,16 @@ export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-2 p-4 mt-24 max-h-3/4 overflow-y-auto">
+        <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
           {equipment.map((item) => (
-            <MenuItem
+            <Box
+              sx={{ borderRadius: 4, bgcolor: "white" }}
               key={item.id}
               onClick={() => getEquipment(item.id)}
-              className="cursor-pointer hover:bg-gray-700 rounded"
+              className="text-black cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg rounded p-2"
             >
               {item.name}
-            </MenuItem>
+            </Box>
           ))}
         </ul>
       </div>
