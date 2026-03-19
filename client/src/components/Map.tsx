@@ -1,16 +1,12 @@
-import {
-  MapContainer,
-  TileLayer,
-  GeoJSON,
-  Popup,
-  CircleMarker,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Popup, CircleMarker } from "react-leaflet";
 import { useState, useRef, useEffect, useMemo } from "react";
-import type { Feature, FeatureCollection, Point } from "geojson";
+import type { Feature, FeatureCollection, Point, LineString } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { GeoJSON } from "react-leaflet";
+import type { GeoJsonObject } from "geojson";
 
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
@@ -41,14 +37,19 @@ export const Map = ({ filters }: MapProps) => {
 
   const activeRef = useRef<L.CircleMarker | null>(null);
 
+  const [route, setRoute] = useState<LineString>({
+    type: "LineString",
+    coordinates: [],
+  });
   useEffect(() => {
     const fetchLocations = async () => {
-      const data1 = fetch(
-        "http://localhost:5001/route/?start_lat=63.432467&start_lng=10.413654&end_lat=63.418120&end_lng=10.403334",
+      const route = fetch(
+        `http://localhost:5001/route/?start_lat=${latitude}&start_lng=${longitude}&end_lat=63.418120&end_lng=10.403334`,
       )
         .then((res) => res.json())
         .then((data) => {
           console.log("Route:", data.coordinates);
+          setRoute(data);
         });
 
       const token = localStorage.getItem("token");
@@ -116,6 +117,7 @@ export const Map = ({ filters }: MapProps) => {
         attribution="© OpenStreetMap contributors © Stadia Maps"
         url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
       />
+      <GeoJSON data={route}></GeoJSON>
       {markers.map((marker) => (
         <CircleMarker
           key={marker.id}

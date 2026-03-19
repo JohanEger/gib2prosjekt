@@ -20,7 +20,7 @@ def load_graph():
         print("Laster ned graf fra OSM...")
         _graph = ox.graph_from_place(
             "Trondheim, Norway",
-            network_type="drive"
+            network_type="walk"
         )
         ox.save_graphml(_graph, GRAPH_PATH)
     return _graph
