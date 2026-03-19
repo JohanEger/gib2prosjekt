@@ -5,6 +5,8 @@ from sqlalchemy import select, and_, func, cast
 from datetime import datetime
 from app.models.equipment import Equipment
 from app.models.group import Group
+from fastapi import HTTPException
+from uuid import UUID
 from geoalchemy2 import Geography, Geometry
 
 def build_equipment_query(committee: list[str] | None, euclidean_distance: float | None, type_of_equipment: str | None, available: bool | None, latitude: float | None, longitude: float | None):
