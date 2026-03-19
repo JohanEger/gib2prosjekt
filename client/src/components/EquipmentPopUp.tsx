@@ -108,6 +108,15 @@ export const EquipmentPopUp = ({
       >
         Book utstyr
       </Button>
+      <Button
+        onClick={func}
+        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+  hover:from-blue-600 hover:to-indigo-700
+  text-white font-semibold rounded-xl shadow-lg
+  transition-all duration-300 hover:scale-105 hover:shadow-xl"
+      >
+        Finn vei
+      </Button>
     </Paper>
   );
 };
