@@ -14,7 +14,7 @@ def get_route(
         path = compute_shortest_path(start_lat, start_lng, end_lat, end_lng)
 
         if path is None:
-            return {"type": "LineString", "coordinates": []}
+            return {"type": "LineString", "coordinates": [], "meters": None}
 
         return path
 

@@ -71,6 +71,8 @@ export const Map = ({ filters, coordinates }: MapProps) => {
             setRoute(data);
           }, 0);
 
+          console.log(data);
+
           if (mapRef.current) {
             mapRef.current.setView([coordinates.lat, coordinates.lng], 16);
           }
