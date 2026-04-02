@@ -39,12 +39,22 @@ const MenuProps = {
   },
 };
 
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
 interface SidebarProps {
   filters: EquipmentFilters;
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
+  SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
 }
 
-export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
+export const Sidebar = ({
+  filters,
+  setFilters,
+  SetFindEquipment,
+}: SidebarProps) => {
   const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
@@ -206,6 +216,7 @@ export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
             description={activeEquipment.description}
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
+            SetFindEquipment={SetFindEquipment}
           />
         )}
       </div>

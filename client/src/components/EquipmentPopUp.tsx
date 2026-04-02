@@ -8,6 +8,11 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
 import { Icon } from "@mui/material";
 
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
 type Props = {
   name: string;
   lat: number;
@@ -15,6 +20,7 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
 };
 
 export const EquipmentPopUp = ({
@@ -24,6 +30,7 @@ export const EquipmentPopUp = ({
   description,
   func,
   booked,
+  SetFindEquipment,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,11 +116,11 @@ export const EquipmentPopUp = ({
         Book utstyr
       </Button>
       <Button
-        onClick={func}
+        onClick={() => SetFindEquipment({ lat, lng })}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
   hover:from-blue-600 hover:to-indigo-700
   text-white font-semibold rounded-xl shadow-lg
-  transition-all duration-300 hover:scale-105 hover:shadow-xl"
+  transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
       >
         Finn vei
       </Button>
