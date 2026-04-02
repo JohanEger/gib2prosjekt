@@ -62,7 +62,14 @@ export const Map = ({ filters, coordinates }: MapProps) => {
             `${API_BASE}/route/?start_lat=${latitude}&start_lng=${longitude}&end_lat=${coordinates.lat}&end_lng=${coordinates.lng}`,
           );
           const data = await res.json();
-          setRoute(data);
+          setRoute({
+            type: "LineString",
+            coordinates: [],
+          });
+
+          setTimeout(() => {
+            setRoute(data);
+          }, 0);
 
           if (mapRef.current) {
             mapRef.current.setView([coordinates.lat, coordinates.lng], 16);
@@ -126,7 +133,9 @@ export const Map = ({ filters, coordinates }: MapProps) => {
         url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
       />
 
-      {route.coordinates.length > 0 && <GeoJSON data={route} />}
+      {route.coordinates.length > 0 && (
+        <GeoJSON key={JSON.stringify(route.coordinates)} data={route} />
+      )}
 
       {markers.map((marker) => (
         <CircleMarker
