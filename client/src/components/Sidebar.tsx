@@ -24,6 +24,21 @@ import { useGeolocation } from "../hooks/useGeolocation";
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
+const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+type Coordinates = {
 type Equipment = {
   id: string;
   name: string;
@@ -35,29 +50,21 @@ type Equipment = {
   available?: boolean;
 };
 
-const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
-
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: 200,
-      width: 250,
-    },
-  },
-};
-
 interface SidebarProps {
   filters: EquipmentFilters;
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
+  SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
 }
 
-export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [activeEquipment, setActiveEquipment] = useState<Equipment | null>(
-    null,
-  );
+export const Sidebar = ({
+  filters,
+  setFilters,
+  SetFindEquipment,
+}: SidebarProps) => {
+  const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
-  const [showFilter, setShowfilter] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [activeEquipment, setActiveEquipment] = useState<any | null>(null);
 
   const { latitude, longitude } = useGeolocation();
 
@@ -105,8 +112,7 @@ export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
     loadEquipment();
   }, [filters, latitude, longitude]);
 
-  // 🔹 Fetch single equipment
-  const getEquipment = async (id: string) => {
+  const getEquipment = async (id: number) => {
     try {
       const token = localStorage.getItem("token");
 
@@ -170,22 +176,22 @@ export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <Box className="flex justify-end relative top-20 right-0">
-          <Button onClick={() => setShowfilter(!showFilter)}>
+        <Box className="flex justify-end relative top-20 right-2">
+          <Button onClick={() => setShowFilter(!showFilter)}>
             <TuneIcon color="primary" />
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-2 p-4 mt-24 max-h-3/4 overflow-y-auto">
+        <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
           {equipment.map((item) => (
-            <MenuItem key={item.id}>
-              <Box
-                className="bg-white shadow-lg rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer"
-                onClick={() => getEquipment(item.id)}
-              >
-                <Typography className="text-black p-2">{item.name}</Typography>
-              </Box>
-            </MenuItem>
+            <Box
+              sx={{ borderRadius: 4, bgcolor: "white" }}
+              key={item.id}
+              onClick={() => getEquipment(item.id)}
+              className="text-black cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg rounded p-2"
+            >
+              {item.name}
+            </Box>
           ))}
         </ul>
       </div>
@@ -196,22 +202,20 @@ export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
           setOpen(!open);
           setShowfilter(false);
         }}
-        className={`fixed top-1/2 z-50 p-1 transition-all duration-300 cursor-pointer ${
-          open ? "left-64" : "left-0"
-        }`}
+        className={`fixed top-1/2 z-50 p-1 transition-all duration-300 cursor-pointer
+        ${open ? "left-64" : "left-0"}`}
       >
         <img
           src={arrow}
           alt="Toggle"
-          className={`w-7 h-7 transition-transform duration-300 ${
-            open ? "rotate-90" : "rotate-270"
-          }`}
+          className={`w-7 h-7 transition-transform duration-300
+          ${open ? "rotate-90" : "rotate-270"}`}
         />
       </button>
 
       {/* Equipment popup */}
       <div
-        className={`fixed top-0 right-0 w-[30rem] h-screen bg-white shadow-xl
+        className={`fixed top-0 right-0 w-[30rem] h-screen
         transform transition-transform duration-300 z-40
         ${activeEquipment ? "translate-x-0" : "translate-x-full"}`}
       >
@@ -221,8 +225,9 @@ export const Sidebar = ({ filters, setFilters }: SidebarProps) => {
             lat={activeEquipment.lat}
             lng={activeEquipment.lng}
             description={activeEquipment.description}
-            func={() => console.log("Booker")}
-            booked={!activeEquipment.available}
+            func={() => console.log("Book equipment")}
+            booked={activeEquipment.booked}
+            SetFindEquipment={SetFindEquipment}
           />
         )}
       </div>

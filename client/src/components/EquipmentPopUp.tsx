@@ -5,6 +5,13 @@ import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import LocationPinIcon from "@mui/icons-material/LocationPin";
+import { Icon } from "@mui/material";
+
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
 
 type Props = {
   name: string;
@@ -13,26 +20,8 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
 };
-
-async function getLocationName(lat: number, lng: number) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-      {
-        headers: {
-          "User-Agent": "equipment-map-app",
-        },
-      },
-    );
-
-    const data = await res.json();
-    return data.display_name ?? "Adresse ikke funnet";
-  } catch (err) {
-    console.error("Geocoding error:", err);
-    return "Kunne ikke hente adresse";
-  }
-}
 
 export const EquipmentPopUp = ({
   name,
@@ -41,11 +30,44 @@ export const EquipmentPopUp = ({
   description,
   func,
   booked,
+  SetFindEquipment,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   console.log(lat, lng);
   console.log(name);
+  console.log(booked);
+
+  useEffect(() => {
+    async function loadAddress() {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          {
+            headers: {
+              "User-Agent": "equipment-map-app",
+            },
+          },
+        );
+
+        const data = await res.json();
+        console.log(data);
+
+        const addr = data.address;
+
+        setAddress(
+          `${addr.road ?? ""} ${addr.house_number ?? ""}, ${addr.suburb ?? addr.city ?? ""}`,
+        );
+      } catch (err) {
+        console.error("Geocoding error:", err);
+        setAddress("Kunne ikke hente adresse");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadAddress();
+  }, [lat, lng]);
 
   return (
     <Paper
@@ -57,23 +79,30 @@ export const EquipmentPopUp = ({
       <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
         {booked ? (
           <>
-            <CheckCircleIcon className="text-green-500" fontSize="small" />
-            <Typography className="text-green-500 font-semibold">
-              Ledig
+            <CancelIcon className="text-red-500" fontSize="small" />
+            <Typography className="text-red-500 font-semibold">
+              Booket
             </Typography>
           </>
         ) : (
           <>
-            <CancelIcon className="text-red-500" fontSize="small" />
-            <Typography className="text-red-500 font-semibold">
-              Booket
+            <CheckCircleIcon className="text-green-500" fontSize="small" />
+            <Typography className="text-green-500 font-semibold">
+              Ledig
             </Typography>
           </>
         )}
       </Paper>
 
       <Typography className="text-center px-6">
-        {loading ? "Laster adresse..." : address}
+        {loading ? (
+          "Laster adresse..."
+        ) : (
+          <>
+            <LocationPinIcon fontSize="small" className="mr-1" />
+            {address}
+          </>
+        )}
       </Typography>
       <Typography>{description}</Typography>
 
@@ -85,6 +114,15 @@ export const EquipmentPopUp = ({
   transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
         Book utstyr
+      </Button>
+      <Button
+        onClick={() => SetFindEquipment({ lat, lng })}
+        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+  hover:from-blue-600 hover:to-indigo-700
+  text-white font-semibold rounded-xl shadow-lg
+  transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
+      >
+        Finn vei
       </Button>
     </Paper>
   );

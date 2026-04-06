@@ -1,12 +1,12 @@
 import {
   MapContainer,
   TileLayer,
-  GeoJSON,
   Popup,
   CircleMarker,
+  GeoJSON,
 } from "react-leaflet";
-import { useState, useRef, useEffect, useMemo } from "react";
-import type { Feature, FeatureCollection, Point } from "geojson";
+import { useState, useRef, useEffect } from "react";
+import type { Feature, Point, LineString } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
 import type { EquipmentFilters } from "../types/equipmentFilters";
@@ -27,12 +27,20 @@ type EquipmentProperties = {
   name: string;
 };
 
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
 interface MapProps {
   filters: EquipmentFilters;
+  coordinates: Coordinates | null;
 }
 
-export const Map = ({filters}: MapProps) => {
-  const [markers,setMarkers] = useState<EquipmentMarker[]>([]);
+export const Map = ({ filters, coordinates }: MapProps) => {
+  const { latitude, longitude } = useGeolocation();
+
+  const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
   const [hovered, setHovered] = useState<{
     feature: Feature<Point, EquipmentProperties>;
     latLng: L.LatLng;
@@ -40,53 +48,80 @@ export const Map = ({filters}: MapProps) => {
   const { latitude, longitude } = useGeolocation();
 
   const activeRef = useRef<L.CircleMarker | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  const [route, setRoute] = useState<LineString>({
+    type: "LineString",
+    coordinates: [],
+  });
 
   useEffect(() => {
     const fetchLocations = async () => {
-      const token = localStorage.getItem("token");
-      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-      
-      const params =  new URLSearchParams();
-      
-      if (filters.committee.length > 0) {
-        for (const committee of filters.committee) {
-          params.append("committee", committee);
-        } 
-      } 
-      if (filters.distance > 0 && latitude !== null && longitude !== null) {
-        params.append("euclidean_distance", filters.distance.toString());
-        params.append("latitude", latitude.toString());
-        params.append("longitude", longitude.toString());
-      } 
-      if (filters.typeOfEquipment) {
-        params.append("type_of_equipment", filters.typeOfEquipment);
-      }
-      if (filters.available) {
-        params.append("available", "true");
-      }
+      try {
+        if (coordinates && latitude && longitude) {
+          const res = await fetch(
+            `${API_BASE}/route/?start_lat=${latitude}&start_lng=${longitude}&end_lat=${coordinates.lat}&end_lng=${coordinates.lng}`,
+          );
+          const data = await res.json();
+          setRoute({
+            type: "LineString",
+            coordinates: [],
+          });
 
-      console.log("token from localStorage:", localStorage.getItem("token"));
-      console.log("request url:", `${API_BASE}/locations/?${params.toString()}`);
-      console.log("headers being sent:", headers);
+          setTimeout(() => {
+            setRoute(data);
+          }, 0);
 
-      const response = await fetch(`${API_BASE}/locations/?${params.toString()}`, {
-        headers
-      });  
+          console.log(data);
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Failed to fetch locations:", response.status, text);
-        return;
+          if (mapRef.current) {
+            mapRef.current.setView([coordinates.lat, coordinates.lng], 16);
+          }
+        }
+
+        const token = localStorage.getItem("token");
+        const headers: HeadersInit = token
+          ? { Authorization: `Bearer ${token}` }
+          : {};
+
+        const params = new URLSearchParams();
+
+        if (filters.committee.length > 0) {
+          filters.committee.forEach((c) => params.append("committee", c));
+        }
+
+        if (filters.distance > 0 && latitude && longitude) {
+          params.append("euclidean_distance", filters.distance.toString());
+          params.append("latitude", latitude.toString());
+          params.append("longitude", longitude.toString());
+        }
+
+        if (filters.typeOfEquipment) {
+          params.append("type_of_equipment", filters.typeOfEquipment);
+        }
+
+        if (filters.available) {
+          params.append("available", "true");
+        }
+
+        const res = await fetch(`${API_BASE}/locations/?${params.toString()}`, {
+          headers,
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch locations");
+          return;
+        }
+
+        const data: EquipmentMarker[] = await res.json();
+        setMarkers(data);
+      } catch (err) {
+        console.error("Error fetching map data:", err);
       }
-      const data: EquipmentMarker[] = await response.json();
-      console.log("locations from backend:", data);
-      setMarkers(data);
     };
 
-    fetchLocations().catch((error) => {
-      console.error("Error fetching locations:", error);
-    });
-  }, [filters, latitude, longitude]);
+    fetchLocations();
+  }, [filters, latitude, longitude, coordinates]);
 
   return (
     <MapContainer
@@ -94,12 +129,17 @@ export const Map = ({filters}: MapProps) => {
       zoom={16}
       style={{ height: "100vh", width: "100%" }}
       zoomControl={false}
-      className="absolute  z-0"
+      className="absolute z-0"
     >
       <TileLayer
         attribution="© OpenStreetMap contributors © Stadia Maps"
         url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
       />
+
+      {route.coordinates.length > 0 && (
+        <GeoJSON key={JSON.stringify(route.coordinates)} data={route} />
+      )}
+
       {markers.map((marker) => (
         <CircleMarker
           key={marker.id}
@@ -147,7 +187,7 @@ export const Map = ({filters}: MapProps) => {
                     type: "Point",
                     coordinates: [marker.lng, marker.lat],
                   },
-                } as Feature<Point, EquipmentProperties>,
+                },
                 latLng: e.latlng,
               });
             },
@@ -165,11 +205,14 @@ export const Map = ({filters}: MapProps) => {
           }}
         />
       ))}
+
+      {/* Hover popup */}
       {hovered && (
         <Popup position={hovered.latLng} closeButton={false}>
           {hovered.feature.properties?.name}
         </Popup>
       )}
+
       <UserLocationMarker />
     </MapContainer>
   );
