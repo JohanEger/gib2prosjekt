@@ -39,6 +39,10 @@ const MenuProps = {
 };
 
 type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
 type Equipment = {
   id: string;
   name: string;
@@ -200,7 +204,7 @@ export const Sidebar = ({
       <button
         onClick={() => {
           setOpen(!open);
-          setShowfilter(false);
+          setShowFilter(false);
         }}
         className={`fixed top-1/2 z-50 p-1 transition-all duration-300 cursor-pointer
         ${open ? "left-64" : "left-0"}`}
