@@ -41,4 +41,4 @@ async def get_equipment_popup_route(
     if not equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
 
-    return equipment
+    return equipment   

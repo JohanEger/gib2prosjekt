@@ -15,7 +15,6 @@ import {
   Checkbox,
   TextField,
   FormControlLabel,
-  Paper,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -40,8 +39,15 @@ const MenuProps = {
 };
 
 type Coordinates = {
+type Equipment = {
+  id: string;
+  name: string;
+  description: string;
+  type_of_equipment: string;
+  owner_id: string;
   lat: number;
   lng: number;
+  available?: boolean;
 };
 
 interface SidebarProps {
@@ -62,6 +68,7 @@ export const Sidebar = ({
 
   const { latitude, longitude } = useGeolocation();
 
+  // 🔹 Fetch equipment list
   useEffect(() => {
     async function loadEquipment() {
       try {
@@ -69,13 +76,17 @@ export const Sidebar = ({
 
         filters.committee.forEach((c) => params.append("committee", c));
 
-        if (filters.distance > 0)
+        if (filters.distance > 0) {
           params.append("euclidean_distance", filters.distance.toString());
+        }
 
-        if (filters.typeOfEquipment)
+        if (filters.typeOfEquipment) {
           params.append("type_of_equipment", filters.typeOfEquipment);
+        }
 
-        if (filters.available) params.append("available", "true");
+        if (filters.available) {
+          params.append("available", "true");
+        }
 
         if (latitude !== null && longitude !== null) {
           params.append("latitude", latitude.toString());
@@ -112,20 +123,20 @@ export const Sidebar = ({
       const data = await res.json();
       setActiveEquipment(data);
     } catch (err) {
-      console.error("Error loading equipment:", err);
+      console.error("Error fetching equipment:", err);
     }
   };
 
+  // 🔹 Handlers
   const handleChangeCommittee = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
-
     setFilters((prev) => ({
       ...prev,
       committee: typeof value === "string" ? value.split(",") : value,
     }));
   };
 
-  const handleDistanceChange = (_event: Event, value: number | number[]) => {
+  const handleDistanceChange = (_: Event, value: number | number[]) => {
     setFilters((prev) => ({
       ...prev,
       distance: Array.isArray(value) ? value[0] : value,
@@ -189,7 +200,7 @@ export const Sidebar = ({
       <button
         onClick={() => {
           setOpen(!open);
-          setShowFilter(false);
+          setShowfilter(false);
         }}
         className={`fixed top-1/2 z-50 p-1 transition-all duration-300 cursor-pointer
         ${open ? "left-64" : "left-0"}`}
@@ -231,7 +242,6 @@ export const Sidebar = ({
 
           <FormControl sx={{ width: 200 }}>
             <InputLabel>Komité</InputLabel>
-
             <Select
               multiple
               value={filters.committee}
@@ -249,9 +259,8 @@ export const Sidebar = ({
             </Select>
           </FormControl>
 
-          <Box className="flex flex-col">
+          <Box>
             <Typography>Avstand (m)</Typography>
-
             <Slider
               value={filters.distance}
               min={0}

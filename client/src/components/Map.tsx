@@ -45,6 +45,7 @@ export const Map = ({ filters, coordinates }: MapProps) => {
     feature: Feature<Point, EquipmentProperties>;
     latLng: L.LatLng;
   } | null>(null);
+  const { latitude, longitude } = useGeolocation();
 
   const activeRef = useRef<L.CircleMarker | null>(null);
   const mapRef = useRef<L.Map | null>(null);
