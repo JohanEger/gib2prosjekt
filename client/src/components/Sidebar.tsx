@@ -72,7 +72,6 @@ export const Sidebar = ({
 
   const { latitude, longitude } = useGeolocation();
 
-  // 🔹 Fetch equipment list
   useEffect(() => {
     async function loadEquipment() {
       try {
