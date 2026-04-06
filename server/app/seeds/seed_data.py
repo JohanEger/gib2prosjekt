@@ -87,12 +87,16 @@ async def seed_equipment():
             (10.413654, 63.432467),
             (10.403334, 63.418120),
             (10.377241, 63.426885),
-            (10.348832, 63.422432)
+            (10.348832, 63.422432),
+            (10.394386, 63.395751),
         ]
         equipment = []
 
         for name, desc, type_eq, owner_id in equipment_data:
-            lon, lat = random.choice(locations)
+            if owner_id == arrkom.id:
+                lon, lat = locations[4]  # Arrkom's equipment is always at the same location
+            else:
+                lon, lat = random.choice(locations[0:4])
 
             equipment.append(
                 Equipment(
