@@ -33,7 +33,12 @@ export const UserLocationMarker = ({
   const [pulse, setPulse] = useState(true);
 
   useEffect(() => {
-    if (latitude !== null && longitude !== null && flyToOnFirstFix && !hasFlewRef.current) {
+    if (
+      latitude !== null &&
+      longitude !== null &&
+      flyToOnFirstFix &&
+      !hasFlewRef.current
+    ) {
       map.flyTo([latitude, longitude], flyToZoom, { duration: 1.5 });
       hasFlewRef.current = true;
     }

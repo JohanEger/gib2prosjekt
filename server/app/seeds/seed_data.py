@@ -1,3 +1,5 @@
+import random
+
 from app.models.group import Group
 from app.models.equipment import Equipment
 from app.database import SessionLocal
@@ -27,6 +29,9 @@ async def seed_groups():
 
 async def seed_equipment():
     async with SessionLocal() as session:
+        result = await session.execute(select(Equipment))
+        if result.scalars().first():
+            return
 
         arrkom_result = await session.execute(select(Group).where(Group.name == "arrkom"))
         arrkom = arrkom_result.scalar_one()
@@ -78,17 +83,30 @@ async def seed_equipment():
             ("Spikeball", "Spikeball spill", "idrett", turingen.id),
             ("Kubb", "Kubb spill", "idrett", turingen.id),
         ]
-
-        equipment = [
-            Equipment(
-                name=name,
-                description=desc,
-                type_of_equipment=type_eq,
-                owner_id=owner_id,
-                current_pos=from_shape(Point(10.403334, 63.418120), srid=4326)
-            )
-            for name, desc, type_eq, owner_id in equipment_data
+        locations = [
+            (10.413654, 63.432467),
+            (10.403334, 63.418120),
+            (10.377241, 63.426885),
+            (10.348832, 63.422432),
+            (10.394386, 63.395751),
         ]
+        equipment = []
+
+        for name, desc, type_eq, owner_id in equipment_data:
+            if owner_id == arrkom.id:
+                lon, lat = locations[4]  # Arrkom's equipment is always at the same location
+            else:
+                lon, lat = random.choice(locations[0:4])
+
+            equipment.append(
+                Equipment(
+                    name=name,
+                    description=desc,
+                    type_of_equipment=type_eq,
+                    owner_id=owner_id,
+                    current_pos=from_shape(Point(lon, lat), srid=4326)
+                )
+            )
 
         session.add_all(equipment)
         await session.commit()

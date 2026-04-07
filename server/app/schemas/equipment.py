@@ -6,6 +6,17 @@ class EquipmentSchema(BaseModel):
     name: str
     description: str | None
     type_of_equipment: str
+    owner_id: uuid.UUID
+    lat: float
+    lng: float
 
     class Config:
         from_attributes = True
+
+class  EquipmentFilter(BaseModel):
+    committee: list[str] | None = None
+    euclidean_distance: float | None = None
+    type_of_equipment: str | None = None
+    available: bool | None = None
+    latitude: float | None = None
+    longitude: float | None = None  
