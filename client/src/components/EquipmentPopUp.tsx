@@ -65,8 +65,6 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
-  console.log(id);
-
   return (
     <Paper
       elevation={3}

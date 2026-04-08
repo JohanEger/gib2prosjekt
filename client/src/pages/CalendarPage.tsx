@@ -90,7 +90,6 @@ function getBookingForDate(date: DateValue, bookings: Booking[]) {
 export const CalendarPage = () => {
   const { id, name } = useParams<{ id: string; name: string }>();
   const today = todayAria(getLocalTimeZone());
-  console.log(name, id);
   const [mode, setMode] = React.useState<"book" | "view">("book");
   const [selectedRange, setSelectedRange] = React.useState<{
     start?: DateValue;
@@ -138,7 +137,6 @@ export const CalendarPage = () => {
           `${API_BASE}/booking/booking_for_equipment/${id}`,
         );
         const data = await res.json();
-        console.log(data);
         const parsedBookings = data.map((b: any) => {
           const start = new Date(b.start_time);
           const end = new Date(b.end_time);
@@ -162,7 +160,7 @@ export const CalendarPage = () => {
             createdAt: new Date(b.created_at),
           };
         });
-        console.log("Parsed bookings:", parsedBookings);
+
         setBookings(parsedBookings);
       } catch (error) {
         console.error("Error fetching bookings:", error);
