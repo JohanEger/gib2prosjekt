@@ -8,8 +8,9 @@ class BookingSchema(BaseModel):
     user_id: uuid.UUID
     start_time: datetime
     end_time: datetime
-    booking_destination: str 
+    latitude: float
+    longitude: float
     created_at: datetime
 
     class Config:
-        from_attributes = True  
+        from_attributes = True

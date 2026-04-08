@@ -132,17 +132,19 @@ export const CalendarPage = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await fetch(`${API_BASE}/booking`);
+        const res = await fetch(
+          `${API_BASE}/booking/booking_for_equipment/${id}`,
+        );
         const data = await res.json();
         setBookings(data);
+        console.log(data);
       } catch (error) {
         console.error("Error fetching bookings:", error);
       }
     };
 
     fetchBookings();
-    console.log(bookings);
-  }, []);
+  }, [id]);
 
   return (
     <>
