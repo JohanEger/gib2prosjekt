@@ -9,3 +9,8 @@ async def check_Availability(session, id):
     booking = result.scalars().first()
 
     return booking is None
+
+async def create_booking():
+    
+
+    return None 

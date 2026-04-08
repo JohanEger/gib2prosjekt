@@ -9,33 +9,35 @@ from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 from datetime import datetime, timedelta
 import uuid
+from app.models.user import User
 
 
 
-async def seed_Bookings():
+from app.models.user import User
+import uuid
+
+async def seed_users():
     async with SessionLocal() as session:
-        today = datetime.utcnow()
+        result = await session.execute(select(User))
+        if result.scalars().first():
+            return
 
+        users = [
+            User(
+                username="test1",
+                email="test1@test.no",
+                password_hash="...",
+                is_admin=False,
+            ),
+            User(
+                username="test2",
+                email="test2@test.no",
+                password_hash="...",
+                is_admin=False,
+            ),
+        ]
 
-        days_until_saturday = (5 - today.weekday()) % 7
-        if days_until_saturday == 0:
-            days_until_saturday = 7
-
-        end_date = today + timedelta(days=days_until_saturday)
-
-    
-        random_user_id = uuid.uuid4()
-
-        point = from_shape(Point(10.3951, 63.4305), srid=4326)
-
-        booking = Booking(
-            equipment_id=uuid.UUID("7ba77278-25c5-4040-ac12-4f90de2d7a02"),
-            user_id=random_user_id,
-            start_time=today,
-            end_time=end_date,
-            booking_destination=point,
-        )
-        session.add(booking)
+        session.add_all(users)
         await session.commit()
         
 
@@ -140,4 +142,42 @@ async def seed_equipment():
             )
 
         session.add_all(equipment)
+        await session.commit()
+
+async def seed_Bookings():
+    async with SessionLocal() as session:
+        today = datetime.utcnow()
+
+
+        days_until_saturday = (5 - today.weekday()) % 7
+        if days_until_saturday == 0:
+            days_until_saturday = 7
+
+        end_date = today + timedelta(days=days_until_saturday)
+
+    
+        result = await session.execute(select(User))
+        user = result.scalars().first()
+
+        if not user:
+            raise Exception("Ingen brukere i databasen")
+
+        user_id = user.id
+
+        point = from_shape(Point(10.3951, 63.4305), srid=4326)
+
+        result = await session.execute(
+            select(Equipment.id).where(Equipment.name == "Soundboks 4")
+        )
+
+        Soundboks_id = result.scalar_one_or_none()
+
+        booking = Booking(
+            equipment_id=Soundboks_id,
+            user_id=user_id,
+            start_time=today,
+            end_time=end_date,
+            booking_destination=point,
+        )
+        session.add(booking)
         await session.commit()

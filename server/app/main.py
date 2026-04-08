@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 from starlette.middleware.cors import CORSMiddleware
-from app.seeds.seed_data import seed_groups, seed_equipment
+from app.seeds.seed_data import seed_groups, seed_equipment, seed_Bookings, seed_users
 from .database import get_database, wait_for_db, engine, Base
 from .routers.auth import router as auth_router
 from app.routers import location, equipment, route
@@ -59,7 +59,10 @@ async def startup():
 
     # Seed data
     await seed_groups()
+    await seed_users()
     await seed_equipment()
+    await seed_Bookings()
+    
 
 
 import os
