@@ -18,40 +18,40 @@ import {
 import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar";
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
-type User = { id: string; name: string; email: string; class: number };
-type Booking = {
-  start: Date;
-  end: Date;
-  title: string;
-  timeSlot: "hele dagen";
+interface Booking {
+  id: string;
+  equipmentId: string;
   userId: string;
-};
-
-// Mockbookings. TODO: fjerne og fikse så tidspunkt funker
-const mockUser: User[] = [
-  { id: "Test1", name: "Adam Hansen", email: "adam@hansen.no", class: 3 },
-  { id: "Test2", name: "Eva Olsen", email: "eva@olsen.no", class: 2 },
-];
+  start_time: Date;
+  end_time: Date;
+  latitude: number;
+  longitude: number;
+  createdAt: Date;
+}
 
 function dateValueToDate(d: DateValue): Date {
   return new Date(d.year, d.month - 1, d.day);
 }
 
 function isDateBooked(date: DateValue, bookings: Booking[]): boolean {
-  const d = dateValueToDate(date);
-  return bookings.some((b) => b.start <= d && b.end >= d);
+  const current = toDateOnly(new Date(date.year, date.month - 1, date.day));
+
+  return bookings.some((b) => {
+    const start = toDateOnly(b.start_time);
+    const end = toDateOnly(b.end_time);
+
+    return start <= current && end >= current;
+  });
+}
+
+function toDateOnly(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function rangeOverlapsBooking(
@@ -67,7 +67,7 @@ function rangeOverlapsBooking(
   );
   const end = new Date(range.end.year, range.end.month - 1, range.end.day);
 
-  return bookings.some((b) => b.start <= end && b.end >= start);
+  return bookings.some((b) => b.start_time <= end && b.end_time >= start);
 }
 
 function getBookingsForRange(
@@ -77,12 +77,14 @@ function getBookingsForRange(
   if (!range.start || !range.end) return [];
   const startDate = dateValueToDate(range.start);
   const endDate = dateValueToDate(range.end);
-  return bookings.filter((b) => b.start <= endDate && b.end >= startDate);
+  return bookings.filter(
+    (b) => b.start_time <= endDate && b.end_time >= startDate,
+  );
 }
 
 function getBookingForDate(date: DateValue, bookings: Booking[]) {
   const d = dateValueToDate(date);
-  return bookings.find((b) => b.start <= d && b.end >= d);
+  return bookings.find((b) => b.start_time <= d && b.end_time >= d);
 }
 
 export const CalendarPage = () => {
@@ -136,8 +138,32 @@ export const CalendarPage = () => {
           `${API_BASE}/booking/booking_for_equipment/${id}`,
         );
         const data = await res.json();
-        setBookings(data);
         console.log(data);
+        const parsedBookings = data.map((b: any) => {
+          const start = new Date(b.start_time);
+          const end = new Date(b.end_time);
+
+          return {
+            id: b.id,
+            equipmentId: b.equipment_id,
+            userId: b.user_id,
+            start_time: new Date(
+              start.getFullYear(),
+              start.getMonth(),
+              start.getDate(),
+            ),
+            end_time: new Date(
+              end.getFullYear(),
+              end.getMonth(),
+              end.getDate(),
+            ),
+            latitude: b.latitude,
+            longitude: b.longitude,
+            createdAt: new Date(b.created_at),
+          };
+        });
+        console.log("Parsed bookings:", parsedBookings);
+        setBookings(parsedBookings);
       } catch (error) {
         console.error("Error fetching bookings:", error);
       }
@@ -189,7 +215,6 @@ export const CalendarPage = () => {
                     </Typography>
                   ) : (
                     getBookingsForRange(selectedRange, bookings).map((b, i) => {
-                      const user = mockUser.find((u) => u.id === b.userId);
                       return (
                         <Box
                           key={i}
@@ -198,8 +223,6 @@ export const CalendarPage = () => {
                           <Typography variant="body1" color="error">
                             Denne datoen er booket
                           </Typography>
-                          <Typography variant="body2">{`Av: ${user?.name ?? "Ukjent bruker"}`}</Typography>
-                          <Typography variant="body2">{`For: ${b.title}`}</Typography>
                         </Box>
                       );
                     })
