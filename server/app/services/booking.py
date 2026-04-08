@@ -1,16 +1,11 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import Booking
 
-async def check_Availability(session, id):
-    result = await session.execute(
-        select(Booking).where(Booking.id == id)
+async def get_bookings(db: AsyncSession):
+    result = await db.execute(
+        select(Booking)
     )
-
-    booking = result.scalars().first()
-
-    return booking is None
-
-async def create_booking():
     
-
-    return None 
+    bookings = result.scalars().all()
+    return bookings

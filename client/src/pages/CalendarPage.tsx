@@ -25,6 +25,10 @@ import {
   DialogActions,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+const API_BASE =
+  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 type User = { id: string; name: string; email: string; class: number };
 type Booking = {
@@ -39,16 +43,6 @@ type Booking = {
 const mockUser: User[] = [
   { id: "Test1", name: "Adam Hansen", email: "adam@hansen.no", class: 3 },
   { id: "Test2", name: "Eva Olsen", email: "eva@olsen.no", class: 2 },
-];
-
-const bookings: Booking[] = [
-  {
-    start: new Date(2026, 4, 2),
-    end: new Date(2026, 4, 5),
-    title: "Møte",
-    timeSlot: "hele dagen",
-    userId: "Test2",
-  },
 ];
 
 function dateValueToDate(d: DateValue): Date {
@@ -102,6 +96,7 @@ export const CalendarPage = () => {
   }>({});
   const [focusedDate, setFocusedDate] = React.useState<DateValue>(today);
   const [selectedYear, setSelectedYear] = React.useState(today.year);
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
   const [popupOpen, setPopupOpen] = React.useState(false);
   const [selectedBooking, setSelectedBooking] = React.useState<
@@ -133,6 +128,21 @@ export const CalendarPage = () => {
 
   const handleOpenPopup = () => setPopupOpen(true);
   const handleClosePopup = () => setPopupOpen(false);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/booking`);
+        const data = await res.json();
+        setBookings(data);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      }
+    };
+
+    fetchBookings();
+    console.log(bookings);
+  }, []);
 
   return (
     <>
