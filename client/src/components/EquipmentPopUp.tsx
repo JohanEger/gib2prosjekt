@@ -1,4 +1,3 @@
-import { Description } from "@headlessui/react";
 import { Typography, Box } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { useEffect, useState } from "react";
@@ -6,7 +5,7 @@ import { Button } from "react-bootstrap";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
-import { Icon } from "@mui/material";
+import { Link } from "react-router-dom";
 
 type Coordinates = {
   lat: number;
@@ -14,6 +13,7 @@ type Coordinates = {
 };
 
 type Props = {
+  id: string;
   name: string;
   lat: number;
   lng: number;
@@ -28,15 +28,13 @@ export const EquipmentPopUp = ({
   lat,
   lng,
   description,
+  id,
   func,
   booked,
   SetFindEquipment,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  console.log(lat, lng);
-  console.log(name);
-  console.log(booked);
 
   useEffect(() => {
     async function loadAddress() {
@@ -51,7 +49,6 @@ export const EquipmentPopUp = ({
         );
 
         const data = await res.json();
-        console.log(data);
 
         const addr = data.address;
 
@@ -59,7 +56,6 @@ export const EquipmentPopUp = ({
           `${addr.road ?? ""} ${addr.house_number ?? ""}, ${addr.suburb ?? addr.city ?? ""}`,
         );
       } catch (err) {
-        console.error("Geocoding error:", err);
         setAddress("Kunne ikke hente adresse");
       } finally {
         setLoading(false);
@@ -68,6 +64,8 @@ export const EquipmentPopUp = ({
 
     loadAddress();
   }, [lat, lng]);
+
+  console.log(id);
 
   return (
     <Paper
@@ -106,15 +104,15 @@ export const EquipmentPopUp = ({
       </Typography>
       <Typography>{description}</Typography>
 
-      <Button
-        onClick={func}
+      <Link
+        to={`/calendar/${id}/${name}`}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
   hover:from-blue-600 hover:to-indigo-700
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
         Book utstyr
-      </Button>
+      </Link>
       <Button
         onClick={() => SetFindEquipment({ lat, lng })}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 

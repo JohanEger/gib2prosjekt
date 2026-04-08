@@ -1,13 +1,30 @@
 import * as React from "react";
-import { Paper, Typography, Button, Box, Select, MenuItem } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Button,
+  Box,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import SearchBox from "../components/SearchBox";
 import type { DateValue } from "react-aria-components";
-import { parseDate, getLocalTimeZone, today as todayAria } from "@internationalized/date";
+import {
+  parseDate,
+  getLocalTimeZone,
+  today as todayAria,
+} from "@internationalized/date";
 import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar";
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
-import { Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import { useParams } from "react-router-dom";
 
 type User = { id: string; name: string; email: string; class: number };
 type Booking = {
@@ -24,11 +41,14 @@ const mockUser: User[] = [
   { id: "Test2", name: "Eva Olsen", email: "eva@olsen.no", class: 2 },
 ];
 
-const mockbookings: Booking[] = [
-  { start: new Date(2026, 1, 12), end: new Date(2026, 1, 14), title: "Hyttetur", timeSlot: "hele dagen", userId: "Test1" },
-  { start: new Date(2026, 1, 28), end: new Date(2026, 1, 28), title: "Møte", timeSlot: "hele dagen", userId: "Test2" },
-  { start: new Date(2026, 4, 28), end: new Date(2026, 4, 28), title: "Møte", timeSlot: "hele dagen", userId: "Test2" },
-  { start: new Date(2026, 4, 2), end: new Date(2026, 4, 5), title: "Møte", timeSlot: "hele dagen", userId: "Test2" }
+const bookings: Booking[] = [
+  {
+    start: new Date(2026, 4, 2),
+    end: new Date(2026, 4, 5),
+    title: "Møte",
+    timeSlot: "hele dagen",
+    userId: "Test2",
+  },
 ];
 
 function dateValueToDate(d: DateValue): Date {
@@ -40,16 +60,26 @@ function isDateBooked(date: DateValue, bookings: Booking[]): boolean {
   return bookings.some((b) => b.start <= d && b.end >= d);
 }
 
-function rangeOverlapsBooking(range: { start?: DateValue; end?: DateValue }, bookings: Booking[]) {
+function rangeOverlapsBooking(
+  range: { start?: DateValue; end?: DateValue },
+  bookings: Booking[],
+) {
   if (!range.start || !range.end) return false;
 
-  const start = new Date(range.start.year, range.start.month - 1, range.start.day);
+  const start = new Date(
+    range.start.year,
+    range.start.month - 1,
+    range.start.day,
+  );
   const end = new Date(range.end.year, range.end.month - 1, range.end.day);
 
-  return bookings.some(b => b.start <= end && b.end >= start);
+  return bookings.some((b) => b.start <= end && b.end >= start);
 }
 
-function getBookingsForRange(range: { start?: DateValue; end?: DateValue }, bookings: Booking[]) {
+function getBookingsForRange(
+  range: { start?: DateValue; end?: DateValue },
+  bookings: Booking[],
+) {
   if (!range.start || !range.end) return [];
   const startDate = dateValueToDate(range.start);
   const endDate = dateValueToDate(range.end);
@@ -61,16 +91,22 @@ function getBookingForDate(date: DateValue, bookings: Booking[]) {
   return bookings.find((b) => b.start <= d && b.end >= d);
 }
 
-export default function CalendarPage() {
+export const CalendarPage = () => {
+  const { id, name } = useParams<{ id: string; name: string }>();
   const today = todayAria(getLocalTimeZone());
-
+  console.log(name, id);
   const [mode, setMode] = React.useState<"book" | "view">("book");
-  const [selectedRange, setSelectedRange] = React.useState<{ start?: DateValue; end?: DateValue }>({});
+  const [selectedRange, setSelectedRange] = React.useState<{
+    start?: DateValue;
+    end?: DateValue;
+  }>({});
   const [focusedDate, setFocusedDate] = React.useState<DateValue>(today);
   const [selectedYear, setSelectedYear] = React.useState(today.year);
 
   const [popupOpen, setPopupOpen] = React.useState(false);
-  const [selectedBooking, setSelectedBooking] = React.useState<Booking | undefined>();
+  const [selectedBooking, setSelectedBooking] = React.useState<
+    Booking | undefined
+  >();
   const [openDialog, setOpenDialog] = React.useState(false);
 
   const maxDateObj = new Date(today.year + 1, today.month - 1, today.day);
@@ -82,7 +118,7 @@ export default function CalendarPage() {
       setSelectedRange(range);
       return;
     }
-    if (rangeOverlapsBooking(range, mockbookings)) {
+    if (rangeOverlapsBooking(range, bookings)) {
       console.warn("Kan ikke booke over allerede bookede dager");
       return;
     }
@@ -102,25 +138,54 @@ export default function CalendarPage() {
     <>
       <NavBar />
       <Box sx={{ mt: "8em", display: "flex", justifyContent: "center", px: 1 }}>
-        <Paper elevation={0} sx={{ width: "100%", maxWidth: "1000px", minHeight: "70vh", p: 4, pt: 10 }}>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
-
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: "1000px",
+            minHeight: "70vh",
+            p: 4,
+            pt: 10,
+          }}
+        >
+          <Typography>{name}</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 4,
+            }}
+          >
             {/* Venstre panel */}
-            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box
+              sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}
+            >
               <Box sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Søk etter utstyr / brukere</Typography>
+                <Typography variant="h6" gutterBottom>
+                  Søk etter utstyr / brukere
+                </Typography>
                 <SearchBox />
               </Box>
               {selectedRange.start && selectedRange.end && (
-                <Paper elevation={0} sx={{ mt: 2, p: 2, bgcolor: "#ffffffff", borderRadius: 1 }}>
-                  {getBookingsForRange(selectedRange, mockbookings).length === 0 ? (
-                    <Typography variant="body1">*Informasjon om bookinger skal komme her etterhvert*</Typography>
+                <Paper
+                  elevation={0}
+                  sx={{ mt: 2, p: 2, bgcolor: "#ffffffff", borderRadius: 1 }}
+                >
+                  {getBookingsForRange(selectedRange, bookings).length === 0 ? (
+                    <Typography variant="body1">
+                      *Informasjon om bookinger skal komme her etterhvert*
+                    </Typography>
                   ) : (
-                    getBookingsForRange(selectedRange, mockbookings).map((b, i) => {
+                    getBookingsForRange(selectedRange, bookings).map((b, i) => {
                       const user = mockUser.find((u) => u.id === b.userId);
                       return (
-                        <Box key={i} sx={{ mb: 2, p: 1, borderBottom: "1px solid #ddd" }}>
-                          <Typography variant="body1" color="error">Denne datoen er booket</Typography>
+                        <Box
+                          key={i}
+                          sx={{ mb: 2, p: 1, borderBottom: "1px solid #ddd" }}
+                        >
+                          <Typography variant="body1" color="error">
+                            Denne datoen er booket
+                          </Typography>
                           <Typography variant="body2">{`Av: ${user?.name ?? "Ukjent bruker"}`}</Typography>
                           <Typography variant="body2">{`For: ${b.title}`}</Typography>
                         </Box>
@@ -132,7 +197,15 @@ export default function CalendarPage() {
             </Box>
 
             {/* Høyre panel */}
-            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
               {/* Mode-navbar som tabs */}
               <Box
                 sx={{
@@ -151,7 +224,8 @@ export default function CalendarPage() {
                     py: 1,
                     cursor: "pointer",
                     borderBottom: mode === "book" ? 2 : 0,
-                    borderColor: mode === "book" ? "primary.main" : "transparent",
+                    borderColor:
+                      mode === "book" ? "primary.main" : "transparent",
                     fontWeight: mode === "book" ? "bold" : "normal",
                     color: mode === "book" ? "primary.main" : "text.primary",
                     "&:hover": { color: "primary.dark" },
@@ -167,7 +241,8 @@ export default function CalendarPage() {
                     py: 1,
                     cursor: "pointer",
                     borderBottom: mode === "view" ? 2 : 0,
-                    borderColor: mode === "view" ? "primary.main" : "transparent",
+                    borderColor:
+                      mode === "view" ? "primary.main" : "transparent",
                     fontWeight: mode === "view" ? "bold" : "normal",
                     color: mode === "view" ? "primary.main" : "text.primary",
                     "&:hover": { color: "primary.dark" },
@@ -189,13 +264,22 @@ export default function CalendarPage() {
                   width: "100%",
                   minHeight: 400,
                   gap: 1,
-                  position: "relative"
+                  position: "relative",
                 }}
               >
                 {/* Raden med år og "Gå til i dag" */}
-                <Box sx={{ display: "flex", width: "100%", alignItems: "center", position: "relative" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    width: "100%",
+                    alignItems: "center",
+                    position: "relative",
+                  }}
+                >
                   {/* År-dropdown midtstilt */}
-                  <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                  <Box
+                    sx={{ flex: 1, display: "flex", justifyContent: "center" }}
+                  >
                     <Select
                       size="small"
                       value={selectedYear}
@@ -203,13 +287,20 @@ export default function CalendarPage() {
                         const year = Number(e.target.value);
                         setSelectedYear(year);
                         setFocusedDate(
-                          parseDate(`${year}-${focusedDate.month.toString().padStart(2, "0")}-01`)
+                          parseDate(
+                            `${year}-${focusedDate.month.toString().padStart(2, "0")}-01`,
+                          ),
                         );
                       }}
                       sx={{ minWidth: 80 }}
                     >
-                      {Array.from({ length: today.year + 2 - 2002 }, (_, i) => 2002 + i).map((year) => (
-                        <MenuItem key={year} value={year}>{year}</MenuItem>
+                      {Array.from(
+                        { length: today.year + 2 - 2002 },
+                        (_, i) => 2002 + i,
+                      ).map((year) => (
+                        <MenuItem key={year} value={year}>
+                          {year}
+                        </MenuItem>
                       ))}
                     </Select>
                   </Box>
@@ -236,7 +327,7 @@ export default function CalendarPage() {
                 {mode === "book" && (
                   <BookingRangeCalendar
                     focusedValue={focusedDate}
-                    isDateBooked={(date) => isDateBooked(date, mockbookings)}
+                    isDateBooked={(date) => isDateBooked(date, bookings)}
                     onChange={handleRangeChange}
                     onFocusChange={(date) => {
                       if (date) {
@@ -257,9 +348,9 @@ export default function CalendarPage() {
                 {mode === "view" && (
                   <BookedDatesCalendar
                     focusedValue={focusedDate}
-                    isDateBooked={(date) => isDateBooked(date, mockbookings)}
+                    isDateBooked={(date) => isDateBooked(date, bookings)}
                     onBookedDateClick={(date) => {
-                      const booking = getBookingForDate(date, mockbookings);
+                      const booking = getBookingForDate(date, bookings);
                       setSelectedBooking(booking ?? undefined);
                       setOpenDialog(true);
                     }}
@@ -276,19 +367,19 @@ export default function CalendarPage() {
 
                 {/* Fast plass til knappen */}
                 <Box sx={{ height: 48, display: "flex", alignItems: "center" }}>
-                  {mode === "book" && selectedRange.start && selectedRange.end && (
-                    <Button
-                      variant="outlined"
-                      sx={{ fontWeight: "bold" }}
-                      size="medium"
-                      onClick={handleOpenPopup}
-                    >
-                      Book
-                    </Button>
-                  )}
+                  {mode === "book" &&
+                    selectedRange.start &&
+                    selectedRange.end && (
+                      <Button
+                        variant="outlined"
+                        sx={{ fontWeight: "bold" }}
+                        size="medium"
+                        onClick={handleOpenPopup}
+                      >
+                        Book
+                      </Button>
+                    )}
                 </Box>
-
-
               </Paper>
             </Box>
           </Box>
@@ -307,4 +398,4 @@ export default function CalendarPage() {
       {/* TODO: Legge til at informasjon vises om bookingene. Egen popup? Til venstre? */}
     </>
   );
-}
+};

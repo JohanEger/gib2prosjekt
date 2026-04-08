@@ -2,11 +2,42 @@ import random
 
 from app.models.group import Group
 from app.models.equipment import Equipment
+from app.models.booking import Booking
 from app.database import SessionLocal
 from sqlalchemy import select
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
+from datetime import datetime, timedelta
+import uuid
 
+
+
+async def seed_Bookings():
+    async with SessionLocal() as session:
+        today = datetime.utcnow()
+
+
+        days_until_saturday = (5 - today.weekday()) % 7
+        if days_until_saturday == 0:
+            days_until_saturday = 7
+
+        end_date = today + timedelta(days=days_until_saturday)
+
+    
+        random_user_id = uuid.uuid4()
+
+        point = from_shape(Point(10.3951, 63.4305), srid=4326)
+
+        booking = Booking(
+            equipment_id=uuid.UUID("7ba77278-25c5-4040-ac12-4f90de2d7a02"),
+            user_id=random_user_id,
+            start_time=today,
+            end_time=end_date,
+            booking_destination=point,
+        )
+        session.add(booking)
+        await session.commit()
+        
 
 async def seed_groups():
     async with SessionLocal() as session:
