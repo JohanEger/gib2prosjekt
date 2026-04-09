@@ -9,6 +9,7 @@ import { HomePage } from "./pages/HomePage";
 import { GeolocationProvider } from "./context/GeolocationContext";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/useAuth";
+import { CalendarPage } from "./pages/CalendarPage";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -20,6 +21,7 @@ function AppRoutes() {
       {user ? (
         <>
           <Route path="/" element={<HomePage />} />
+          <Route path="/calendar/:id/:name" element={<CalendarPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       ) : (
