@@ -22,6 +22,7 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  findEquipment: Coordinates | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
   onClose: () => void;
 };
@@ -34,11 +35,20 @@ export const EquipmentPopUp = ({
   id,
   func,
   booked,
+  findEquipment,
   SetFindEquipment,
   onClose,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const toggleRoute = () => {
+    if (findEquipment && findEquipment.lat === lat && findEquipment.lng === lng) {
+      SetFindEquipment(null); // skjul ruten
+    } else {
+      SetFindEquipment({ lat, lng }); // vis ruten
+    }
+  };
 
   useEffect(() => {
     async function loadAddress() {
@@ -76,7 +86,12 @@ export const EquipmentPopUp = ({
       className="w-full h-full pl-2 pr-2 pb-16 bg-black text-white flex flex-col items-center pt-2 gap-4 relative"
       onClick={(e) => e.stopPropagation()}
     >
-      <IconButton onClick={onClose} className="absolute top-2 left-50">
+      <IconButton
+        onClick={() => {
+          SetFindEquipment(null);
+          onClose();
+        }}
+        className="absolute top-2 left-50">
         <CloseIcon />
       </IconButton>
 
@@ -122,13 +137,15 @@ export const EquipmentPopUp = ({
         Book utstyr
       </Link>
       <Button
-        onClick={() => SetFindEquipment({ lat, lng })}
+        onClick={toggleRoute}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
   hover:from-blue-600 hover:to-indigo-700
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
       >
-        Finn vei
+        {findEquipment && findEquipment.lat === lat && findEquipment.lng === lng
+          ? "Skjul vei"
+          : "Finn vei"}
       </Button>
     </Paper>
   );

@@ -59,12 +59,14 @@ type Equipment = {
 interface SidebarProps {
   filters: EquipmentFilters;
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
+  findEquipment: Coordinates | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
 }
 
 export const Sidebar = ({
   filters,
   setFilters,
+  findEquipment,
   SetFindEquipment,
 }: SidebarProps) => {
   const [equipment, setEquipment] = useState<any[]>([]);
@@ -240,6 +242,7 @@ export const Sidebar = ({
             description={activeEquipment.description}
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
+            findEquipment={findEquipment}
             SetFindEquipment={SetFindEquipment}
             onClose={handleCloseEquipment}
           />

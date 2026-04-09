@@ -19,12 +19,14 @@ export const HomePage = () => {
 
   const [findEquipment, setFindEquipment] = useState<Coordinates | null>(null);
 
+  
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <NavBar />
       <Sidebar
         filters={filters}
         setFilters={setFilters}
+        findEquipment={findEquipment}
         SetFindEquipment={setFindEquipment}
       />
       <Map filters={filters} coordinates={findEquipment} />

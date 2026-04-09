@@ -58,7 +58,7 @@ const createEquipmentIcon = (active: boolean = false) =>
     iconAnchor: [8, 8],
   });
 
-const createCustomClusterIcon = (cluster: any) => 
+const createCustomClusterIcon = (cluster: any) =>
   L.divIcon({
     className: "marker-cluster marker-cluster-custom",
     html: `
@@ -96,6 +96,17 @@ export const Map = ({ filters, coordinates }: MapProps) => {
   useEffect(() => {
     clusterGroupRef.current?.refreshClusters();
   }, [markers, activeMarkerId]);
+
+  useEffect(() => {
+    if (!coordinates) {
+      setRoute({
+        type: "LineString",
+        coordinates: [],
+      });
+      return;
+    }
+  }, [coordinates]);
+
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -177,7 +188,7 @@ export const Map = ({ filters, coordinates }: MapProps) => {
       />
 
       {route.coordinates.length > 0 && (
-        <GeoJSON key={JSON.stringify(route.coordinates)} data={route} />
+        <GeoJSON key={JSON.stringify(coordinates && route.coordinates)} data={route} />
       )}
 
       <MarkerClusterGroup
@@ -192,25 +203,25 @@ export const Map = ({ filters, coordinates }: MapProps) => {
           clustermouseover: (e: any) => {
             const cluster = e.layer;
             const childMarkers = cluster.getAllChildMarkers() as MarkerWithProperties[];
-            
+
             const items = childMarkers
               .map((m) => (m.options as L.MarkerOptions & { equipmentData?: EquipmentMarker }).equipmentData)
               .filter((data): data is EquipmentMarker => Boolean(data));
-            
+
             if (items.length === 0) return;
 
             const html = `
               <div class="min-w-52">
                 <ul class="space-y-1 text-sm">
                   ${items
-                    .map(
-                      (item) => `
+                .map(
+                  (item) => `
                         <li class="rounded px-2 py-1">
                           ${item.name}
                         </li>
                       `,
-                    )
-                    .join("")}
+                )
+                .join("")}
                 </ul>
               </div>
             `;
@@ -232,53 +243,53 @@ export const Map = ({ filters, coordinates }: MapProps) => {
           },
         }}
       >
-      
-      {markers.map((marker) => (
-        <Marker
-          key={`${marker.id}:${marker.lat}:${marker.lng}`}
-          position={[marker.lat, marker.lng]}
-          icon ={createEquipmentIcon(activeMarkerId === marker.id)}
-          ref={(ref) => {
-            if (ref) {
-              (ref as MarkerWithProperties).options.equipmentData = marker;
-            }
-          }}
-          eventHandlers={{
-            // TODO: Add click handler to open a sidebar with more details about the equipment
-            // click: () => {
-            //   setActiveMarkerId((prev) => (prev === marker.id ? null : marker.id));
-            // },
-              
-            mouseover: (e) => {
-              const markerInstance = e.target as MarkerWithProperties;
 
-              markerInstance.bindTooltip(
-                `
+        {markers.map((marker) => (
+          <Marker
+            key={`${marker.id}:${marker.lat}:${marker.lng}`}
+            position={[marker.lat, marker.lng]}
+            icon={createEquipmentIcon(activeMarkerId === marker.id)}
+            ref={(ref) => {
+              if (ref) {
+                (ref as MarkerWithProperties).options.equipmentData = marker;
+              }
+            }}
+            eventHandlers={{
+              // TODO: Add click handler to open a sidebar with more details about the equipment
+              // click: () => {
+              //   setActiveMarkerId((prev) => (prev === marker.id ? null : marker.id));
+              // },
+
+              mouseover: (e) => {
+                const markerInstance = e.target as MarkerWithProperties;
+
+                markerInstance.bindTooltip(
+                  `
                   <div class="min-w-32">
                     <div class="rounded px-2 py-1 text-sm">
                       ${marker.name}
                     </div>
                   </div>
                 `,
-                {
-                  direction: "top",
-                  offset: [0, -10],
-                  opacity: 1,
-                  sticky: false,
-                },
-              );
+                  {
+                    direction: "top",
+                    offset: [0, -10],
+                    opacity: 1,
+                    sticky: false,
+                  },
+                );
 
-              markerInstance.openTooltip();
-            },
+                markerInstance.openTooltip();
+              },
 
-            mouseout: (e) => {
-              const markerInstance = e.target as MarkerWithProperties;
-              markerInstance.closeTooltip();
-              markerInstance.unbindTooltip();
-            },
-          }}
-        />
-      ))}
+              mouseout: (e) => {
+                const markerInstance = e.target as MarkerWithProperties;
+                markerInstance.closeTooltip();
+                markerInstance.unbindTooltip();
+              },
+            }}
+          />
+        ))}
       </MarkerClusterGroup>
       <UserLocationMarker />
     </MapContainer>
