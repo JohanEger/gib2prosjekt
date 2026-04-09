@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import arrow from "../assets/arrow.svg";
+import CloseIcon from "@mui/icons-material/Close";
 import { EquipmentPopUp } from "./EquipmentPopUp";
 import {
   Box,
@@ -15,6 +16,7 @@ import {
   Checkbox,
   TextField,
   FormControlLabel,
+  IconButton,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -130,6 +132,13 @@ export const Sidebar = ({
     }
   };
 
+  const handleCloseEquipment = () => {
+    setActiveEquipment(null);
+    SetFindEquipment(null);
+  };
+
+  const handleCloseFilterCard = () => setShowFilter(false);
+
   // 🔹 Handlers
   const handleChangeCommittee = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
@@ -218,9 +227,9 @@ export const Sidebar = ({
 
       {/* Equipment popup */}
       <div
-        className={`fixed top-0 right-0 w-[30rem] h-screen
-        transform transition-transform duration-300 z-40
-        ${activeEquipment ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-24 right-4 w-[90%] sm:w-[30rem]
+                    max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl duration-300 z-40 
+        ${activeEquipment ? "translate-x-0 opacity-100 " : "translate-x-full opacity-0 pointer-events-none"}`}
       >
         {activeEquipment && (
           <EquipmentPopUp
@@ -231,6 +240,7 @@ export const Sidebar = ({
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
             SetFindEquipment={SetFindEquipment}
+            onClose={handleCloseEquipment}
           />
         )}
       </div>
@@ -241,7 +251,12 @@ export const Sidebar = ({
           className="fixed z-30 top-20 left-72 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
           sx={{ borderRadius: "0.5rem" }}
         >
-          <Typography variant="h6">Filtre</Typography>
+          <Box className="flex items-center justify-between mb-1 ml-1">
+            <Typography variant="h6">Filtre</Typography>
+          <IconButton onClick={handleCloseFilterCard} className="absolute">
+            <CloseIcon />
+          </IconButton>
+          </Box>
 
           <FormControl sx={{ width: 200 }}>
             <InputLabel>Komité</InputLabel>

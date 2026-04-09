@@ -1,12 +1,12 @@
 import { Description } from "@headlessui/react";
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, IconButton } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
-import { Icon } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 type Coordinates = {
   lat: number;
@@ -21,6 +21,7 @@ type Props = {
   func: () => void;
   booked: boolean;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
+  onClose: () => void;
 };
 
 export const EquipmentPopUp = ({
@@ -31,6 +32,7 @@ export const EquipmentPopUp = ({
   func,
   booked,
   SetFindEquipment,
+  onClose,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,11 +71,17 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
+
   return (
     <Paper
       elevation={3}
-      className="fixed top-0 right-0 w-[30rem] h-screen bg-black text-white flex flex-col items-center pt-24 gap-4"
+      className="w-full h-full pl-2 pr-2 pb-16 bg-black text-white flex flex-col items-center pt-2 gap-4 relative"
+      onClick={(e) => e.stopPropagation()}
     >
+      <IconButton onClick={onClose} className="absolute top-2 left-50">
+        <CloseIcon />
+      </IconButton>
+
       <Typography variant="h4">{name}</Typography>
 
       <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
