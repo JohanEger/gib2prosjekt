@@ -52,7 +52,7 @@ export default function BookingPopup({
       lat: Coordinates.lat,
       lng: Coordinates.lng,
     };
-
+    console.log(newBooking);
     try {
       const booked = await createBooking(newBooking);
       setBooking(booked);
@@ -78,14 +78,32 @@ export default function BookingPopup({
             position: "fixed",
             inset: 0,
             backgroundColor: "rgba(0,0,0,0.4)",
-            backdropFilter: "blur(1.5px)",
+            backdropFilter: "blur(2px)",
             zIndex: 999,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          Booking suksee
+          <Box
+            onClick={(e) => e.stopPropagation()}
+            sx={{
+              backgroundColor: "white",
+              padding: "32px",
+              borderRadius: "16px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+              textAlign: "center",
+              minWidth: "300px",
+            }}
+          >
+            <h2 style={{ marginBottom: "12px" }}>Booking fullført!</h2>
+
+            <p style={{ marginBottom: "20px" }}>
+              Utstyret ble booket suksessfullt for {startDate.day}.
+              {startDate.month}.{startDate.year} til {endDate.day}.
+              {endDate.month}.{endDate.year}
+            </p>
+          </Box>
         </Box>
       ) : (
         <Box

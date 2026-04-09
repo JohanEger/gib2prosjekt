@@ -62,6 +62,10 @@ export default function AddressSearch({
                 : name
                   ? `${name}, ${city ?? ""}`
                   : inputValue;
+          console.log(
+            item.geometry.coordinates[1],
+            item.geometry.coordinates[0],
+          );
           return {
             label: label.trim(),
             lat: item.geometry.coordinates[1],
