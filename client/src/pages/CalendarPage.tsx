@@ -419,13 +419,13 @@ export const CalendarPage = () => {
         </Paper>
       </Box>
 
-      {/* BookingPopup */}
       {selectedRange.start && selectedRange.end && (
         <BookingPopup
           open={popupOpen}
           onClose={handleClosePopup}
           startDate={selectedRange.start}
           endDate={selectedRange.end}
+          equipmentId={id}
         />
       )}
       {/* TODO: Legge til at informasjon vises om bookingene. Egen popup? Til venstre? */}

@@ -11,7 +11,7 @@ from geoalchemy2.shape import to_shape
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.booking import BookingSchema
+from app.schemas.booking import BookingSchema, BookingCreate
 from app.database import get_database
 from app.services.booking import get_bookings_by_equipment,create_booking
 from geoalchemy2.shape import to_shape
@@ -40,18 +40,32 @@ async def get_bookings_for_equipment(
         for b in bookings
     ]
 
-@router.post("/create_booking/", response_model=list[BookingSchema])
-async def create_booking(
-    data:BookingSchema,
-    session: AsyncSession = Depends(get_database),
+from geoalchemy2.shape import to_shape
+
+@router.post("/create_booking", response_model=BookingSchema)
+async def create_booking_endpoint(
+    booking: BookingCreate,
+    db: AsyncSession = Depends(get_database),
 ):
-    booking = await create_booking(
-        db=session,
-        equipment_id=data.equipment_id,
-        user_id=data.user_id,
-        start_time=data.start_time,
-        end_time=data.end_time,
-        latitude=data.latitude,
-        longitude=data.longitude,
+    b = await create_booking(
+        db=db,
+        equipment_id=booking.equipment_id,
+        user_id=booking.user_id,
+        start_time=booking.start_time,
+        end_time=booking.end_time,
+        latitude=booking.latitude,
+        longitude=booking.longitude,
     )
-    return booking
+
+    p = to_shape(b.booking_destination)
+
+    return BookingSchema(
+        id=b.id,
+        equipment_id=b.equipment_id,
+        user_id=b.user_id,
+        start_time=b.start_time,
+        end_time=b.end_time,
+        latitude=p.y,
+        longitude=p.x,
+        created_at=b.created_at,
+    )

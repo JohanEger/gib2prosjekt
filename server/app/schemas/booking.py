@@ -14,3 +14,11 @@ class BookingSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class BookingCreate(BaseModel):
+    equipment_id: uuid.UUID
+    user_id: uuid.UUID
+    start_time: datetime
+    end_time: datetime
+    latitude: float
+    longitude: float

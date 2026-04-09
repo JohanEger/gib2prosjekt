@@ -16,6 +16,11 @@ async def get_bookings_by_equipment(
     bookings = result.scalars().all()
     return bookings
 
+from geoalchemy2.shape import from_shape
+from shapely.geometry import Point
+
+from datetime import datetime
+
 async def create_booking(
     db: AsyncSession,
     equipment_id: uuid.UUID,
@@ -24,18 +29,20 @@ async def create_booking(
     end_time: datetime,
     latitude: float,
     longitude: float,
-    created_at: datetime
 ):
+    point = from_shape(Point(longitude, latitude), srid=4326)
+
     booking = Booking(
         equipment_id=equipment_id,
-        udser_id=user_id,
+        user_id=user_id,
         start_time=start_time,
         end_time=end_time,
-        latitude=latitude,
-        longitude=longitude,
-        created_at=created_at
+        booking_destination=point,
+        created_at=datetime.utcnow(), 
     )
+
     db.add(booking)
     await db.commit()
+    await db.refresh(booking)
 
     return booking
