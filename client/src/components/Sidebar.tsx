@@ -233,6 +233,7 @@ export const Sidebar = ({
       >
         {activeEquipment && (
           <EquipmentPopUp
+            id={activeEquipment.id}
             name={activeEquipment.name}
             lat={activeEquipment.lat}
             lng={activeEquipment.lng}

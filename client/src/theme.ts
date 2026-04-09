@@ -2,11 +2,16 @@ import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
     palette: {
+        mode: "light",
         primary: {
             main: "rgb(42, 80, 148)",
             contrastText: "#ffffff",
         },
+        background: {
+            default: "#1f2937",   // ≈ Tailwind bg-gray-800
+        },
     },
+
     components: {
         MuiButton: {
             styleOverrides: {

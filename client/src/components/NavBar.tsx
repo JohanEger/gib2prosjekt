@@ -5,14 +5,11 @@ export const NavBar = () => {
   const { logout, user: currentUser } = useAuth();
 
   return (
-    <nav className="bg-blue-900 text-white px-6 py-4 flex justify-between items-center z-50 absolute w-full shadow-lg">
+    <nav className="bg-blue-900 text-white px-6 py-4 flex justify-between items-center z-50 fixed top-0 left-0 w-full shadow-lg">
       <div className="flex items-center space-x-6">
         <Link to="/" className="hover:text-gray-400 transition">
-          Home
+          Hjem
         </Link>
-        <a href="#calendar" className="hover:text-gray-400 transition">
-          Calendar
-        </a>
       </div>
 
       <div className="flex items-center space-x-4">
