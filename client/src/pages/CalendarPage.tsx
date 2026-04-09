@@ -6,6 +6,7 @@ import {
   Box,
   Select,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import SearchBox from "../components/SearchBox";
@@ -20,6 +21,9 @@ import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useNavigate } from "react-router-dom";
+
 
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
@@ -109,6 +113,12 @@ export const CalendarPage = () => {
   const maxDateStr = `${maxDateObj.getFullYear()}-${(maxDateObj.getMonth() + 1).toString().padStart(2, "0")}-${maxDateObj.getDate().toString().padStart(2, "0")}`;
   const maxDate = parseDate(maxDateStr);
 
+  const navigate = useNavigate();
+
+  const handleGoBackToHomePage = () => {
+    navigate("/", { state: { openEquipmentId: id, openEquipmentName: name } });
+  };
+
   const handleRangeChange = (range: { start?: DateValue; end?: DateValue }) => {
     if (!range.start || !range.end) {
       setSelectedRange(range);
@@ -181,10 +191,15 @@ export const CalendarPage = () => {
             maxWidth: "1000px",
             minHeight: "70vh",
             p: 4,
-            pt: 10,
+            pt: 4,
           }}
         >
-          <Typography>{name}</Typography>
+          <IconButton onClick={handleGoBackToHomePage} className="absolute">
+            <ArrowBackIcon />
+          </IconButton>
+          <Box>
+            <Typography variant="h3" pl="10px">{name}</Typography>
+          </Box>
           <Box
             sx={{
               display: "flex",
