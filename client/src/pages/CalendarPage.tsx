@@ -20,9 +20,7 @@ import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+import { API_BASE } from "@/apiBase";
 
 interface Booking {
   id: string;
