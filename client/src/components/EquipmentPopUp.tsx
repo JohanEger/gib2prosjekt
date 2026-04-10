@@ -8,6 +8,10 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
 import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
+import { TravelModeSelector } from "./TravelModeSelector";
+import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
+import type { RoutePanelState } from "../types/routePanelState";
+import { formatRouteDistance, formatRouteDuration } from "../utils/formatRoute";
 
 type Coordinates = {
   lat: number;
@@ -25,6 +29,11 @@ type Props = {
   findEquipment: Coordinates | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
   onClose: () => void;
+  travelMode: RouteTravelMode;
+  setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
+  routePanel: RoutePanelState;
+  /** True når kart-ruten er beregnet til dette utstyrets posisjon */
+  isRouteTarget: boolean;
 };
 
 export const EquipmentPopUp = ({
@@ -38,6 +47,10 @@ export const EquipmentPopUp = ({
   findEquipment,
   SetFindEquipment,
   onClose,
+  travelMode,
+  setTravelMode,
+  routePanel,
+  isRouteTarget,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,13 +92,14 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
+// Var i dev nedenfor: className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
 
   return (
     <Paper
       elevation={3}
       className="w-full h-full pl-2 pr-2 pb-16 bg-black text-white flex flex-col items-center pt-2 gap-4 relative"
       onClick={(e) => e.stopPropagation()}
-    >
+    > 
       <IconButton
         onClick={() => {
           SetFindEquipment(null);
@@ -147,6 +161,78 @@ export const EquipmentPopUp = ({
           ? "Skjul vei"
           : "Finn vei"}
       </Button>
+
+      <div className="w-full max-w-[22rem] px-4 pb-10">
+        <TravelModeSelector
+          variant="dark"
+          value={travelMode}
+          onChange={setTravelMode}
+          className="mt-2 text-left"
+        />
+
+        {isRouteTarget ? (
+          <div className="mt-5 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold tracking-tight text-white">
+                Ruteinformasjon
+              </h3>
+              {routePanel.status === "ready" && (
+                <span className="shrink-0 rounded-full border border-sky-400/60 bg-sky-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-sky-100">
+                  {MODE_LABEL[travelMode]}
+                </span>
+              )}
+            </div>
+
+            {(routePanel.status === "idle" ||
+              routePanel.status === "loading") && (
+              <p className="text-sm font-medium text-sky-200/90">
+                {routePanel.status === "loading"
+                  ? "Beregner rute…"
+                  : "Henter posisjon og rute…"}
+              </p>
+            )}
+
+            {routePanel.status === "ready" && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg border border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                    Tid
+                  </div>
+                  <div className="mt-1 text-lg font-bold text-white">
+                    {formatRouteDuration(routePanel.seconds)}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                    Avstand
+                  </div>
+                  <div className="mt-1 text-lg font-bold text-white">
+                    {formatRouteDistance(routePanel.meters)}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {routePanel.status === "no_route" && (
+              <p className="text-sm text-amber-200/90">
+                Fant ingen rute mellom din posisjon og dette punktet. Prøv et
+                annet transportmiddel eller sjekk at GPS er aktivert.
+              </p>
+            )}
+
+            {routePanel.status === "error" && (
+              <p className="text-sm text-red-300">
+                Klarte ikke å hente rute akkurat nå. Prøv igjen om litt.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="mt-4 text-center text-xs text-zinc-500">
+            Ruteinformasjon vises her når du trykker «Finn vei» for dette
+            utstyret.
+          </p>
+        )}
+      </div>
     </Paper>
   );
 };

@@ -21,10 +21,10 @@ import {
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
 import type { EquipmentFilters } from "../types/equipmentFilters";
+import type { RouteTravelMode } from "../types/routeTravelMode";
+import type { RoutePanelState } from "../types/routePanelState";
 import { useGeolocation } from "../hooks/useGeolocation";
-
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+import { API_BASE } from "../apiBase";
 
 const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
 
@@ -61,6 +61,9 @@ interface SidebarProps {
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
   findEquipment: Coordinates | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
+  travelMode: RouteTravelMode;
+  setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
+  routePanel: RoutePanelState;
 }
 
 export const Sidebar = ({
@@ -68,6 +71,9 @@ export const Sidebar = ({
   setFilters,
   findEquipment,
   SetFindEquipment,
+  travelMode,
+  setTravelMode,
+  routePanel,
 }: SidebarProps) => {
   const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
@@ -245,6 +251,14 @@ export const Sidebar = ({
             findEquipment={findEquipment}
             SetFindEquipment={SetFindEquipment}
             onClose={handleCloseEquipment}
+            travelMode={travelMode}
+            setTravelMode={setTravelMode}
+            routePanel={routePanel}
+            isRouteTarget={
+              findEquipment !== null &&
+              findEquipment.lat === activeEquipment.lat &&
+              findEquipment.lng === activeEquipment.lng
+            }
           />
         )}
       </div>

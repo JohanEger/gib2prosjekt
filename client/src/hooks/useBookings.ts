@@ -1,57 +1,95 @@
 import { useEffect, useState } from "react";
-import type { DateValue } from "react-aria-components";
+import { useAuth } from "./useAuth";
+import { fetchUserId } from "./fetchUserId";
 
-export type Booking = {
+type Booking = {
   start: Date;
   end: Date;
-  title: string;
-  timeSlot?: string;
-  userId?: string;
+  equipmentId: string;
+  lat: number;
+  lng: number;
 };
 
+const API_BASE =
+  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+
 export function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const { token } = useAuth();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
 
   useEffect(() => {
-    async function load() {
-      // Bytt senere
-      const mock: Booking[] = [
-        { start: new Date(2026, 1, 12), end: new Date(2026, 1, 14), title: "Hyttetur" }, // obs: 0 = jan, 1 = feb
-        { start: new Date(2026, 1, 28), end: new Date(2026, 1, 28), title: "Møte" },
-        { start: new Date(2026, 2, 18), end: new Date(2026, 2, 23), title: "Blåtur" },
-        { start: new Date(2026, 2, 27), end: new Date(2026, 2, 27), title: "Vors" }
-      ]; // TODO: importer samme typer og variabler som booking.py i backend (./././././server/app/models/booking.py)! Limt inn her:
-      {/* from app.database import Base
+    const getUserId = async () => {
+      if (!token) {
+        setUserId(null);
+        setLoadingUser(false);
+        return;
+      }
 
-class Booking(Base):
-    __tablename__ = 'booking'
-    id : Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    equipment_id : Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('equipment.id', ondelete='CASCADE'), nullable=False,index=True)
-    user_id : Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
-    start_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    end_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    booking_destination: Mapped[Geography] = mapped_column(Geography(geometry_type='POINT', srid=4326), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    equipment : Mapped["Equipment"] = relationship("Equipment", back_populates="bookings")
-    user: Mapped["User"] = relationship("User", back_populates="bookings")    
+      try {
+        const id = await fetchUserId(token);
+        setUserId(id);
+      } catch (err) {
+        console.error("Failed to fetch userId:", err);
+        setUserId(null);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
 
-TODO: lag samme mock Bookings som ovenfor bare med denne klassetypen, slik at det blir enklere å overføre funksjonene senere
-     */}
-      setBookings(mock);
+    getUserId();
+  }, [token]);
+
+  const createBooking = async (booking: Booking) => {
+    if (loadingUser) {
+      throw new Error("Bruker lastes fortsatt...");
     }
 
-    load();
-  }, []);
+    if (!token) {
+      throw new Error("Ikke logget inn");
+    }
 
-  function isDateBooked(dateValue: DateValue) {
-    const d = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
-    return bookings.some(b => b.start <= d && b.end >= d);
-  }
+    if (!userId) {
+      throw new Error("Fant ikke bruker-ID");
+    }
 
-  function getBookingForDate(dateValue: DateValue) {
-    const d = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
-    return bookings.find(b => b.start <= d && b.end >= d);
-  }
+    if (booking.start >= booking.end) {
+      throw new Error("Sluttid må være etter starttid");
+    }
 
-  return { bookings, isDateBooked, getBookingForDate };
+    const bookingToBackend = {
+      equipment_id: booking.equipmentId,
+      user_id: userId,
+      start_time: booking.start.toISOString(),
+      end_time: booking.end.toISOString(),
+      latitude: booking.lat,
+      longitude: booking.lng,
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/booking/create_booking`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, 
+        },
+        body: JSON.stringify(bookingToBackend),
+      });
+
+      const text = await res.text();
+      console.log("Backend response:", text);
+
+      if (!res.ok) {
+        throw new Error(text || "Kunne ikke opprette booking");
+      }
+
+      return JSON.parse(text);
+    } catch (err) {
+      console.error("Booking error:", err);
+      throw err;
+    }
+  };
+
+  return { createBooking, userId, loadingUser };
 }
