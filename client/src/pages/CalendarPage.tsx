@@ -128,43 +128,40 @@ export const CalendarPage = () => {
   const handleOpenPopup = () => setPopupOpen(true);
   const handleClosePopup = () => setPopupOpen(false);
 
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/booking/booking_for_equipment/${id}`,
+      );
+      const data = await res.json();
+      const parsedBookings = data.map((b: any) => {
+        const start = new Date(b.start_time);
+        const end = new Date(b.end_time);
+
+        return {
+          id: b.id,
+          equipmentId: b.equipment_id,
+          userId: b.user_id,
+          start_time: new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate(),
+          ),
+          end_time: new Date(end.getFullYear(), end.getMonth(), end.getDate()),
+          latitude: b.latitude,
+          longitude: b.longitude,
+          createdAt: new Date(b.created_at),
+        };
+      });
+
+      setBookings(parsedBookings);
+      console.log(parsedBookings);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE}/booking/booking_for_equipment/${id}`,
-        );
-        const data = await res.json();
-        const parsedBookings = data.map((b: any) => {
-          const start = new Date(b.start_time);
-          const end = new Date(b.end_time);
-
-          return {
-            id: b.id,
-            equipmentId: b.equipment_id,
-            userId: b.user_id,
-            start_time: new Date(
-              start.getFullYear(),
-              start.getMonth(),
-              start.getDate(),
-            ),
-            end_time: new Date(
-              end.getFullYear(),
-              end.getMonth(),
-              end.getDate(),
-            ),
-            latitude: b.latitude,
-            longitude: b.longitude,
-            createdAt: new Date(b.created_at),
-          };
-        });
-
-        setBookings(parsedBookings);
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
-      }
-    };
-
     fetchBookings();
   }, [id]);
 
@@ -424,6 +421,7 @@ export const CalendarPage = () => {
           startDate={selectedRange.start}
           endDate={selectedRange.end}
           equipmentId={id}
+          fetchBookings={fetchBookings}
         />
       )}
       {/* TODO: Legge til at informasjon vises om bookingene. Egen popup? Til venstre? */}

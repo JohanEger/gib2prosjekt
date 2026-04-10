@@ -9,10 +9,7 @@ import { Link } from "react-router-dom";
 import { TravelModeSelector } from "./TravelModeSelector";
 import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
-import {
-  formatRouteDistance,
-  formatRouteDuration,
-} from "../utils/formatRoute";
+import { formatRouteDistance, formatRouteDuration } from "../utils/formatRoute";
 
 type Coordinates = {
   lat: number;
