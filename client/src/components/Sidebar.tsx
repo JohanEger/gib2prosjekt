@@ -24,7 +24,7 @@ import type { RoutePanelState } from "../types/routePanelState";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { API_BASE } from "../apiBase";
 
-const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
