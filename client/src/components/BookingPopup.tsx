@@ -42,6 +42,9 @@ const hours = [
 function formatDate(d: DateValue) {
   return `${d.day.toString().padStart(2, "0")}.${d.month.toString().padStart(2, "0")}.${d.year}`;
 }
+function sleep(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 export default function BookingPopup({
   open,
@@ -73,7 +76,8 @@ export default function BookingPopup({
       const booked = await createBooking(newBooking);
       setBooking(booked);
       await fetchBookings();
-      window.location.reload();
+      await sleep(2000);
+      await window.location.reload();
     } catch (err) {
       console.error(err);
     }
