@@ -1,10 +1,12 @@
-import { Typography, Box } from "@mui/material";
+import { Description } from "@headlessui/react";
+import { Typography, Box, IconButton } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
+import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
 import { TravelModeSelector } from "./TravelModeSelector";
 import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
@@ -24,7 +26,9 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  findEquipment: Coordinates | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
+  onClose: () => void;
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
   routePanel: RoutePanelState;
@@ -40,7 +44,9 @@ export const EquipmentPopUp = ({
   id,
   func,
   booked,
+  findEquipment,
   SetFindEquipment,
+  onClose,
   travelMode,
   setTravelMode,
   routePanel,
@@ -48,6 +54,14 @@ export const EquipmentPopUp = ({
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const toggleRoute = () => {
+    if (findEquipment && findEquipment.lat === lat && findEquipment.lng === lng) {
+      SetFindEquipment(null); // skjul ruten
+    } else {
+      SetFindEquipment({ lat, lng }); // vis ruten
+    }
+  };
 
   useEffect(() => {
     async function loadAddress() {
@@ -78,11 +92,23 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
+// Var i dev nedenfor: className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
+
   return (
     <Paper
       elevation={3}
-      className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
-    >
+      className="w-full h-full pl-2 pr-2 pb-16 bg-black text-white flex flex-col items-center pt-2 gap-4 relative"
+      onClick={(e) => e.stopPropagation()}
+    > 
+      <IconButton
+        onClick={() => {
+          SetFindEquipment(null);
+          onClose();
+        }}
+        className="absolute top-2 left-50">
+        <CloseIcon />
+      </IconButton>
+
       <Typography variant="h4">{name}</Typography>
 
       <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
@@ -125,13 +151,15 @@ export const EquipmentPopUp = ({
         Book utstyr
       </Link>
       <Button
-        onClick={() => SetFindEquipment({ lat, lng })}
+        onClick={toggleRoute}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
   hover:from-blue-600 hover:to-indigo-700
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
       >
-        Finn vei
+        {findEquipment && findEquipment.lat === lat && findEquipment.lng === lng
+          ? "Skjul vei"
+          : "Finn vei"}
       </Button>
 
       <div className="w-full max-w-[22rem] px-4 pb-10">

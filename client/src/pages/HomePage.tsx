@@ -25,14 +25,15 @@ export const HomePage = () => {
     status: "idle",
   });
 
+  
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <NavBar />
       <Sidebar
         filters={filters}
         setFilters={setFilters}
-        SetFindEquipment={setFindEquipment}
         findEquipment={findEquipment}
+        SetFindEquipment={setFindEquipment}
         travelMode={travelMode}
         setTravelMode={setTravelMode}
         routePanel={routePanel}
