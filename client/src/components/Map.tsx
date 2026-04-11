@@ -126,7 +126,7 @@ export const Map = ({
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
-  const [mapType, setMapType] = useState<string>("satellite");
+  const [mapType, setMapType] = useState<string>("alidade_smooth");
 
   // --- Effect 1: hent markers ----------------------------------------------
   useEffect(() => {
