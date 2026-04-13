@@ -17,12 +17,16 @@ import {
 import type { LineString } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
-import { ROUTE_LINE_STYLE, type RouteTravelMode } from "../types/routeTravelMode";
+import {
+  ROUTE_LINE_STYLE,
+  type RouteTravelMode,
+} from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import { useGeolocation } from "../hooks/useGeolocation";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import MapControl from "./MapControl";
 
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
@@ -122,6 +126,7 @@ export const Map = ({
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
+  const [mapType, setMapType] = useState<string>("alidade_smooth");
 
   // --- Effect 1: hent markers ----------------------------------------------
   useEffect(() => {
@@ -151,10 +156,10 @@ export const Map = ({
         : {};
 
       try {
-        const res = await fetch(
-          `${API_BASE}/locations/?${params.toString()}`,
-          { headers, signal: ac.signal },
-        );
+        const res = await fetch(`${API_BASE}/locations/?${params.toString()}`, {
+          headers,
+          signal: ac.signal,
+        });
         if (!res.ok) {
           console.error("Failed to fetch locations:", res.status);
           return;
@@ -215,10 +220,7 @@ export const Map = ({
           }
           setRoute(emptyLineString());
           onRoutePanelChange({ status: "error" });
-        } else if (
-          data.coordinates.length === 0 ||
-          (data.meters ?? 0) <= 0
-        ) {
+        } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
           setRoute(emptyLineString());
           onRoutePanelChange({ status: "no_route" });
         } else {
@@ -252,6 +254,11 @@ export const Map = ({
 
   return (
     <div className="relative h-screen w-full">
+      <div className="absolute bottom-6 right-4 z-30">
+        <div className="bg-white rounded-xl shadow-lg border p-2">
+          <MapControl setMap={setMapType} />
+        </div>
+      </div>
       <MapContainer
         ref={mapRef}
         center={TRONDHEIM_CENTER}
@@ -260,10 +267,21 @@ export const Map = ({
         zoomControl={false}
         className="absolute inset-0 z-0"
       >
-        <TileLayer
-          attribution="© OpenStreetMap contributors © Stadia Maps"
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
-        />
+        {mapType == "satellite" ? (
+          <TileLayer
+            attribution="© OpenStreetMap contributors © Stadia Maps © Esri"
+            url={
+              mapType === "satellite"
+                ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                : `https://tiles.stadiamaps.com/tiles/${mapType}/{z}/{x}/{y}{r}.png`
+            }
+          />
+        ) : (
+          <TileLayer
+            attribution="© OpenStreetMap contributors © Stadia Maps"
+            url={`https://tiles.stadiamaps.com/tiles/${mapType}/{z}/{x}/{y}{r}.png`}
+          />
+        )}
 
         {coordinates && route.coordinates.length > 0 && (
           <GeoJSON
