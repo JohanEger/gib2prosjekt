@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Paper, Typography, Button, Box } from "@mui/material";
+import { Paper, Typography, Button, Box, Divider } from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import type { DateValue } from "react-aria-components";
 import { getLocalTimeZone, today as todayAria } from "@internationalized/date";
@@ -8,7 +8,6 @@ import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
@@ -156,29 +155,89 @@ export const CalendarPage = () => {
 
       <Box sx={{ mt: "8em", display: "flex", justifyContent: "center" }}>
         <Paper sx={{ maxWidth: 1000, p: 4 }}>
-          <Typography variant="h5">{name}</Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              px: 2,
+              py: 1,
+              fontWeight: 600,
+              letterSpacing: 0.3,
+            }}
+          >
+            {name}
+          </Typography>
 
           <Box sx={{ display: "flex", gap: 4 }}>
-            {/* LEFT PANEL */}
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, py: 3 }}>
               {mode === "view" && (
-                <Paper sx={{ p: 2 }}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    maxWidth: 400,
+                    mx: "auto",
+                  }}
+                >
                   {selectedBooking ? (
                     <>
-                      <Typography variant="h6">Booking info</Typography>
-                      <Typography>
-                        Start: {selectedBooking.start_time.toDateString()}
+                      <Typography variant="h6" fontWeight={600} gutterBottom>
+                        Bookinginformasjon
                       </Typography>
-                      <Typography>
-                        End: {selectedBooking.end_time.toDateString()}
-                      </Typography>
-                      <Typography>
-                        Bruker: {selectedBooking.username}
-                      </Typography>
-                      <Typography>Emal: {selectedBooking.email}</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1.5,
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Startdato
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.start_time.toLocaleDateString()}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Sluttdato
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.end_time.toLocaleDateString()}
+                          </Typography>
+                        </Box>
+
+                        <Divider />
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Bruker
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.username}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            E-post
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.email}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </>
                   ) : (
-                    <Typography>Ingen booking valgt</Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      textAlign="center"
+                    >
+                      Ingen booking valgt
+                    </Typography>
                   )}
                 </Paper>
               )}
@@ -234,7 +293,6 @@ export const CalendarPage = () => {
                   )}
                 </>
               )}
-
               {mode === "view" && (
                 <BookedDatesCalendar
                   focusedValue={focusedDate}
@@ -249,8 +307,6 @@ export const CalendarPage = () => {
           </Box>
         </Paper>
       </Box>
-
-      {/* POPUP */}
       {selectedRange.start && selectedRange.end && (
         <BookingPopup
           open={popupOpen}
