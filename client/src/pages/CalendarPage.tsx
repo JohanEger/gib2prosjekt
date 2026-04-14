@@ -90,7 +90,6 @@ export const CalendarPage = () => {
           createdAt: new Date(b.created_at),
         }));
 
-        console.log("BOOKINGS:", parsed);
         setBookings(parsed);
       } catch (err) {
         console.error(err);
@@ -108,8 +107,6 @@ export const CalendarPage = () => {
     try {
       const iso = `${focusedDate.year}-${date.month.toString().padStart(2, "0")}-${date.day.toString().padStart(2, "0")}T00:00:00`;
 
-      console.log("FETCHING booking for:", iso);
-
       const res = await fetch(
         `${API_BASE}/booking/get_booking_for_date?equipment_id=${id}&start_time=${iso}`,
         {
@@ -121,13 +118,12 @@ export const CalendarPage = () => {
 
       if (!res.ok) {
         const text = await res.text();
-        console.error("API ERROR:", text);
+
         setSelectedBooking(null);
         return;
       }
 
       const data = await res.json();
-      console.log("BOOKING FROM API:", data);
 
       if (!data) {
         setSelectedBooking(null);
