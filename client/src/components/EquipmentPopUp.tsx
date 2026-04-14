@@ -34,6 +34,7 @@ type Props = {
   routePanel: RoutePanelState;
   /** True når kart-ruten er beregnet til dette utstyrets posisjon */
   isRouteTarget: boolean;
+  setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 export const EquipmentPopUp = ({
@@ -97,15 +98,16 @@ export const EquipmentPopUp = ({
   return (
     <Paper
       elevation={3}
-      className="w-full h-full pl-2 pr-2 pb-16 bg-black text-white flex flex-col items-center pt-2 gap-4 relative"
+      className="w-full max-h-screen overflow-y-auto pl-2 pr-2 pb-26 bg-black text-white flex flex-col items-center gap-4 relative"
       onClick={(e) => e.stopPropagation()}
-    > 
+    >
       <IconButton
         onClick={() => {
           SetFindEquipment(null);
+          setSelectedEquipmentId?.(null);
           onClose();
         }}
-        className="absolute top-2 left-50">
+        className="absolute top-4 left-50">
         <CloseIcon />
       </IconButton>
 
@@ -152,7 +154,7 @@ export const EquipmentPopUp = ({
       </Link>
       <Button
         onClick={toggleRoute}
-        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
   hover:from-blue-600 hover:to-indigo-700
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
@@ -171,7 +173,7 @@ export const EquipmentPopUp = ({
         />
 
         {isRouteTarget ? (
-          <div className="mt-5 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
+          <div className="mt-2 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold tracking-tight text-white">
                 Ruteinformasjon
@@ -185,12 +187,12 @@ export const EquipmentPopUp = ({
 
             {(routePanel.status === "idle" ||
               routePanel.status === "loading") && (
-              <p className="text-sm font-medium text-sky-200/90">
-                {routePanel.status === "loading"
-                  ? "Beregner rute…"
-                  : "Henter posisjon og rute…"}
-              </p>
-            )}
+                <p className="text-sm font-medium text-sky-200/90">
+                  {routePanel.status === "loading"
+                    ? "Beregner rute…"
+                    : "Henter posisjon og rute…"}
+                </p>
+              )}
 
             {routePanel.status === "ready" && (
               <div className="grid grid-cols-2 gap-2">

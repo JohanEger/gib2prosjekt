@@ -64,6 +64,9 @@ interface SidebarProps {
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
   routePanel: RoutePanelState;
+  setSelectedEquipmentId: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedEquipmentId: string | null;
+  clearSelection: () => void;
 }
 
 export const Sidebar = ({
@@ -74,6 +77,8 @@ export const Sidebar = ({
   travelMode,
   setTravelMode,
   routePanel,
+  setSelectedEquipmentId,
+  selectedEquipmentId,
 }: SidebarProps) => {
   const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
@@ -87,7 +92,7 @@ export const Sidebar = ({
       try {
         const params = new URLSearchParams();
 
-        filters.committee.forEach((c) => params.append("committee", c));
+        filters.committee.forEach((c) => params.append("committee", c.toLowerCase()));
 
         if (filters.distance > 0) {
           params.append("euclidean_distance", filters.distance.toString());
@@ -198,26 +203,39 @@ export const Sidebar = ({
       >
         <Box className="flex justify-end relative top-20 right-2">
           <Button onClick={() => setShowFilter(!showFilter)}>
-            <TuneIcon color="primary" />
+            <TuneIcon className="text-blue-500 hover:scale-105 transition-transform" />
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
+        <ul className="relative flex flex-col gap-3 p-4 mt-20 max-h-3/4 overflow-y-auto overflow-x-hidden">
           {equipment.map((item) => (
             <Box
-              sx={{ borderRadius: 4, bgcolor: "white" }}
+              sx={{ borderRadius: 4 }}
               key={item.id}
-              onClick={() => getEquipment(item.id)}
-              className="text-black cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg rounded p-2"
+              onClick={() => {
+                if (selectedEquipmentId === item.id) {
+                  setSelectedEquipmentId(null);
+                  setActiveEquipment(null); 
+                  SetFindEquipment(null);
+                } else {
+                  setSelectedEquipmentId(item.id);
+                  getEquipment(item.id);
+                }
+              }}
+              className={`text-black cursor-pointer transition-all duration-200 rounded p-2 
+                ${selectedEquipmentId === item.id
+                  ? "bg-blue-900 text-white ring-2 ring-blue-100"
+                  : "bg-white text-black hover:scale-105 hover:shadow-lg"
+                }`}
             >
               {item.name}
             </Box>
           ))}
         </ul>
-      </div>
+      </div >
 
       {/* Toggle button */}
-      <button
+      < button
         onClick={() => {
           setOpen(!open);
           setShowFilter(false);
@@ -231,10 +249,10 @@ export const Sidebar = ({
           className={`w-7 h-7 transition-transform duration-300
           ${open ? "rotate-90" : "rotate-270"}`}
         />
-      </button>
+      </button >
 
       {/* Equipment popup */}
-      <div
+      < div
         className={`fixed top-24 right-4 w-[90%] sm:w-[30rem]
                     max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl duration-300 z-40 
         ${activeEquipment ? "translate-x-0 opacity-100 " : "translate-x-full opacity-0 pointer-events-none"}`}
@@ -264,70 +282,72 @@ export const Sidebar = ({
       </div>
 
       {/* Filters */}
-      {showFilter && (
-        <Box
-          className="fixed z-30 top-20 left-72 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
-          sx={{ borderRadius: "0.5rem" }}
-        >
-          <Box className="flex items-center justify-between mb-1 ml-1">
-            <Typography variant="h6">Filtre</Typography>
-          <IconButton onClick={handleCloseFilterCard} className="absolute">
-            <CloseIcon />
-          </IconButton>
-          </Box>
+      {
+        showFilter && (
+          <Box
+            className="fixed z-30 top-20 left-72 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
+            sx={{ borderRadius: "0.5rem" }}
+          >
+            <Box className="flex items-center justify-between mb-1 ml-1">
+              <Typography variant="h6">Filtre</Typography>
+              <IconButton onClick={handleCloseFilterCard} className="absolute">
+                <CloseIcon />
+              </IconButton>
+            </Box>
 
-          <FormControl sx={{ width: 200 }}>
-            <InputLabel>Komité</InputLabel>
-            <Select
-              multiple
-              value={filters.committee}
-              input={<OutlinedInput label="Komité" />}
-              renderValue={(selected) => selected.join(", ")}
-              MenuProps={MenuProps}
-              onChange={handleChangeCommittee}
-            >
-              {committeeNames.map((name) => (
-                <MenuItem key={name} value={name}>
-                  <Checkbox checked={filters.committee.includes(name)} />
-                  <ListItemText primary={name} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            <FormControl sx={{ width: 200 }}>
+              <InputLabel>Komité</InputLabel>
+              <Select
+                multiple
+                value={filters.committee}
+                input={<OutlinedInput label="Komité" />}
+                renderValue={(selected) => selected.join(", ")}
+                MenuProps={MenuProps}
+                onChange={handleChangeCommittee}
+              >
+                {committeeNames.map((name) => (
+                  <MenuItem key={name} value={name}>
+                    <Checkbox checked={filters.committee.includes(name)} />
+                    <ListItemText primary={name} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          <Box>
-            <Typography>Avstand (m)</Typography>
-            <Slider
-              value={filters.distance}
-              min={0}
-              max={5000}
-              onChange={handleDistanceChange}
-              valueLabelDisplay="auto"
-            />
-          </Box>
-
-          <TextField
-            label="Type utstyr"
-            value={filters.typeOfEquipment}
-            onChange={handleTypeChange}
-            size="small"
-          />
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={filters.available}
-                onChange={handleAvailableChange}
+            <Box>
+              <Typography>Avstand (m)</Typography>
+              <Slider
+                value={filters.distance}
+                min={0}
+                max={5000}
+                onChange={handleDistanceChange}
+                valueLabelDisplay="auto"
               />
-            }
-            label="Kun tilgjengelig"
-          />
+            </Box>
 
-          <Button variant="outlined" onClick={resetFilters}>
-            Nullstill filtre
-          </Button>
-        </Box>
-      )}
+            <TextField
+              label="Type utstyr"
+              value={filters.typeOfEquipment}
+              onChange={handleTypeChange}
+              size="small"
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.available}
+                  onChange={handleAvailableChange}
+                />
+              }
+              label="Kun tilgjengelig"
+            />
+
+            <Button variant="outlined" onClick={resetFilters}>
+              Nullstill filtre
+            </Button>
+          </Box>
+        )
+      }
     </>
   );
 };

@@ -51,6 +51,7 @@ interface MapProps {
   coordinates: Coordinates | null;
   travelMode: RouteTravelMode;
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
+  selectedEquipmentId: string | null;
 }
 
 interface MarkerClusterLike extends L.Layer {
@@ -74,9 +75,8 @@ const emptyLineString = (): LineString => ({
 const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
     className: "",
-    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${
-      active ? "bg-blue-600" : "bg-zinc-400"
-    }"></div>`,
+    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${active ? "bg-green-700" : "bg-blue-600"
+      }"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
@@ -112,6 +112,7 @@ export const Map = ({
   coordinates,
   travelMode,
   onRoutePanelChange,
+  selectedEquipmentId,
 }: MapProps) => {
   const { latitude, longitude } = useGeolocation();
 
@@ -122,6 +123,33 @@ export const Map = ({
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
+  const isClusterSelected = (cluster: MarkerClusterLike) => {
+    return cluster.getAllChildMarkers().some((m) => {
+      const data = markerDataRef.current.get(m);
+      return data?.id === selectedEquipmentId;
+    });
+  };
+
+  // --- Farget cluster
+
+  const createClusterIcon = (cluster: MarkerClusterLike) => {
+    const selected = isClusterSelected(cluster);
+
+    return L.divIcon({
+      className: "marker-cluster marker-cluster-custom",
+      html: `
+      <div class="
+        flex h-10 w-10 items-center justify-center rounded-full border-2 border-black
+        ${selected ? "bg-green-700" : "bg-blue-600"}
+        text-sm font-bold text-white shadow-md
+      ">
+        ${cluster.getChildCount()}
+      </div>
+    `,
+      iconSize: L.point(40, 40, true),
+    });
+  };
+
 
   // --- Effect 1: hent markers ----------------------------------------------
   useEffect(() => {
@@ -274,6 +302,7 @@ export const Map = ({
         )}
 
         <MarkerClusterGroup
+          key={selectedEquipmentId ?? "none"}
           chunkedLoading
           showCoverageOnHover={false}
           spiderfyOnMaxZoom={false}
@@ -324,7 +353,11 @@ export const Map = ({
             <Marker
               key={marker.id}
               position={[marker.lat, marker.lng]}
-              icon={activeMarkerId === marker.id ? ICON_ACTIVE : ICON_IDLE}
+              icon={
+                selectedEquipmentId === marker.id
+                  ? ICON_ACTIVE
+                  : ICON_IDLE
+              }
               ref={(ref) => {
                 if (ref) markerDataRef.current.set(ref, marker);
               }}
