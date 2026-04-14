@@ -1,9 +1,4 @@
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  GeoJSON,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, GeoJSON } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { useState, useRef, useEffect, use } from "react";
 import type { Feature, Point, LineString } from "geojson";
@@ -58,7 +53,7 @@ const createEquipmentIcon = (active: boolean = false) =>
     iconAnchor: [8, 8],
   });
 
-const createCustomClusterIcon = (cluster: any) => 
+const createCustomClusterIcon = (cluster: any) =>
   L.divIcon({
     className: "marker-cluster marker-cluster-custom",
     html: `
@@ -81,10 +76,8 @@ export const Map = ({ filters, coordinates }: MapProps) => {
 
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
-  
-  const clusterKey = markers
-    .map((m) => `${m.id}:${m.lat}:${m.lng}`)
-    .join("|");
+
+  const clusterKey = markers.map((m) => `${m.id}:${m.lat}:${m.lng}`).join("|");
 
   const [route, setRoute] = useState<LineString>({
     type: "LineString",
@@ -191,12 +184,20 @@ export const Map = ({ filters, coordinates }: MapProps) => {
         eventHandlers={{
           clustermouseover: (e: any) => {
             const cluster = e.layer;
-            const childMarkers = cluster.getAllChildMarkers() as MarkerWithProperties[];
-            
+            const childMarkers =
+              cluster.getAllChildMarkers() as MarkerWithProperties[];
+
             const items = childMarkers
-              .map((m) => (m.options as L.MarkerOptions & { equipmentData?: EquipmentMarker }).equipmentData)
+              .map(
+                (m) =>
+                  (
+                    m.options as L.MarkerOptions & {
+                      equipmentData?: EquipmentMarker;
+                    }
+                  ).equipmentData,
+              )
               .filter((data): data is EquipmentMarker => Boolean(data));
-            
+
             if (items.length === 0) return;
 
             const html = `
@@ -232,53 +233,52 @@ export const Map = ({ filters, coordinates }: MapProps) => {
           },
         }}
       >
-      
-      {markers.map((marker) => (
-        <Marker
-          key={`${marker.id}:${marker.lat}:${marker.lng}`}
-          position={[marker.lat, marker.lng]}
-          icon ={createEquipmentIcon(activeMarkerId === marker.id)}
-          ref={(ref) => {
-            if (ref) {
-              (ref as MarkerWithProperties).options.equipmentData = marker;
-            }
-          }}
-          eventHandlers={{
-            // TODO: Add click handler to open a sidebar with more details about the equipment
-            // click: () => {
-            //   setActiveMarkerId((prev) => (prev === marker.id ? null : marker.id));
-            // },
-              
-            mouseover: (e) => {
-              const markerInstance = e.target as MarkerWithProperties;
+        {markers.map((marker) => (
+          <Marker
+            key={`${marker.id}:${marker.lat}:${marker.lng}`}
+            position={[marker.lat, marker.lng]}
+            icon={createEquipmentIcon(activeMarkerId === marker.id)}
+            ref={(ref) => {
+              if (ref) {
+                (ref as MarkerWithProperties).options.equipmentData = marker;
+              }
+            }}
+            eventHandlers={{
+              // TODO: Add click handler to open a sidebar with more details about the equipment
+              // click: () => {
+              //   setActiveMarkerId((prev) => (prev === marker.id ? null : marker.id));
+              // },
 
-              markerInstance.bindTooltip(
-                `
+              mouseover: (e) => {
+                const markerInstance = e.target as MarkerWithProperties;
+
+                markerInstance.bindTooltip(
+                  `
                   <div class="min-w-32">
                     <div class="rounded px-2 py-1 text-sm">
                       ${marker.name}
                     </div>
                   </div>
                 `,
-                {
-                  direction: "top",
-                  offset: [0, -10],
-                  opacity: 1,
-                  sticky: false,
-                },
-              );
+                  {
+                    direction: "top",
+                    offset: [0, -10],
+                    opacity: 1,
+                    sticky: false,
+                  },
+                );
 
-              markerInstance.openTooltip();
-            },
+                markerInstance.openTooltip();
+              },
 
-            mouseout: (e) => {
-              const markerInstance = e.target as MarkerWithProperties;
-              markerInstance.closeTooltip();
-              markerInstance.unbindTooltip();
-            },
-          }}
-        />
-      ))}
+              mouseout: (e) => {
+                const markerInstance = e.target as MarkerWithProperties;
+                markerInstance.closeTooltip();
+                markerInstance.unbindTooltip();
+              },
+            }}
+          />
+        ))}
       </MarkerClusterGroup>
       <UserLocationMarker />
     </MapContainer>

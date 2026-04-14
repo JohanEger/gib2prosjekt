@@ -2,8 +2,6 @@ import * as React from "react";
 import { Box, Typography, Select, MenuItem, Button } from "@mui/material";
 import type { DateValue } from "react-aria-components";
 import { useEffect, useState } from "react";
-import { fetchUserId } from "@/hooks/fetchUserId";
-import { useAuth } from "@/hooks/useAuth";
 import AddressSearch from "./calendar/AddressSearchBox";
 import { useBookings } from "@/hooks/useBookings";
 

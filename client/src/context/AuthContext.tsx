@@ -1,11 +1,8 @@
-import {
-  useState,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { AuthContext, type User } from "./authContextValue";
 
-const API_BASE = import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+const API_BASE =
+  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -95,7 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
