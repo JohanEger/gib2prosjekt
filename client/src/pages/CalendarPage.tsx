@@ -16,6 +16,8 @@ interface Booking {
   id: string;
   equipmentId: string;
   userId: string;
+  username: string;
+  email: string;
   start_time: Date;
   end_time: Date;
   latitude: number;
@@ -104,7 +106,7 @@ export const CalendarPage = () => {
 
   const handleDateClick = async (date: DateValue) => {
     try {
-      const iso = `${focusedDate.year}-${focusedDate.month.toString().padStart(2, "0")}-${focusedDate.day.toString().padStart(2, "0")}T00:00:00`;
+      const iso = `${focusedDate.year}-${date.month.toString().padStart(2, "0")}-${date.day.toString().padStart(2, "0")}T00:00:00`;
 
       console.log("FETCHING booking for:", iso);
 
@@ -136,13 +138,15 @@ export const CalendarPage = () => {
         id: data.id,
         equipmentId: data.equipment_id,
         userId: data.user_id,
+
         start_time: new Date(data.start_time),
         end_time: new Date(data.end_time),
         latitude: data.latitude,
         longitude: data.longitude,
         createdAt: new Date(data.created_at),
+        username: data.user.name,
+        email: data.user.email,
       };
-
       setSelectedBooking(parsedBooking);
     } catch (err) {
       console.error("FETCH FAILED:", err);
@@ -172,6 +176,10 @@ export const CalendarPage = () => {
                       <Typography>
                         End: {selectedBooking.end_time.toDateString()}
                       </Typography>
+                      <Typography>
+                        Bruker: {selectedBooking.username}
+                      </Typography>
+                      <Typography>Emal: {selectedBooking.email}</Typography>
                     </>
                   ) : (
                     <Typography>Ingen booking valgt</Typography>
@@ -180,9 +188,7 @@ export const CalendarPage = () => {
               )}
             </Box>
 
-            {/* RIGHT PANEL */}
             <Box sx={{ flex: 1 }}>
-              {/* MODE SWITCH */}
               <Box
                 sx={{
                   display: "flex",
@@ -233,12 +239,14 @@ export const CalendarPage = () => {
                 </>
               )}
 
-              {/* VIEW MODE */}
               {mode === "view" && (
                 <BookedDatesCalendar
                   focusedValue={focusedDate}
                   isDateBooked={(date) => isDateBooked(date, bookings)}
-                  onBookedDateClick={(date) => handleDateClick(date)}
+                  onBookedDateClick={(date) => {
+                    console.log(date);
+                    handleDateClick(date);
+                  }}
                 />
               )}
             </Box>

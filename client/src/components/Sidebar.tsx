@@ -43,17 +43,6 @@ type Coordinates = {
   lng: number;
 };
 
-type Equipment = {
-  id: string;
-  name: string;
-  description: string;
-  type_of_equipment: string;
-  owner_id: string;
-  lat: number;
-  lng: number;
-  available?: boolean;
-};
-
 interface SidebarProps {
   filters: EquipmentFilters;
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
@@ -130,7 +119,6 @@ export const Sidebar = ({
     }
   };
 
-  // 🔹 Handlers
   const handleChangeCommittee = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     setFilters((prev) => ({
