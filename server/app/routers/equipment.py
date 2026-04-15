@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from app.database import get_database
-from app.services.equipment_service import equipment_for_sidebar, get_equipment_popup
-from app.schemas.equipment import EquipmentFilter, EquipmentSchema
+from app.services.equipment_service import equipment_for_sidebar, get_equipment_popup, register_new_equipment
+from app.schemas.equipment import EquipmentFilter, EquipmentSchema, NewEquipment
 from typing import List
 from app.dependencies import get_current_user
 from uuid import UUID
@@ -43,3 +43,11 @@ async def get_equipment_popup_route(
 
     return equipment   
 
+@router.post("/register_equipment", response_model=NewEquipment)
+async def create_equipment(
+    new_equipment: NewEquipment,
+    session = Depends(get_database),
+):
+    equipment = await register_new_equipment(session, new_equipment)
+
+    return equipment

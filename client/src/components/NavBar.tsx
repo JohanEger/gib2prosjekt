@@ -11,6 +11,14 @@ export const NavBar = () => {
           Hjem
         </Link>
       </div>
+      <div className="flex items-center space-x-6">
+        <Link
+          to="/registerequipment"
+          className="hover:text-gray-400 transition"
+        >
+          Registrer utstyr
+        </Link>
+      </div>
 
       <div className="flex items-center space-x-4">
         {currentUser && (

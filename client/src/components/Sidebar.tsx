@@ -65,7 +65,9 @@ interface SidebarProps {
   activeEquipment: Equipment | null;
   setActiveEquipment: React.Dispatch<React.SetStateAction<Equipment | null>>;
   selectedClusterEquipmentIds: string[] | null;
-  setSelectedClusterEquipmentIds: React.Dispatch<React.SetStateAction<string[] | null>>;
+  setSelectedClusterEquipmentIds: React.Dispatch<
+    React.SetStateAction<string[] | null>
+  >;
 }
 
 export const Sidebar = ({
@@ -85,7 +87,9 @@ export const Sidebar = ({
   const [open, setOpen] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
 
-  const equipmentTypes = Array.from(new Set(equipment.map((eq) => eq.type_of_equipment)));
+  const equipmentTypes = Array.from(
+    new Set(equipment.map((eq) => eq.type_of_equipment)),
+  );
 
   const { latitude, longitude } = useGeolocation();
 
@@ -188,7 +192,7 @@ export const Sidebar = ({
     setSelectedClusterEquipmentIds(null);
   };
 
-  const visibleEquipment = 
+  const visibleEquipment =
     selectedClusterEquipmentIds === null
       ? equipment
       : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));

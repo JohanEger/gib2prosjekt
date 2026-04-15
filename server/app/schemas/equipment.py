@@ -20,3 +20,11 @@ class  EquipmentFilter(BaseModel):
     available: bool | None = None
     latitude: float | None = None
     longitude: float | None = None  
+
+class NewEquipment(BaseModel):
+    name: str
+    description: str
+    committee: str
+    type: str
+    latitude: float
+    longitude: float
