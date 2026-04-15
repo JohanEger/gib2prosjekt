@@ -25,6 +25,7 @@ import type { RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { API_BASE } from "../apiBase";
+import type { LogPosition } from "./LogMapLayer";
 
 const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
 
@@ -67,6 +68,12 @@ interface SidebarProps {
   setSelectedEquipmentId: React.Dispatch<React.SetStateAction<string | null>>;
   selectedEquipmentId: string | null;
   clearSelection: () => void;
+
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onShowLog: (equipmentId: string) => Promise<void>;
+  setLogPositions: React.Dispatch<React.SetStateAction<LogPosition[]>>;
+
+
 }
 
 export const Sidebar = ({
@@ -79,6 +86,10 @@ export const Sidebar = ({
   routePanel,
   setSelectedEquipmentId,
   selectedEquipmentId,
+  setShowLogMode,
+  onShowLog,
+  setLogPositions,
+  clearSelection
 }: SidebarProps) => {
   const [equipment, setEquipment] = useState<any[]>([]);
   const [open, setOpen] = useState(true);
@@ -215,7 +226,7 @@ export const Sidebar = ({
               onClick={() => {
                 if (selectedEquipmentId === item.id) {
                   setSelectedEquipmentId(null);
-                  setActiveEquipment(null); 
+                  setActiveEquipment(null);
                   SetFindEquipment(null);
                 } else {
                   setSelectedEquipmentId(item.id);
@@ -277,6 +288,10 @@ export const Sidebar = ({
               findEquipment.lat === activeEquipment.lat &&
               findEquipment.lng === activeEquipment.lng
             }
+            setShowLogMode={setShowLogMode}
+            onShowLog={onShowLog}
+            setLogPositions={setLogPositions}
+            clearSelection={clearSelection}
           />
         )}
       </div>

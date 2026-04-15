@@ -23,6 +23,8 @@ import type { EquipmentFilters } from "../types/equipmentFilters";
 import { useGeolocation } from "../hooks/useGeolocation";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import type { LogPosition } from "../types/logPositions";
+import { LogMapLayer } from "./LogMapLayer";
 
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
@@ -52,6 +54,10 @@ interface MapProps {
   travelMode: RouteTravelMode;
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
   selectedEquipmentId: string | null;
+  logPositions: { lat: number; lng: number; created_at: string }[];
+  setLogPositions: React.Dispatch<React.SetStateAction<LogPosition[]>>;
+  showLogMode: boolean;
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface MarkerClusterLike extends L.Layer {
@@ -123,6 +129,9 @@ export const Map = ({
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
+  const [showLogMode, setShowLogMode] = useState(false);
+  const [fiveLatestID, setFiveLatestID] = useState<string | null>()
+
   const isClusterSelected = (cluster: MarkerClusterLike) => {
     return cluster.getAllChildMarkers().some((m) => {
       const data = markerDataRef.current.get(m);
@@ -151,7 +160,7 @@ export const Map = ({
   };
 
 
-  // --- Effect 1: hent markers ----------------------------------------------
+
   useEffect(() => {
     const ac = new AbortController();
 
@@ -206,6 +215,23 @@ export const Map = ({
     latitude,
     longitude,
   ]);
+
+
+
+  const fetchLog = async (equipmentId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/booking/log/${equipmentId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      const data = await res.json();
+      setLogPositions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // --- Effect 2: hent rute --------------------------------------------------
   useEffect(() => {
@@ -276,6 +302,16 @@ export const Map = ({
     return () => ac.abort();
   }, [coordinates, latitude, longitude, travelMode, onRoutePanelChange]);
 
+  // --- Log ------------------------------------------------------------------
+
+  type Props = {
+    logPositions: LogPosition[];
+  };
+
+
+  const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
+
+
   // --- Render --------------------------------------------------------------
 
   return (
@@ -301,6 +337,7 @@ export const Map = ({
           />
         )}
 
+
         <MarkerClusterGroup
           key={selectedEquipmentId ?? "none"}
           chunkedLoading
@@ -324,11 +361,11 @@ export const Map = ({
                 <div class="min-w-52">
                   <ul class="space-y-1 text-sm">
                     ${items
-                      .map(
-                        (item) =>
-                          `<li class="rounded px-2 py-1">${item.name}</li>`,
-                      )
-                      .join("")}
+                  .map(
+                    (item) =>
+                      `<li class="rounded px-2 py-1">${item.name}</li>`,
+                  )
+                  .join("")}
                   </ul>
                 </div>
               `;
@@ -349,34 +386,43 @@ export const Map = ({
             },
           }}
         >
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={[marker.lat, marker.lng]}
-              icon={
-                selectedEquipmentId === marker.id
-                  ? ICON_ACTIVE
-                  : ICON_IDLE
-              }
-              ref={(ref) => {
-                if (ref) markerDataRef.current.set(ref, marker);
-              }}
-              eventHandlers={{
-                click: () => {
-                  setActiveMarkerId((prev) =>
-                    prev === marker.id ? null : marker.id,
-                  );
-                },
-              }}
-            >
-              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-                <div className="min-w-32 px-2 py-1 text-sm">{marker.name}</div>
-              </Tooltip>
-            </Marker>
-          ))}
+
+          {!showLogMode &&
+            markers.map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={
+                  selectedEquipmentId === marker.id
+                    ? ICON_ACTIVE
+                    : ICON_IDLE
+                }
+                ref={(ref) => {
+                  if (ref) markerDataRef.current.set(ref, marker);
+                }}
+                eventHandlers={{
+                  click: () => {
+                    setActiveMarkerId((prev) =>
+                      prev === marker.id ? null : marker.id,
+                    );
+                    fetchLog(marker.id);
+                  },
+                }}
+              >
+
+                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                  <div className="min-w-32 px-2 py-1 text-sm">{marker.name}</div>
+                </Tooltip>
+              </Marker>
+            ))}
         </MarkerClusterGroup>
 
+        {showLogMode && (
+          <LogMapLayer logPositions={logPositions} />
+        )}
+
         <UserLocationMarker />
+
       </MapContainer>
     </div>
   );

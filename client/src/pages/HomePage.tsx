@@ -5,6 +5,8 @@ import type { RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { useState, type SetStateAction } from "react";
 import type { EquipmentFilters } from "../types/equipmentFilters";
+import type { LogPosition } from "../types/logPositions";
+import { LogMapLayer } from "@/components/LogMapLayer";
 
 
 
@@ -18,24 +20,54 @@ export const HomePage = () => {
     available: false,
   });
 
-  const clearSelection = () => {
-    setSelectedEquipmentId(null);
-    setFindEquipment(null);
-  };
-
-
-  type Coordinates = {
-    lat: number;
-    lng: number;
-  };
-
   const [findEquipment, setFindEquipment] = useState<Coordinates | null>(null);
   const [travelMode, setTravelMode] = useState<RouteTravelMode>("walk");
   const [routePanel, setRoutePanel] = useState<RoutePanelState>({
     status: "idle",
   });
 
-  
+  const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
+  const [showLogMode, setShowLogMode] = useState(false);
+
+
+  const clearSelection = () => {
+    setSelectedEquipmentId(null);
+    setFindEquipment(null);
+  };
+
+  type Coordinates = {
+    lat: number;
+    lng: number;
+  };
+
+const API_BASE = "http://localhost:5001";
+
+const handleShowLog = async (equipmentId: string) => {
+  console.log("HENTER LOGG FOR:", equipmentId);
+
+  setShowLogMode(true);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_BASE}/booking/log/${equipmentId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    console.log("LOGG FRA API:", data);
+
+    setLogPositions(data);
+  } catch (err) {
+    console.error("Feil ved henting av logg:", err);
+  }
+};
+
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <NavBar />
@@ -49,15 +81,55 @@ export const HomePage = () => {
         routePanel={routePanel}
         setSelectedEquipmentId={setSelectedEquipmentId}
         selectedEquipmentId={selectedEquipmentId}
-        clearSelection={clearSelection} 
-         />
+        clearSelection={clearSelection}
+        setShowLogMode={setShowLogMode}
+        onShowLog={handleShowLog}
+        setLogPositions={setLogPositions}
+      />
+
       <Map
         filters={filters}
         coordinates={findEquipment}
         travelMode={travelMode}
         onRoutePanelChange={setRoutePanel}
         selectedEquipmentId={selectedEquipmentId}
+        logPositions={logPositions}
+        setLogPositions={setLogPositions}
+        showLogMode={showLogMode}
+        setShowLogMode={setShowLogMode}
+        
       />
+
+{/* Må få fiksa på kartet i stedet for liste... Men er dritvanskelig! */}
+      {showLogMode && (
+  <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-h-[80vh] overflow-y-auto w-[400px]">
+      <h2 className="text-xl font-bold mb-4">Siste posisjoner</h2>
+
+      {logPositions.length === 0 && (
+        <p>Ingen logg funnet.</p>
+      )}
+
+      <ul className="space-y-3">
+        {logPositions.map((p, i) => (
+          <li key={i} className="border p-3 rounded">
+            <div><strong>Lat:</strong> {p.lat}</div>
+            <div><strong>Lng:</strong> {p.lng}</div>
+            <div><strong>Tid:</strong> {new Date(p.created_at).toLocaleString()}</div>
+          </li>
+        ))}
+      </ul>
+
+      <button
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+        onClick={() => setShowLogMode(false)}
+      >
+        Lukk
+      </button>
+    </div>
+  </div>
+)}
+{/* Denne delen over er listen som kommer */}
     </div>
   );
 };
