@@ -1,7 +1,8 @@
-﻿FROM node:20-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 
-ARG VITE_BACKEND_BASE_URL
+# Standard når compose ikke sender build-arg (tom streng i Vite gir feil fetch-URL).
+ARG VITE_BACKEND_BASE_URL=http://localhost:5001
 ENV VITE_BACKEND_BASE_URL=$VITE_BACKEND_BASE_URL
 
 COPY package*.json ./

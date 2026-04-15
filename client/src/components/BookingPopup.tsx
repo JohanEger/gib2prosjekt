@@ -4,6 +4,19 @@ import type { DateValue } from "react-aria-components";
 import { useEffect, useState } from "react";
 import AddressSearch from "./calendar/AddressSearchBox";
 import { useBookings } from "@/hooks/useBookings";
+import { useNavigate } from "react-router-dom";
+import { API_BASE } from "@/apiBase";
+
+interface Booking {
+  id: string;
+  equipmentId: string;
+  userId: string;
+  start_time: Date;
+  end_time: Date;
+  latitude: number;
+  longitude: number;
+  createdAt: Date;
+}
 
 type BookingPopupProps = {
   open: boolean;
@@ -11,6 +24,7 @@ type BookingPopupProps = {
   startDate: DateValue;
   endDate: DateValue;
   equipmentId: string | undefined;
+  fetchBookings: () => Promise<void>;
 };
 
 type Coordinates = {
@@ -26,6 +40,9 @@ const hours = [
 function formatDate(d: DateValue) {
   return `${d.day.toString().padStart(2, "0")}.${d.month.toString().padStart(2, "0")}.${d.year}`;
 }
+function sleep(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 export default function BookingPopup({
   open,
@@ -33,13 +50,15 @@ export default function BookingPopup({
   startDate,
   endDate,
   equipmentId,
+  fetchBookings,
 }: BookingPopupProps) {
   const [startHour, setStartHour] = React.useState<string | "">("");
   const [endHour, setEndHour] = React.useState<string | "">("");
-  const [booking, setBooking] = useState<String | null>(null);
+  const [booking, setBooking] = useState<string | null>(null);
 
   const [Coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const { createBooking } = useBookings();
+
   const handleBooking = async () => {
     if (!Coordinates || !equipmentId) return;
 
@@ -54,10 +73,14 @@ export default function BookingPopup({
     try {
       const booked = await createBooking(newBooking);
       setBooking(booked);
+      await fetchBookings();
+      await sleep(2000);
+      await window.location.reload();
     } catch (err) {
       console.error(err);
     }
   };
+
   if (!open) return null;
 
   const startNumber =

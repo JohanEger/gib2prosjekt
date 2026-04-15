@@ -1,8 +1,10 @@
-import { useState, useEffect, type ReactNode } from "react";
+import {
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { API_BASE } from "../apiBase";
 import { AuthContext, type User } from "./authContextValue";
-
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

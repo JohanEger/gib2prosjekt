@@ -19,10 +19,10 @@ import {
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
 import type { EquipmentFilters } from "../types/equipmentFilters";
+import type { RouteTravelMode } from "../types/routeTravelMode";
+import type { RoutePanelState } from "../types/routePanelState";
 import { useGeolocation } from "../hooks/useGeolocation";
-
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+import { API_BASE } from "../apiBase";
 
 const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
 
@@ -43,21 +43,49 @@ type Coordinates = {
   lng: number;
 };
 
+type Equipment = {
+  id: string;
+  name: string;
+  description: string;
+  type_of_equipment: string;
+  owner_id: string;
+  lat: number;
+  lng: number;
+  booked: boolean;
+};
+
 interface SidebarProps {
   filters: EquipmentFilters;
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
+  findEquipment: Coordinates | null;
+  travelMode: RouteTravelMode;
+  setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
+  routePanel: RoutePanelState;
+  activeEquipment: Equipment | null;
+  setActiveEquipment: React.Dispatch<React.SetStateAction<Equipment | null>>;
+  selectedClusterEquipmentIds: string[] | null;
+  setSelectedClusterEquipmentIds: React.Dispatch<React.SetStateAction<string[] | null>>;
 }
 
 export const Sidebar = ({
   filters,
   setFilters,
   SetFindEquipment,
+  findEquipment,
+  travelMode,
+  setTravelMode,
+  routePanel,
+  activeEquipment,
+  setActiveEquipment,
+  selectedClusterEquipmentIds,
+  setSelectedClusterEquipmentIds,
 }: SidebarProps) => {
-  const [equipment, setEquipment] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [open, setOpen] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
-  const [activeEquipment, setActiveEquipment] = useState<any | null>(null);
+
+  const equipmentTypes = Array.from(new Set(equipment.map((eq) => eq.type_of_equipment)));
 
   const { latitude, longitude } = useGeolocation();
 
@@ -104,7 +132,7 @@ export const Sidebar = ({
     loadEquipment();
   }, [filters, latitude, longitude]);
 
-  const getEquipment = async (id: number) => {
+  const getEquipment = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
 
@@ -157,7 +185,13 @@ export const Sidebar = ({
       typeOfEquipment: "",
       available: false,
     });
+    setSelectedClusterEquipmentIds(null);
   };
+
+  const visibleEquipment = 
+    selectedClusterEquipmentIds === null
+      ? equipment
+      : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
 
   return (
     <>
@@ -174,7 +208,7 @@ export const Sidebar = ({
         </Box>
 
         <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
-          {equipment.map((item) => (
+          {visibleEquipment.map((item) => (
             <Box
               sx={{ borderRadius: 4, bgcolor: "white" }}
               key={item.id}
@@ -220,6 +254,14 @@ export const Sidebar = ({
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
             SetFindEquipment={SetFindEquipment}
+            travelMode={travelMode}
+            setTravelMode={setTravelMode}
+            routePanel={routePanel}
+            isRouteTarget={
+              findEquipment !== null &&
+              findEquipment.lat === activeEquipment.lat &&
+              findEquipment.lng === activeEquipment.lng
+            }
           />
         )}
       </div>
@@ -262,12 +304,29 @@ export const Sidebar = ({
             />
           </Box>
 
-          <TextField
-            label="Type utstyr"
-            value={filters.typeOfEquipment}
-            onChange={handleTypeChange}
-            size="small"
-          />
+          <FormControl sx={{ width: 200 }}>
+            <InputLabel>Type utstyr</InputLabel>
+            <Select
+              value={filters.typeOfEquipment}
+              input={<OutlinedInput label="Type utstyr" />}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  typeOfEquipment: e.target.value,
+                }))
+              }
+            >
+              <MenuItem value="">
+                <em>Alle</em>
+              </MenuItem>
+
+              {equipmentTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <FormControlLabel
             control={

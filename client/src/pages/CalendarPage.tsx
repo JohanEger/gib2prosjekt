@@ -7,9 +7,8 @@ import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+import { useEffect, useState } from "react";
+import { API_BASE } from "@/apiBase";
 
 interface Booking {
   id: string;
@@ -67,34 +66,40 @@ export const CalendarPage = () => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 
-  useEffect(() => {
-    if (!id) return;
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/booking/booking_for_equipment/${id}`,
+      );
+      const data = await res.json();
+      const parsedBookings = data.map((b: any) => {
+        const start = new Date(b.start_time);
+        const end = new Date(b.end_time);
 
-    const fetchBookings = async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE}/booking/booking_for_equipment/${id}`,
-        );
-
-        const data = await res.json();
-
-        const parsed = data.map((b: any) => ({
+        return {
           id: b.id,
           equipmentId: b.equipment_id,
           userId: b.user_id,
-          start_time: new Date(b.start_time + "Z"),
-          end_time: new Date(b.end_time + "Z"),
+          start_time: new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate(),
+          ),
+          end_time: new Date(end.getFullYear(), end.getMonth(), end.getDate()),
           latitude: b.latitude,
           longitude: b.longitude,
           createdAt: new Date(b.created_at),
-        }));
+        };
+      });
 
-        setBookings(parsed);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+      setBookings(parsedBookings);
+      console.log(parsedBookings);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchBookings();
   }, [id]);
 
@@ -314,6 +319,7 @@ export const CalendarPage = () => {
           startDate={selectedRange.start}
           endDate={selectedRange.end}
           equipmentId={id}
+          fetchBookings={fetchBookings}
         />
       )}
     </>
