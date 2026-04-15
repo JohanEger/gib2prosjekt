@@ -26,12 +26,14 @@ async def seed_users():
             User(
                 username="test1",
                 email="test1@test.no",
+                phone_number = "12345678",
                 password_hash="...",
                 is_admin=False,
             ),
             User(
                 username="test2",
                 email="test2@test.no",
+                phone_number = "32412141",
                 password_hash="...",
                 is_admin=False,
             ),
@@ -137,7 +139,7 @@ async def seed_equipment():
                     description=desc,
                     type_of_equipment=type_eq,
                     owner_id=owner_id,
-                    current_pos=from_shape(Point(lon, lat), srid=4326)
+                    home_pos=from_shape(Point(lon, lat), srid=4326)
                 )
             )
 

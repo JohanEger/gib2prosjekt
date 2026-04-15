@@ -41,6 +41,7 @@ async def register(
         username=body.username,
         email=body.email,
         password_hash=hash_password(body.password),
+        phone_number = body.phone_number
     )
     db.add(user)
     await db.commit()

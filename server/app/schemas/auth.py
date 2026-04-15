@@ -7,6 +7,7 @@ class RegisterRequest(BaseModel):
     username: str
     email: EmailStr
     password: str
+    phone_number: str
 
 
 class LoginRequest(BaseModel):
@@ -23,6 +24,7 @@ class UserResponse(BaseModel):
     id: uuid.UUID
     username: str
     email: str
+    phone_number: str
     is_admin: bool
     created_at: datetime
 
