@@ -38,6 +38,8 @@ const MenuProps = {
   },
 };
 
+type FunctionalStatus = "functional" | "lost" | "broken";
+
 type Coordinates = {
   lat: number;
   lng: number;
@@ -52,6 +54,8 @@ type Equipment = {
   lat: number;
   lng: number;
   booked: boolean;
+  functional_status: FunctionalStatus;
+  functional_status_comment?: string | null;
 };
 
 interface SidebarProps {
@@ -251,6 +255,8 @@ export const Sidebar = ({
             lat={activeEquipment.lat}
             lng={activeEquipment.lng}
             description={activeEquipment.description}
+            functional_status={activeEquipment.functional_status}
+            functional_status_comment={activeEquipment.functional_status_comment}
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
             SetFindEquipment={SetFindEquipment}
