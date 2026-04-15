@@ -106,6 +106,8 @@ async def get_equipment_popup(session, equipment_id: uuid.UUID):
         Equipment.id,
         Equipment.name,
         Equipment.description,
+        Equipment.functional_status,
+        Equipment.functional_status_comment,
         func.ST_Y(location_geom).label("lat"),
         func.ST_X(location_geom).label("lng"),
     ).where(Equipment.id == equipment_id)
@@ -134,7 +136,33 @@ async def get_equipment_popup(session, equipment_id: uuid.UUID):
         "id": row.id,
         "name": row.name,
         "description": row.description,
+        "functional_status": row.functional_status.value,
+        "functional_status_comment": row.functional_status_comment,
         "lat": row.lat,
         "lng": row.lng,
         "booked": booked,
+    }
+
+async def update_equipment_status(
+    session,
+    equipment_id: uuid.UUID,
+    functional_status,
+    functional_status_comment: str | None,
+):
+    equipment = await session.get(Equipment, equipment_id)
+
+    if not equipment:
+        return None
+
+    equipment.functional_status = functional_status
+    equipment.functional_status_comment = functional_status_comment
+
+    await session.commit()
+    await session.refresh(equipment)
+
+    return {
+        "id": equipment.id,
+        "name": equipment.name,
+        "functional_status": equipment.functional_status.value,
+        "functional_status_comment": equipment.functional_status_comment,
     }

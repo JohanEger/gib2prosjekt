@@ -1,4 +1,4 @@
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, Divider } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
@@ -10,6 +10,8 @@ import { TravelModeSelector } from "./TravelModeSelector";
 import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { formatRouteDistance, formatRouteDuration } from "../utils/formatRoute";
+
+type FunctionalStatus = "functional" | "lost" | "broken";
 
 type Coordinates = {
   lat: number;
@@ -24,6 +26,8 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  functional_status: FunctionalStatus;
+  functional_status_comment?: string | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
@@ -40,6 +44,8 @@ export const EquipmentPopUp = ({
   id,
   func,
   booked,
+  functional_status,
+  functional_status_comment,
   SetFindEquipment,
   travelMode,
   setTravelMode,
@@ -48,6 +54,11 @@ export const EquipmentPopUp = ({
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const statusLabel: Record<FunctionalStatus, string> = {
+  functional: "Alt i orden",
+  broken: "Ødelagt",
+  lost: "Tapt",
+  };
 
   useEffect(() => {
     async function loadAddress() {
@@ -118,12 +129,23 @@ export const EquipmentPopUp = ({
       <Link
         to={`/calendar/${id}/${name}`}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-  hover:from-blue-600 hover:to-indigo-700
-  text-white font-semibold rounded-xl shadow-lg
-  transition-all duration-300 hover:scale-105 hover:shadow-xl"
+        hover:from-blue-600 hover:to-indigo-700
+        text-white font-semibold rounded-xl shadow-lg
+        transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
         Book utstyr
       </Link>
+
+      <Link
+          to={`/reportEquipment/${id}/${name}`}
+          className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+          hover:from-blue-600 hover:to-indigo-700
+          text-white font-semibold rounded-xl shadow-lg
+          transition-all duration-300 hover:scale-105 hover:shadow-xl"
+        >
+        Meld tapt/ødelagt
+      </Link>
+
       <Button
         onClick={() => SetFindEquipment({ lat, lng })}
         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
@@ -205,6 +227,39 @@ export const EquipmentPopUp = ({
           </p>
         )}
       </div>
+
+      <div className="mt-auto w-full max-w-[22rem] px-4 pb-8">
+        <div className="rounded-xl border border-zinc-300 bg-white p-4 text-center shadow-sm">
+          <div className="space-y-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Status
+              </div>
+              <div
+                className={`mt-1 text-sm font-semibold ${
+                  functional_status === "functional"
+                    ? "text-green-500"
+                    : functional_status === "broken"
+                      ? "text-red-500"
+                      : "text-amber-500"
+                }`}
+              >
+                {statusLabel[functional_status]}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Kommentar
+              </div>
+              <div className="mt-1 text-sm text-zinc-700">
+                {functional_status_comment || "Ingen kommentar"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
     </Paper>
   );
 };
