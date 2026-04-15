@@ -51,7 +51,7 @@ type Equipment = {
   owner_id: string;
   lat: number;
   lng: number;
-  available?: boolean;
+  booked: boolean;
 };
 
 interface SidebarProps {
@@ -62,6 +62,10 @@ interface SidebarProps {
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
   routePanel: RoutePanelState;
+  activeEquipment: Equipment | null;
+  setActiveEquipment: React.Dispatch<React.SetStateAction<Equipment | null>>;
+  selectedClusterEquipmentIds: string[] | null;
+  setSelectedClusterEquipmentIds: React.Dispatch<React.SetStateAction<string[] | null>>;
 }
 
 export const Sidebar = ({
@@ -72,11 +76,16 @@ export const Sidebar = ({
   travelMode,
   setTravelMode,
   routePanel,
+  activeEquipment,
+  setActiveEquipment,
+  selectedClusterEquipmentIds,
+  setSelectedClusterEquipmentIds,
 }: SidebarProps) => {
-  const [equipment, setEquipment] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [open, setOpen] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
-  const [activeEquipment, setActiveEquipment] = useState<any | null>(null);
+
+  const equipmentTypes = Array.from(new Set(equipment.map((eq) => eq.type_of_equipment)));
 
   const { latitude, longitude } = useGeolocation();
 
@@ -123,7 +132,7 @@ export const Sidebar = ({
     loadEquipment();
   }, [filters, latitude, longitude]);
 
-  const getEquipment = async (id: number) => {
+  const getEquipment = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
 
@@ -177,7 +186,13 @@ export const Sidebar = ({
       typeOfEquipment: "",
       available: false,
     });
+    setSelectedClusterEquipmentIds(null);
   };
+
+  const visibleEquipment = 
+    selectedClusterEquipmentIds === null
+      ? equipment
+      : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
 
   return (
     <>
@@ -194,7 +209,7 @@ export const Sidebar = ({
         </Box>
 
         <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
-          {equipment.map((item) => (
+          {visibleEquipment.map((item) => (
             <Box
               sx={{ borderRadius: 4, bgcolor: "white" }}
               key={item.id}
@@ -290,12 +305,29 @@ export const Sidebar = ({
             />
           </Box>
 
-          <TextField
-            label="Type utstyr"
-            value={filters.typeOfEquipment}
-            onChange={handleTypeChange}
-            size="small"
-          />
+          <FormControl sx={{ width: 200 }}>
+            <InputLabel>Type utstyr</InputLabel>
+            <Select
+              value={filters.typeOfEquipment}
+              input={<OutlinedInput label="Type utstyr" />}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  typeOfEquipment: e.target.value,
+                }))
+              }
+            >
+              <MenuItem value="">
+                <em>Alle</em>
+              </MenuItem>
+
+              {equipmentTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <FormControlLabel
             control={
