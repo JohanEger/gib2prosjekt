@@ -147,7 +147,6 @@ export const Sidebar = ({
     }
   };
 
-  // 🔹 Handlers
   const handleChangeCommittee = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     setFilters((prev) => ({

@@ -135,26 +135,38 @@ export function BookedDatesCalendar<T extends AriaDateValue>({
               date={date}
               className={composeRenderProps("", (_, renderProps) =>
                 cn(
-                  "relative flex size-9 items-center justify-center p-0 text-sm font-normal rounded-md ",
+                  "relative flex size-9 items-center justify-center p-0 text-sm font-normal rounded-md",
 
-                  // Skjul datoer utenfor måneden
                   renderProps.isOutsideMonth &&
                     "opacity-40 pointer-events-none",
 
-                  // Marker dagens dato svart
                   renderProps.date.compare(today(getLocalTimeZone())) === 0 &&
                     "bg-black text-white",
 
-                  // Booket dato
                   isDateBooked?.(renderProps.date as T) &&
                     "bg-red-600 text-white hover:bg-red-700 cursor-pointer",
 
-                  // Ikke-booket dato
                   !isDateBooked?.(renderProps.date as T) &&
                     "opacity-40 text-muted-foreground cursor-default",
                 ),
               )}
-            />
+            >
+              {(renderProps) => (
+                <div
+                  onClick={() => {
+                    if (
+                      isDateBooked?.(renderProps.date as T) &&
+                      onBookedDateClick
+                    ) {
+                      onBookedDateClick(renderProps.date as T);
+                    }
+                  }}
+                  className="w-full h-full flex items-center justify-center"
+                >
+                  {renderProps.formattedDate}
+                </div>
+              )}
+            </AriaCalendarCell>
           )}
         </CalendarGridBody>
       </CalendarGrid>

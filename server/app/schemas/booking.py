@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 import uuid
-
+from app.schemas.user import UserSchema
 class BookingSchema(BaseModel):
     id: uuid.UUID
     equipment_id: uuid.UUID
@@ -22,3 +22,12 @@ class BookingCreate(BaseModel):
     end_time: datetime
     latitude: float
     longitude: float
+
+class BookingWithUser(BaseModel):
+    id: uuid.UUID
+    start_time: datetime
+    end_time: datetime
+    user: UserSchema
+
+    class Config:
+        from_attributes = True
