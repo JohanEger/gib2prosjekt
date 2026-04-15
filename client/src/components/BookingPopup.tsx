@@ -220,7 +220,7 @@ export default function BookingPopup({
                 mt: 2,
               }}
             >
-              <Button onClick={onClose} variant="outlined" sx={{mr: 1}}>
+              <Button onClick={onClose} variant="outlined" sx={{ mr: 1 }}>
                 Lukk
               </Button>
               <Button

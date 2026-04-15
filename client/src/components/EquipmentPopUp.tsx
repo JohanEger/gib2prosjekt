@@ -41,7 +41,6 @@ type Props = {
   >;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   clearSelection: () => void;
-
 };
 
 export const EquipmentPopUp = ({
@@ -62,50 +61,58 @@ export const EquipmentPopUp = ({
   setSelectedEquipmentId,
   setLogPositions,
   setShowLogMode,
-  clearSelection
+  clearSelection,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [logError, setLogError] = useState<string | null>(null);
   const [logLoading, setLogLoading] = useState(false);
+  const [fiveLatestID, setFiveLatestID] = useState<string | null>(null);
 
   // --- Se fem siste posisjoner logg -------
   const API_BASE = "http://localhost:5001";
 
-  const handleShowLog = async (equipmentId: string) => {
-    setShowLogMode(true);
-    setLogLoading(true);
-    setLogError(null);
+  useEffect(() => {
+    if (!fiveLatestID) return; // viktig guard
 
-    try {
-      const token = localStorage.getItem("token");
+    const handleShowLog = async () => {
+      setShowLogMode(true);
+      setLogLoading(true);
+      setLogError(null);
 
-      const res = await fetch(
-        `${API_BASE}/booking/log/${equipmentId}`,
-        {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API_BASE}/booking/log/${fiveLatestID}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
         }
-      );
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        console.log(data);
+        setLogPositions(data);
+      } catch (err) {
+        console.error(err);
+        setLogError("Kunne ikke hente logg");
+      } finally {
+        setLogLoading(false);
       }
+    };
 
-      const data = await res.json();
-
-      setLogPositions(data);
-    } catch (err) {
-      console.error(err);
-      setLogError("Kunne ikke hente logg");
-    } finally {
-      setLogLoading(false);
-    }
-  };
+    handleShowLog();
+  }, [fiveLatestID, setLogPositions, setShowLogMode]);
 
   // ----
 
   const toggleRoute = () => {
-    if (findEquipment && findEquipment.lat === lat && findEquipment.lng === lng) {
+    if (
+      findEquipment &&
+      findEquipment.lat === lat &&
+      findEquipment.lng === lng
+    ) {
       SetFindEquipment(null); // skjul ruten
     } else {
       SetFindEquipment({ lat, lng }); // vis ruten
@@ -141,7 +148,6 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
-
   // Var i dev nedenfor: className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
 
   return (
@@ -157,7 +163,8 @@ export const EquipmentPopUp = ({
           clearSelection();
           onClose();
         }}
-        className="absolute top-4 left-50">
+        className="absolute top-4 left-50"
+      >
         <CloseIcon />
       </IconButton>
 
@@ -194,9 +201,13 @@ export const EquipmentPopUp = ({
       <Typography>{description}</Typography>
       <Button
         variant="text"
-        onClick={() => handleShowLog(id)}
+        onClick={() => setFiveLatestID(id)}
         className="underline italic cursor-pointer hover:text-blue-600 transition"
-        title="Trykk for å se siste 5 posisjoner"> Se posisjonslogg </Button>
+        title="Trykk for å se siste 5 posisjoner"
+      >
+        {" "}
+        Se posisjonslogg{" "}
+      </Button>
 
       <Link
         to={`/calendar/${id}/${name}`}
@@ -242,12 +253,12 @@ export const EquipmentPopUp = ({
 
             {(routePanel.status === "idle" ||
               routePanel.status === "loading") && (
-                <p className="text-sm font-medium text-sky-200/90">
-                  {routePanel.status === "loading"
-                    ? "Beregner rute…"
-                    : "Henter posisjon og rute…"}
-                </p>
-              )}
+              <p className="text-sm font-medium text-sky-200/90">
+                {routePanel.status === "loading"
+                  ? "Beregner rute…"
+                  : "Henter posisjon og rute…"}
+              </p>
+            )}
 
             {routePanel.status === "ready" && (
               <div className="grid grid-cols-2 gap-2">

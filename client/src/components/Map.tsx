@@ -17,7 +17,10 @@ import {
 import type { LineString } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
-import { ROUTE_LINE_STYLE, type RouteTravelMode } from "../types/routeTravelMode";
+import {
+  ROUTE_LINE_STYLE,
+  type RouteTravelMode,
+} from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import { useGeolocation } from "../hooks/useGeolocation";
@@ -55,7 +58,7 @@ interface MapProps {
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
   selectedEquipmentId: string | null;
   logPositions: { lat: number; lng: number; created_at: string }[];
-  setLogPositions: React.Dispatch<React.SetStateAction<LogPosition[]>>;
+  LogPositions: LogPosition[];
   showLogMode: boolean;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -81,8 +84,9 @@ const emptyLineString = (): LineString => ({
 const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
     className: "",
-    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${active ? "bg-green-700" : "bg-blue-600"
-      }"></div>`,
+    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${
+      active ? "bg-green-700" : "bg-blue-600"
+    }"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
@@ -119,6 +123,7 @@ export const Map = ({
   travelMode,
   onRoutePanelChange,
   selectedEquipmentId,
+  LogPositions,
 }: MapProps) => {
   const { latitude, longitude } = useGeolocation();
 
@@ -130,8 +135,7 @@ export const Map = ({
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
   const [showLogMode, setShowLogMode] = useState(false);
-  const [fiveLatestID, setFiveLatestID] = useState<string | null>()
-
+  console.log(LogPositions);
   const isClusterSelected = (cluster: MarkerClusterLike) => {
     return cluster.getAllChildMarkers().some((m) => {
       const data = markerDataRef.current.get(m);
@@ -158,8 +162,6 @@ export const Map = ({
       iconSize: L.point(40, 40, true),
     });
   };
-
-
 
   useEffect(() => {
     const ac = new AbortController();
@@ -188,10 +190,10 @@ export const Map = ({
         : {};
 
       try {
-        const res = await fetch(
-          `${API_BASE}/locations/?${params.toString()}`,
-          { headers, signal: ac.signal },
-        );
+        const res = await fetch(`${API_BASE}/locations/?${params.toString()}`, {
+          headers,
+          signal: ac.signal,
+        });
         if (!res.ok) {
           console.error("Failed to fetch locations:", res.status);
           return;
@@ -215,8 +217,6 @@ export const Map = ({
     latitude,
     longitude,
   ]);
-
-
 
   const fetchLog = async (equipmentId: string) => {
     try {
@@ -269,10 +269,7 @@ export const Map = ({
           }
           setRoute(emptyLineString());
           onRoutePanelChange({ status: "error" });
-        } else if (
-          data.coordinates.length === 0 ||
-          (data.meters ?? 0) <= 0
-        ) {
+        } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
           setRoute(emptyLineString());
           onRoutePanelChange({ status: "no_route" });
         } else {
@@ -308,9 +305,7 @@ export const Map = ({
     logPositions: LogPosition[];
   };
 
-
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
-
 
   // --- Render --------------------------------------------------------------
 
@@ -337,7 +332,6 @@ export const Map = ({
           />
         )}
 
-
         <MarkerClusterGroup
           key={selectedEquipmentId ?? "none"}
           chunkedLoading
@@ -361,11 +355,11 @@ export const Map = ({
                 <div class="min-w-52">
                   <ul class="space-y-1 text-sm">
                     ${items
-                  .map(
-                    (item) =>
-                      `<li class="rounded px-2 py-1">${item.name}</li>`,
-                  )
-                  .join("")}
+                      .map(
+                        (item) =>
+                          `<li class="rounded px-2 py-1">${item.name}</li>`,
+                      )
+                      .join("")}
                   </ul>
                 </div>
               `;
@@ -386,16 +380,13 @@ export const Map = ({
             },
           }}
         >
-
           {!showLogMode &&
             markers.map((marker) => (
               <Marker
                 key={marker.id}
                 position={[marker.lat, marker.lng]}
                 icon={
-                  selectedEquipmentId === marker.id
-                    ? ICON_ACTIVE
-                    : ICON_IDLE
+                  selectedEquipmentId === marker.id ? ICON_ACTIVE : ICON_IDLE
                 }
                 ref={(ref) => {
                   if (ref) markerDataRef.current.set(ref, marker);
@@ -409,20 +400,18 @@ export const Map = ({
                   },
                 }}
               >
-
                 <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-                  <div className="min-w-32 px-2 py-1 text-sm">{marker.name}</div>
+                  <div className="min-w-32 px-2 py-1 text-sm">
+                    {marker.name}
+                  </div>
                 </Tooltip>
               </Marker>
             ))}
         </MarkerClusterGroup>
 
-        {showLogMode && (
-          <LogMapLayer logPositions={logPositions} />
-        )}
+        <LogMapLayer logPositions={LogPositions} />
 
         <UserLocationMarker />
-
       </MapContainer>
     </div>
   );
