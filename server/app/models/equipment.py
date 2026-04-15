@@ -17,7 +17,7 @@ class Equipment(Base):
     type_of_equipment = mapped_column(String(50), nullable=False)
     owner_id : Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("group.id"), nullable=False) 
     bookable_by : Mapped[list["Group"]] = relationship("Group", secondary="equipment_group", back_populates="equipment")
-    current_pos = mapped_column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    home_pos = mapped_column(Geography(geometry_type='POINT', srid=4326), nullable=False)
     created_at = mapped_column(DateTime, default=datetime.utcnow)
     bookings : Mapped[list["Booking"]] = relationship("Booking", back_populates="equipment", cascade="all, delete-orphan")
     owner: Mapped["Group"] = relationship("Group", backref="owned_equipment", foreign_keys=[owner_id])
