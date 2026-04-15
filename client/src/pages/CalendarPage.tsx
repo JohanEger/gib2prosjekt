@@ -8,6 +8,7 @@ import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
 import { API_BASE } from "@/apiBase";
+import { useAuth } from "../hooks/useAuth";
 
 interface Booking {
   id: string;
