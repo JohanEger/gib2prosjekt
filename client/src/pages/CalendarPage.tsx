@@ -7,7 +7,6 @@ import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { API_BASE } from "@/apiBase";
 
 interface Booking {
