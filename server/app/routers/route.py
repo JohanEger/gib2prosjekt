@@ -4,6 +4,7 @@ import networkx as nx
 from fastapi import APIRouter, HTTPException
 
 from app.routing.pipeline import RouteMode, compute_shortest_path
+from app.services.entur import compute_bus_route
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/route", tags=["route"])
 
 
 @router.get("/")
-def get_route(
+async def get_route(
     start_lat: float,
     start_lng: float,
     end_lat: float,
@@ -25,6 +26,10 @@ def get_route(
         raise HTTPException(422, "Ugyldig lengdegrad")
 
     try:
+        if mode is RouteMode.bus:
+            return await compute_bus_route(
+                start_lat, start_lng, end_lat, end_lng
+            )
         return compute_shortest_path(
             start_lat, start_lng, end_lat, end_lng, mode=mode
         )

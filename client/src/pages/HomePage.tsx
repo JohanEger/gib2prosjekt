@@ -5,6 +5,7 @@ import type { RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { useState } from "react";
 import type { EquipmentFilters } from "../types/equipmentFilters";
+import type { Equipment } from "../types/equipment";
 
 export const HomePage = () => {
   const [filters, setFilters] = useState<EquipmentFilters>({
@@ -17,17 +18,6 @@ export const HomePage = () => {
   type Coordinates = {
     lat: number;
     lng: number;
-  };
-
-  type Equipment = {
-    id: string;
-    name: string;
-    description: string;
-    type_of_equipment: string;
-    owner_id: string;
-    lat: number;
-    lng: number;
-    booked: boolean;
   };
 
   const [findEquipment, setFindEquipment] = useState<Coordinates | null>(null);
