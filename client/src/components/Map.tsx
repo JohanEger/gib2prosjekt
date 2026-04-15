@@ -4,6 +4,7 @@ import {
   Marker,
   GeoJSON,
   Tooltip,
+  useMapEvents,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import {
@@ -13,6 +14,7 @@ import {
   startTransition,
   type Dispatch,
   type SetStateAction,
+  use,
 } from "react";
 import type { LineString } from "geojson";
 import L from "leaflet";
@@ -28,6 +30,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import MapControl from "./MapControl";
 
+
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
@@ -40,6 +43,17 @@ type EquipmentMarker = {
   lng: number;
 };
 
+export type Equipment = {
+  id: string;
+  name: string;
+  description: string;
+  type_of_equipment: string;
+  owner_id: string;
+  lat: number;
+  lng: number;
+  booked: boolean;
+};
+
 type Coordinates = {
   lat: number;
   lng: number;
@@ -50,11 +64,18 @@ type RouteResponse = LineString & {
   seconds?: number;
 };
 
+type ResetClusterFilterOnMapClickProps = {
+  onReset: () => void;
+};
+
 interface MapProps {
   filters: EquipmentFilters;
   coordinates: Coordinates | null;
   travelMode: RouteTravelMode;
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
+  activeEquipment: Equipment | null;
+  setActiveEquipment: Dispatch<SetStateAction<Equipment | null>>;
+  setSelectedClusterEquipmentIds: Dispatch<SetStateAction<string[] | null>>
 }
 
 interface MarkerClusterLike extends L.Layer {
@@ -74,6 +95,18 @@ const emptyLineString = (): LineString => ({
   type: "LineString",
   coordinates: [],
 });
+
+const ResetClusterFilterOnMapClick = ({
+  onReset,
+}: ResetClusterFilterOnMapClickProps) => {
+  useMapEvents({
+    click: () => {
+      onReset();
+    },
+  });
+
+  return null;
+};
 
 const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
@@ -116,17 +149,38 @@ export const Map = ({
   coordinates,
   travelMode,
   onRoutePanelChange,
+  activeEquipment,
+  setActiveEquipment,
+  setSelectedClusterEquipmentIds,
 }: MapProps) => {
   const { latitude, longitude } = useGeolocation();
 
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
   const [route, setRoute] = useState<LineString>(emptyLineString());
   const [routeVersion, setRouteVersion] = useState(0);
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
   const [mapType, setMapType] = useState<string>("alidade_smooth");
+
+  const getEquipment = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      const res = await fetch(`${API_BASE}/equipment/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        console.error("Failed to fetch equipment:", res.status);
+        return null;
+      }
+
+      const data: Equipment = await res.json();
+      setActiveEquipment(data);
+    } catch (err) {
+      console.error("Error fetching equipment:", err);
+    }
+  };
 
   // --- Effect 1: hent markers ----------------------------------------------
   useEffect(() => {
@@ -184,7 +238,16 @@ export const Map = ({
     longitude,
   ]);
 
-  // --- Effect 2: hent rute --------------------------------------------------
+  // --- Effect 2: fly til markerte koordinater --------------------------------------
+  useEffect(() => {
+    if (!activeEquipment || !mapRef.current) return;
+
+    mapRef.current.flyTo([activeEquipment.lat, activeEquipment.lng], 16, {
+      duration: 0.6,
+    });
+  }, [activeEquipment]);
+
+  // --- Effect 3: hent rute --------------------------------------------------
   useEffect(() => {
     const canRoute =
       coordinates !== null && latitude != null && longitude != null;
@@ -230,12 +293,19 @@ export const Map = ({
             meters: data.meters ?? 0,
             seconds: data.seconds ?? 0,
           });
+          if (mapRef.current && data.coordinates.length > 0) {
+            const LatLngs = data.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]);
+            const bounds = L.latLngBounds(LatLngs);
+
+            mapRef.current.fitBounds(bounds, { 
+              padding: [50, 50], 
+              animate: true,
+            });
+          }
         }
         setRouteVersion((v) => v + 1);
 
-        mapRef.current?.flyTo([coordinates.lat, coordinates.lng], 16, {
-          duration: 0.6,
-        });
+
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Error fetching route:", err);
@@ -267,6 +337,10 @@ export const Map = ({
         zoomControl={false}
         className="absolute inset-0 z-0"
       >
+        <ResetClusterFilterOnMapClick
+          onReset={() => setSelectedClusterEquipmentIds(null)}
+        />
+
         {mapType == "satellite" ? (
           <TileLayer
             attribution="© OpenStreetMap contributors © Stadia Maps © Esri"
@@ -336,21 +410,30 @@ export const Map = ({
               cluster.closeTooltip();
               cluster.unbindTooltip();
             },
+            clusterclick: (e: L.LeafletEvent) => {
+              const cluster = (e as unknown as { layer: MarkerClusterLike }).layer;
+              const children = cluster.getAllChildMarkers();
+
+              const items = children
+                .map((m) => markerDataRef.current.get(m))
+                .filter((d): d is EquipmentMarker => Boolean(d));
+
+              setSelectedClusterEquipmentIds(items.map((item) => item.id));
+            },
           }}
         >
           {markers.map((marker) => (
             <Marker
               key={marker.id}
               position={[marker.lat, marker.lng]}
-              icon={activeMarkerId === marker.id ? ICON_ACTIVE : ICON_IDLE}
+              icon={activeEquipment?.id === marker.id ? ICON_ACTIVE : ICON_IDLE}
               ref={(ref) => {
                 if (ref) markerDataRef.current.set(ref, marker);
               }}
               eventHandlers={{
                 click: () => {
-                  setActiveMarkerId((prev) =>
-                    prev === marker.id ? null : marker.id,
-                  );
+                  setSelectedClusterEquipmentIds(null);
+                  getEquipment(marker.id);
                 },
               }}
             >

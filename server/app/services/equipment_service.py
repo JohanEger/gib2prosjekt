@@ -1,3 +1,5 @@
+import uuid
+
 from app.models.booking import Booking
 from app.models.user import User
 from app.schemas.equipment import EquipmentFilter
@@ -67,7 +69,7 @@ async def equipment_for_sidebar(session, filter: EquipmentFilter):
         for row in rows
     ]
 
-async def get_equipment_popup(session, equipment_id: int):
+async def get_equipment_popup(session, equipment_id: uuid.UUID):
     stmt = select(
         Equipment.id,
         Equipment.name,
