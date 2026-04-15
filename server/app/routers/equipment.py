@@ -43,11 +43,12 @@ async def get_equipment_popup_route(
 
     return equipment   
 
-@router.post("/register_equipment", response_model=NewEquipment)
+from app.schemas.equipment import EquipmentResponse
+
+@router.post("/register_equipment", response_model=EquipmentResponse)
 async def create_equipment(
     new_equipment: NewEquipment,
     session = Depends(get_database),
 ):
     equipment = await register_new_equipment(session, new_equipment)
-
     return equipment

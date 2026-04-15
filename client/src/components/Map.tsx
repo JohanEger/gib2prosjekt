@@ -30,7 +30,6 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import MapControl from "./MapControl";
 
-
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
@@ -75,7 +74,7 @@ interface MapProps {
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
   activeEquipment: Equipment | null;
   setActiveEquipment: Dispatch<SetStateAction<Equipment | null>>;
-  setSelectedClusterEquipmentIds: Dispatch<SetStateAction<string[] | null>>
+  setSelectedClusterEquipmentIds: Dispatch<SetStateAction<string[] | null>>;
 }
 
 interface MarkerClusterLike extends L.Layer {
@@ -166,7 +165,7 @@ export const Map = ({
   const getEquipment = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       const res = await fetch(`${API_BASE}/equipment/${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -294,18 +293,18 @@ export const Map = ({
             seconds: data.seconds ?? 0,
           });
           if (mapRef.current && data.coordinates.length > 0) {
-            const LatLngs = data.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]);
+            const LatLngs = data.coordinates.map(
+              ([lng, lat]) => [lat, lng] as [number, number],
+            );
             const bounds = L.latLngBounds(LatLngs);
 
-            mapRef.current.fitBounds(bounds, { 
-              padding: [50, 50], 
+            mapRef.current.fitBounds(bounds, {
+              padding: [50, 50],
               animate: true,
             });
           }
         }
         setRouteVersion((v) => v + 1);
-
-
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Error fetching route:", err);
@@ -411,7 +410,8 @@ export const Map = ({
               cluster.unbindTooltip();
             },
             clusterclick: (e: L.LeafletEvent) => {
-              const cluster = (e as unknown as { layer: MarkerClusterLike }).layer;
+              const cluster = (e as unknown as { layer: MarkerClusterLike })
+                .layer;
               const children = cluster.getAllChildMarkers();
 
               const items = children

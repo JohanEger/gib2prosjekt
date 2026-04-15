@@ -28,3 +28,14 @@ class NewEquipment(BaseModel):
     type: str
     latitude: float
     longitude: float
+
+from pydantic import BaseModel
+from uuid import UUID
+
+class EquipmentResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str
+
+    class Config:
+        from_attributes = True  # viktig!

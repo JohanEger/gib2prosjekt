@@ -8,13 +8,16 @@ import {
   Typography,
   Button,
   Box,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
 import { useState } from "react";
 import { NavBar } from "@/components/NavBar";
-import { Nav } from "react-bootstrap";
-import AddressSearch from "@/components/calendar/AddressSearchBox";
 
+import AddressSearch from "@/components/calendar/AddressSearchBox";
+import { API_BASE } from "@/apiBase";
+import { useNavigate } from "react-router-dom";
 type Coordinates = {
   lat: number;
   lng: number;
@@ -28,10 +31,14 @@ export default function RegisterEquipment() {
   const [description, setDescription] = useState("");
   const [committee, setCommittee] = useState("");
   const [coords, setCoords] = useState<Coordinates | null>(null);
+  const [registeredName, setRegisteredName] = useState<String>("");
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const handleChangeCommittee = (event: SelectChangeEvent) => {
     setCommittee(event.target.value);
   };
+  const navigate = useNavigate();
+
   const isFormValid =
     name.trim() !== "" &&
     type.trim() !== "" &&
@@ -39,20 +46,58 @@ export default function RegisterEquipment() {
     committee !== "" &&
     coords !== null;
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const register = {
-      equipmentName: name,
-      equipmentType: type,
-      equipmentDescription: description,
-      equipmentCommitte: committee,
+      name,
+      description,
+      type,
+      committee,
       latitude: coords?.lat,
       longitude: coords?.lng,
     };
+    try {
+      const res = await fetch(`${API_BASE}/equipment/register_equipment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(register),
+      });
+
+      if (!res.ok) {
+        throw new Error("Kunne ikke lagre");
+      }
+
+      const data = await res.json();
+      console.log("Lagret:", data);
+      setSuccessOpen(true);
+      setRegisteredName(data.name);
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (
     <>
       <NavBar></NavBar>
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={3000}
+        onClose={() => setSuccessOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSuccessOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {registeredName} ble registrert 🎉
+        </Alert>
+      </Snackbar>
       <Box className="flex justify-center items-center min-h-screen bg-blue">
         <Paper
           elevation={4}
@@ -79,7 +124,6 @@ export default function RegisterEquipment() {
             </Select>
           </FormControl>
 
-          {/* Navn */}
           <TextField
             label="Navn på utstyr"
             value={name}
@@ -87,7 +131,6 @@ export default function RegisterEquipment() {
             fullWidth
           />
 
-          {/* Type */}
           <TextField
             label="Type utstyr"
             value={type}
@@ -112,6 +155,7 @@ export default function RegisterEquipment() {
             variant="contained"
             size="large"
             className="mt-2 rounded-xl"
+            onClick={handleRegister}
           >
             Lagre utstyr
           </Button>

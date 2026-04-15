@@ -135,3 +135,4 @@ async def register_new_equipment(session, newEquipment: NewEquipment):
     except IntegrityError:
         await session.rollback()
         raise Exception("ID-kollisjon (ekstremt sjeldent)")
+    return equipment
