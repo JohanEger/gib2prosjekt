@@ -20,3 +20,22 @@ class  EquipmentFilter(BaseModel):
     available: bool | None = None
     latitude: float | None = None
     longitude: float | None = None  
+
+class NewEquipment(BaseModel):
+    name: str
+    description: str
+    committee: str
+    type: str
+    latitude: float
+    longitude: float
+
+from pydantic import BaseModel
+from uuid import UUID
+
+class EquipmentResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str
+
+    class Config:
+        from_attributes = True  # viktig!

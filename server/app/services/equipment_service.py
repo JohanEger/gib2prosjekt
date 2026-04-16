@@ -2,12 +2,15 @@ import uuid
 
 from app.models.booking import Booking
 from app.models.user import User
-from app.schemas.equipment import EquipmentFilter
+from app.schemas.equipment import EquipmentFilter, NewEquipment
 from sqlalchemy import select, and_, func, cast
 from datetime import datetime, timezone
 from app.models.equipment import Equipment
 from app.models.group import Group
 from geoalchemy2 import Geography, Geometry
+from sqlalchemy.exc import IntegrityError
+
+
 
 def current_location_expr():
     current_time = datetime.now()
@@ -143,6 +146,28 @@ async def get_equipment_popup(session, equipment_id: uuid.UUID):
         "booked": booked,
     }
 
+async def register_new_equipment(session, newEquipment: NewEquipment):
+    stmt = select(Group.id).where(Group.name == newEquipment.committee)
+    result = await session.execute(stmt)
+    owner_id = result.scalar_one_or_none()
+    equipment = Equipment(
+        name = newEquipment.name,
+        description = newEquipment.description,
+        type_of_equipment = newEquipment.type,
+        owner_id = owner_id,
+         current_pos=func.ST_SetSRID(
+        func.ST_MakePoint(newEquipment.longitude, newEquipment.latitude),
+        4326
+    )
+    )
+    try:
+        session.add(equipment)
+        await session.commit()
+        await session.refresh(equipment)
+    except IntegrityError:
+        await session.rollback()
+        raise Exception("ID-kollisjon (ekstremt sjeldent)")
+    return equipment
 async def update_equipment_status(
     session,
     equipment_id: uuid.UUID,
