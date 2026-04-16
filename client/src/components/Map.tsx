@@ -3,6 +3,7 @@ import {
   TileLayer,
   Marker,
   GeoJSON,
+  Polyline,
   Tooltip,
   useMapEvents,
 } from "react-leaflet";
@@ -14,9 +15,7 @@ import {
   startTransition,
   type Dispatch,
   type SetStateAction,
-  use,
 } from "react";
-import type { LineString } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
 import {
@@ -25,7 +24,10 @@ import {
 } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import type { EquipmentFilters } from "../types/equipmentFilters";
+import type { Equipment } from "../types/equipment";
+import type { RouteLiveVehicle, RouteResponse } from "../types/routeResponse";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import MapControl from "./MapControl";
@@ -42,25 +44,9 @@ type EquipmentMarker = {
   lng: number;
 };
 
-export type Equipment = {
-  id: string;
-  name: string;
-  description: string;
-  type_of_equipment: string;
-  owner_id: string;
-  lat: number;
-  lng: number;
-  booked: boolean;
-};
-
 type Coordinates = {
   lat: number;
   lng: number;
-};
-
-type RouteResponse = LineString & {
-  meters?: number;
-  seconds?: number;
 };
 
 type ResetClusterFilterOnMapClickProps = {
@@ -90,9 +76,11 @@ interface MarkerClusterLike extends L.Layer {
 
 const TRONDHEIM_CENTER: [number, number] = [63.43, 10.4];
 
-const emptyLineString = (): LineString => ({
+const emptyRouteResponse = (): RouteResponse => ({
   type: "LineString",
   coordinates: [],
+  meters: 0,
+  seconds: 0,
 });
 
 const ResetClusterFilterOnMapClick = ({
@@ -119,6 +107,13 @@ const makeEquipmentIcon = (active: boolean) =>
 
 const ICON_IDLE = makeEquipmentIcon(false);
 const ICON_ACTIVE = makeEquipmentIcon(true);
+const makeLiveBusIcon = (linePublicCode?: string | null) =>
+  L.divIcon({
+    className: "",
+    html: `<div class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-violet-600 text-[11px] font-bold text-white shadow-lg">${linePublicCode ?? "B"}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
 
 const createClusterIcon = (cluster: MarkerClusterLike) =>
   L.divIcon({
@@ -126,6 +121,20 @@ const createClusterIcon = (cluster: MarkerClusterLike) =>
     html: `<div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-blue-600 text-sm font-bold text-white shadow-md">${cluster.getChildCount()}</div>`,
     iconSize: L.point(40, 40, true),
   });
+
+const TRANSIT_LEG_STYLE = {
+  foot: {
+    color: "#38bdf8",
+    weight: 5,
+    opacity: 0.95,
+    dashArray: "10 10",
+  },
+  bus: {
+    color: "#a855f7",
+    weight: 7,
+    opacity: 0.95,
+  },
+} as const;
 
 function isValidRoutePayload(data: unknown): data is RouteResponse {
   if (!data || typeof data !== "object") return false;
@@ -155,7 +164,7 @@ export const Map = ({
   const { latitude, longitude } = useGeolocation();
 
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
-  const [route, setRoute] = useState<LineString>(emptyLineString());
+  const [route, setRoute] = useState<RouteResponse>(emptyRouteResponse());
   const [routeVersion, setRouteVersion] = useState(0);
 
   const mapRef = useRef<L.Map | null>(null);
@@ -253,7 +262,7 @@ export const Map = ({
 
     if (!canRoute) {
       startTransition(() => {
-        setRoute(emptyLineString());
+        setRoute(emptyRouteResponse());
         onRoutePanelChange({ status: "idle" });
       });
       return;
@@ -280,10 +289,10 @@ export const Map = ({
           ) {
             console.warn("Rute-API:", (data as { detail: string }).detail);
           }
-          setRoute(emptyLineString());
+          setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "error" });
-        } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
-          setRoute(emptyLineString());
+        } else if ((data.meters ?? 0) <= 0) {
+          setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "no_route" });
         } else {
           setRoute(data);
@@ -291,6 +300,7 @@ export const Map = ({
             status: "ready",
             meters: data.meters ?? 0,
             seconds: data.seconds ?? 0,
+            transit: data.transit,
           });
           if (mapRef.current && data.coordinates.length > 0) {
             const LatLngs = data.coordinates.map(
@@ -308,7 +318,7 @@ export const Map = ({
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Error fetching route:", err);
-          setRoute(emptyLineString());
+          setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "error" });
           setRouteVersion((v) => v + 1);
         }
@@ -318,6 +328,13 @@ export const Map = ({
     fetchRoute();
     return () => ac.abort();
   }, [coordinates, latitude, longitude, travelMode, onRoutePanelChange]);
+
+  const liveVehicles: RouteLiveVehicle[] = route.transit
+    ? route.transit.legs
+        .filter((leg) => leg.mode === "bus" && leg.liveVehicle)
+        .map((leg) => leg.liveVehicle as RouteLiveVehicle)
+    : [];
+  const transitLegs = route.transit?.legs ?? [];
 
   // --- Render --------------------------------------------------------------
 
@@ -356,13 +373,55 @@ export const Map = ({
           />
         )}
 
-        {coordinates && route.coordinates.length > 0 && (
+        {travelMode !== "bus" && coordinates && route.coordinates.length > 0 && (
           <GeoJSON
             key={`${travelMode}-${routeVersion}`}
             data={route}
             style={ROUTE_LINE_STYLE[travelMode]}
           />
         )}
+
+        {travelMode === "bus" &&
+          transitLegs.map((leg, index) => {
+            if (leg.coordinates.length === 0) return null;
+
+            return (
+              <Polyline
+                key={`${leg.mode}-${leg.serviceJourneyId ?? index}-${routeVersion}`}
+                positions={leg.coordinates.map(([lng, lat]) => [lat, lng] as [number, number])}
+                pathOptions={TRANSIT_LEG_STYLE[leg.mode]}
+              >
+                <Tooltip direction="top" offset={[0, -6]} opacity={1}>
+                  <div className="min-w-28 px-2 py-1 text-sm">
+                    <div className="font-semibold">
+                      {leg.mode === "bus" ? leg.linePublicCode ?? "?" : "Gå"}
+                    </div>
+                    <div>
+                      {leg.fromName ?? "Start"} til {leg.toName ?? "Mål"}
+                    </div>
+                  </div>
+                </Tooltip>
+              </Polyline>
+            );
+          })}
+
+        {travelMode === "bus" &&
+          liveVehicles.map((vehicle) => (
+            <Marker
+              key={`${vehicle.serviceJourneyId}-${vehicle.date}`}
+              position={[vehicle.latitude, vehicle.longitude]}
+              icon={makeLiveBusIcon(vehicle.linePublicCode)}
+            >
+              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                <div className="min-w-36 px-2 py-1 text-sm">
+                  <div className="font-semibold">
+                    {vehicle.linePublicCode ?? ""}
+                  </div>
+                  <div>{vehicle.destinationName ?? "Live-posisjon"}</div>
+                </div>
+              </Tooltip>
+            </Marker>
+          ))}
 
         <MarkerClusterGroup
           chunkedLoading

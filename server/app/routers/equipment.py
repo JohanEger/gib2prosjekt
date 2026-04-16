@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from app.database import get_database
-from app.services.equipment_service import equipment_for_sidebar, get_equipment_popup, register_new_equipment
+from app.services.equipment_service import equipment_for_sidebar, get_equipment_popup, register_new_equipment, update_equipment_status
 from app.schemas.equipment import EquipmentFilter, EquipmentSchema, NewEquipment
 from typing import List
 from app.dependencies import get_current_user
 from uuid import UUID
+from pydantic import BaseModel
+from app.models.enums import FunctionalStatus
+from app.models.equipment import Equipment
 
 
 router = APIRouter(prefix="/equipment", tags=["equipment"])
@@ -52,3 +55,26 @@ async def create_equipment(
 ):
     equipment = await register_new_equipment(session, new_equipment)
     return equipment
+class EquipmentStatusUpdate(BaseModel):
+    functional_status: FunctionalStatus
+    functional_status_comment: str | None = None
+
+@router.patch("/{equipment_id}/functional_status")
+async def patch_equipment_status(
+    equipment_id: UUID,
+    payload: EquipmentStatusUpdate,
+    session=Depends(get_database),
+    current_user=Depends(get_current_user),
+):
+    updated_equipment = await update_equipment_status(
+        session=session,
+        equipment_id=equipment_id,
+        functional_status=payload.functional_status,
+        functional_status_comment=payload.functional_status_comment,
+    )
+
+    if not updated_equipment:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+
+    return updated_equipment
+

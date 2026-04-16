@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 import uuid
 from geoalchemy2 import Geography
+from .enums import FunctionalStatus
 
 from app.database import Base
 
@@ -17,7 +18,9 @@ class Equipment(Base):
     type_of_equipment = mapped_column(String(50), nullable=False)
     owner_id : Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("group.id"), nullable=False) 
     bookable_by : Mapped[list["Group"]] = relationship("Group", secondary="equipment_group", back_populates="equipment")
-    current_pos = mapped_column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    home_pos = mapped_column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    functional_status: Mapped[FunctionalStatus] = mapped_column(Enum(FunctionalStatus, name = "functional_status_enum"), default = FunctionalStatus.functional, nullable=False)
+    functional_status_comment = mapped_column(Text, nullable=True)
     created_at = mapped_column(DateTime, default=datetime.utcnow)
     bookings : Mapped[list["Booking"]] = relationship("Booking", back_populates="equipment", cascade="all, delete-orphan")
     owner: Mapped["Group"] = relationship("Group", backref="owned_equipment", foreign_keys=[owner_id])

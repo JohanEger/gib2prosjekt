@@ -21,6 +21,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
+import type { Equipment } from "../types/equipment";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { API_BASE } from "../apiBase";
 
@@ -41,17 +42,6 @@ const MenuProps = {
 type Coordinates = {
   lat: number;
   lng: number;
-};
-
-type Equipment = {
-  id: string;
-  name: string;
-  description: string;
-  type_of_equipment: string;
-  owner_id: string;
-  lat: number;
-  lng: number;
-  booked: boolean;
 };
 
 interface SidebarProps {
@@ -255,6 +245,8 @@ export const Sidebar = ({
             lat={activeEquipment.lat}
             lng={activeEquipment.lng}
             description={activeEquipment.description}
+            functional_status={activeEquipment.functional_status}
+            functional_status_comment={activeEquipment.functional_status_comment}
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
             SetFindEquipment={SetFindEquipment}
