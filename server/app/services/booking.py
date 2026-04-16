@@ -24,7 +24,7 @@ async def get_5_last_bookings_by_equipment(
     result = await db.execute(
         select(Booking)
         .where(Booking.equipment_id == equipment_id)
-        .order_by(desc(Booking.created_at))
+        .order_by(desc(Booking.start_time))
         .limit(5)
     )
     return result.scalars().all()

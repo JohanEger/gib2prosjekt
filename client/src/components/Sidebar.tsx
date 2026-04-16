@@ -227,9 +227,11 @@ export const Sidebar = ({
                   setSelectedEquipmentId(null);
                   setActiveEquipment(null);
                   SetFindEquipment(null);
+                  setLogPositions([]);
                 } else {
                   setSelectedEquipmentId(item.id);
                   getEquipment(item.id);
+                  setLogPositions([]);
                 }
               }}
               className={`text-black cursor-pointer transition-all duration-200 rounded p-2 

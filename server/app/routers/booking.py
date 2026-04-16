@@ -60,7 +60,7 @@ async def get_5_latest_booking_for_equipment(
             result.append({
                 "lat": p.y,
                 "lng": p.x,
-                "created_at": b.created_at, 
+                "started_at": b.start_time, 
             })
         except Exception:
             continue

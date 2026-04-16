@@ -97,10 +97,6 @@ export const HomePage = () => {
         showLogMode={showLogMode}
         setShowLogMode={setShowLogMode}
       />
-
-      {/* Må få fiksa på kartet i stedet for liste... Men er dritvanskelig! */}
-
-      {/* Denne delen over er listen som kommer */}
     </div>
   );
 };
