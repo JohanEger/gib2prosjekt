@@ -21,25 +21,75 @@ BIKE_SPEED_KPH = 15.0
 DRIVE_FALLBACK_KPH = 30.0  # brukes kun hvis en kant mangler speed_kph
 
 WALK_SPEED_BY_HIGHWAY_KPH = {
-    "cycleway": 5.8,
-    "steps": 2.0,
-    "path": 4.2,
-    "track": 4.5,
-    "footway": 5.0,
-    "pedestrian": 5.0,
-    "corridor": 4.0,
-    "service": 5.5,
-    "residential": 5.5,
-    "living_street": 5.5,
-    "unclassified": 5.5,
-    "tertiary": 5.5,
-    "secondary": 5.3,
-    "primary": 5.0,
-    "trunk": 4.5,
-    "bridleway": 4.0,
+    "footway": 5.6,
+    "pedestrian": 5.6,
+    "path": 5.1,
+    "track": 4.8,
+    "living_street": 5.1,
+    "residential": 4.9,
+    "unclassified": 4.7,
+    "service": 4.3,
+    "tertiary": 4.2,
+    "secondary": 3.9,
+    "primary": 3.5,
+    "trunk": 3.0,
+    "cycleway": 4.5,
+    "steps": 1.8,
+    "corridor": 4.5,
+    "bridleway": 3.8,
     "elevator": 1.0,
     "via_ferrata": 1.0,
 }
+
+WALK_COST_FACTOR_BY_HIGHWAY = {
+    "footway": 0.88,
+    "pedestrian": 0.86,
+    "path": 0.94,
+    "track": 1.0,
+    "living_street": 0.96,
+    "residential": 1.0,
+    "unclassified": 1.04,
+    "service": 1.12,
+    "tertiary": 1.1,
+    "secondary": 1.18,
+    "primary": 1.35,
+    "trunk": 1.9,
+    "cycleway": 1.12,
+    "steps": 1.65,
+    "corridor": 0.92,
+    "bridleway": 1.2,
+    "elevator": 1.15,
+    "via_ferrata": 4.0,
+}
+
+WALK_FOOT_ALLOWED_VALUES = {"yes", "designated", "permissive", "official"}
+WALK_FOOT_DISALLOWED_VALUES = {"no", "private"}
+WALK_SIDEWALK_GOOD_VALUES = {"yes", "both", "left", "right", "separate"}
+WALK_SIDEWALK_BAD_VALUES = {"no", "none"}
+WALK_CROSSING_GOOD_VALUES = {"yes", "marked", "zebra", "traffic_signals", "uncontrolled"}
+
+WALK_HIGHWAY_PRIORITY = (
+    "steps",
+    "footway",
+    "pedestrian",
+    "path",
+    "track",
+    "cycleway",
+    "corridor",
+    "living_street",
+    "residential",
+    "service",
+    "unclassified",
+    "tertiary",
+    "secondary",
+    "primary",
+    "trunk",
+    "bridleway",
+    "elevator",
+    "via_ferrata",
+)
+
+ROAD_WITH_SIDEWALK_IMPORTANCE = {"service", "residential", "unclassified", "tertiary", "secondary", "primary", "trunk"}
 
 
 class RouteMode(str, Enum):
@@ -91,22 +141,76 @@ def _seconds_for_speed(length_m: float, speed_kph: float) -> float:
     return length_m / (speed_kph * 1000 / 3600)
 
 
-def _walk_speed_kph_for_edge(highway: object) -> float:
-    if isinstance(highway, list):
-        return min(
-            (WALK_SPEED_BY_HIGHWAY_KPH.get(h, WALK_SPEED_KPH) for h in highway),
-            default=WALK_SPEED_KPH,
-        )
-    if isinstance(highway, str):
-        return WALK_SPEED_BY_HIGHWAY_KPH.get(highway, WALK_SPEED_KPH)
-    return WALK_SPEED_KPH
+def _tag_values(data: dict, key: str) -> set[str]:
+    value = data.get(key)
+    if value is None:
+        return set()
+    if isinstance(value, list):
+        return {str(v).lower() for v in value if v is not None}
+    return {str(value).lower()}
+
+
+def _edge_highways(data: dict) -> list[str]:
+    highways = list(_tag_values(data, "highway"))
+    if not highways:
+        return []
+
+    for preferred in WALK_HIGHWAY_PRIORITY:
+        if preferred in highways:
+            return [preferred]
+    return highways
+
+
+def _primary_walk_highway(data: dict) -> str | None:
+    highways = _edge_highways(data)
+    return highways[0] if highways else None
+
+
+def _walk_speed_kph_for_edge(data: dict) -> float:
+    highway = _primary_walk_highway(data)
+    return WALK_SPEED_BY_HIGHWAY_KPH.get(highway or "", WALK_SPEED_KPH)
+
+
+def _walk_cost_factor_for_edge(data: dict) -> float:
+    highway = _primary_walk_highway(data)
+    factor = WALK_COST_FACTOR_BY_HIGHWAY.get(highway or "", 1.0)
+
+    foot_tags = _tag_values(data, "foot")
+    sidewalk_tags = _tag_values(data, "sidewalk")
+    crossing_tags = _tag_values(data, "crossing")
+    segregated_tags = _tag_values(data, "segregated")
+    bicycle_tags = _tag_values(data, "bicycle")
+
+    if foot_tags & WALK_FOOT_ALLOWED_VALUES:
+        factor *= 0.92
+    if foot_tags & WALK_FOOT_DISALLOWED_VALUES:
+        factor *= 2.5
+
+    if highway in ROAD_WITH_SIDEWALK_IMPORTANCE:
+        if sidewalk_tags & WALK_SIDEWALK_GOOD_VALUES:
+            factor *= 0.9
+        elif sidewalk_tags & WALK_SIDEWALK_BAD_VALUES:
+            factor *= 1.12
+
+    if crossing_tags & WALK_CROSSING_GOOD_VALUES:
+        factor *= 0.9
+
+    if "yes" in segregated_tags and highway == "cycleway":
+        factor *= 0.96
+
+    if highway in {"path", "track", "cycleway"} and bicycle_tags & {"designated", "official"}:
+        factor *= 1.04
+
+    return max(factor, 0.5)
 
 
 def _add_walk_travel_times(G: nx.MultiDiGraph) -> nx.MultiDiGraph:
     for _, _, _, data in G.edges(keys=True, data=True):
         length_m = data.get("length", 0.0)
-        speed_kph = _walk_speed_kph_for_edge(data.get("highway"))
-        data["travel_time"] = _seconds_for_speed(length_m, speed_kph)
+        speed_kph = _walk_speed_kph_for_edge(data)
+        travel_time = _seconds_for_speed(length_m, speed_kph)
+        data["travel_time"] = travel_time
+        data["walk_cost"] = travel_time * _walk_cost_factor_for_edge(data)
     return G
 
 
@@ -116,6 +220,13 @@ def _is_cycleway_edge(highway: object) -> bool:
     return highway == "cycleway"
 
 
+def _can_walk_on_cycleway_edge(data: dict) -> bool:
+    foot_tags = _tag_values(data, "foot")
+    if foot_tags & WALK_FOOT_DISALLOWED_VALUES:
+        return False
+    return bool(foot_tags & WALK_FOOT_ALLOWED_VALUES)
+
+
 def _merge_walk_with_bike_cycleways(
     walk_graph: nx.MultiDiGraph, bike_graph: nx.MultiDiGraph
 ) -> nx.MultiDiGraph:
@@ -123,6 +234,8 @@ def _merge_walk_with_bike_cycleways(
 
     for u, v, _, data in bike_graph.edges(keys=True, data=True):
         if not _is_cycleway_edge(data.get("highway")):
+            continue
+        if not _can_walk_on_cycleway_edge(data):
             continue
 
         if u not in walk_graph:
@@ -138,7 +251,9 @@ def _merge_walk_with_bike_cycleways(
 
 
 def _route_weight(mode: RouteMode) -> str:
-    if mode in (RouteMode.walk, RouteMode.drive):
+    if mode is RouteMode.walk:
+        return "walk_cost"
+    if mode is RouteMode.drive:
         return "travel_time"
     return "length"
 
@@ -180,6 +295,15 @@ def _pick_best_edge(edge_data: dict, weight: str) -> dict:
     """Velg parallell-kanten som best matcher vekten ruten ble beregnet med."""
     if weight == "length":
         return min(edge_data.values(), key=lambda d: d.get("length", float("inf")))
+    if weight == "walk_cost":
+        return min(
+            edge_data.values(),
+            key=lambda d: (
+                d.get("walk_cost", float("inf")),
+                d.get("travel_time", float("inf")),
+                d.get("length", float("inf")),
+            ),
+        )
     return min(
         edge_data.values(),
         key=lambda d: (d.get(weight, float("inf")), d.get("length", float("inf"))),
