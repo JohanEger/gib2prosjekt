@@ -60,6 +60,42 @@ query Trip($fromLat: Float!, $fromLng: Float!, $toLat: Float!, $toLng: Float!) {
 }
 """
 
+WALK_TRIP_QUERY = """
+query WalkTrip($fromLat: Float!, $fromLng: Float!, $toLat: Float!, $toLng: Float!) {
+  trip(
+    from: { coordinates: { latitude: $fromLat, longitude: $fromLng } }
+    to: { coordinates: { latitude: $toLat, longitude: $toLng } }
+    numTripPatterns: 1
+    modes: {
+      directMode: foot
+      transportModes: []
+    }
+  ) {
+    tripPatterns {
+      duration
+      walkDistance
+      legs {
+        mode
+        distance
+        aimedStartTime
+        aimedEndTime
+        expectedStartTime
+        expectedEndTime
+        pointsOnLink {
+          points
+        }
+        fromPlace {
+          name
+        }
+        toPlace {
+          name
+        }
+      }
+    }
+  }
+}
+"""
+
 LIVE_VEHICLE_QUERY = """
 query LiveVehicle($serviceJourneyId: String!, $date: String!, $codespaceId: String!) {
   vehicles(
@@ -357,4 +393,42 @@ async def compute_bus_route(
                 "walkMeters": best_pattern.get("walkDistance") or 0.0,
                 "legs": normalized_legs,
             },
+        }
+
+
+async def compute_walk_route(
+    start_lat: float,
+    start_lng: float,
+    end_lat: float,
+    end_lng: float,
+) -> dict:
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as client:
+        data = await _post_graphql(
+            client,
+            ENTUR_JOURNEY_URL,
+            WALK_TRIP_QUERY,
+            {
+                "fromLat": start_lat,
+                "fromLng": start_lng,
+                "toLat": end_lat,
+                "toLng": end_lng,
+            },
+        )
+
+        trip_patterns = ((data.get("trip") or {}).get("tripPatterns")) or []
+        best_pattern = trip_patterns[0] if trip_patterns else None
+        if best_pattern is None:
+            raise ValueError("Ingen gangrute funnet mellom punktene")
+
+        raw_legs = best_pattern.get("legs") or []
+        coordinates = _merge_leg_coordinates(raw_legs)
+        meters = best_pattern.get("walkDistance")
+        if meters is None:
+            meters = sum((leg.get("distance") or 0.0) for leg in raw_legs)
+
+        return {
+            "type": "LineString",
+            "coordinates": coordinates,
+            "meters": meters,
+            "seconds": best_pattern.get("duration") or 0.0,
         }
