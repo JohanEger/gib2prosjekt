@@ -240,7 +240,7 @@ export const Sidebar = ({
     </div>
   );
 
-  const [showLegend, setShowLegend] = useState(true);
+  const [showLegend, setShowLegend] = useState(false);
   const visibleEquipment =
     selectedClusterEquipmentIds === null
       ? equipment
@@ -260,7 +260,7 @@ export const Sidebar = ({
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
+        <ul className="relative flex flex-col gap-3 p-4 mt-20 max-h-47/64 overflow-y-auto overflow-x-hidden">
           {visibleEquipment.map((item) => (
             <Box
               sx={{ borderRadius: 4 }}
@@ -289,43 +289,60 @@ export const Sidebar = ({
         </ul>
 
         {/* Tegnbeskrivelse */}
-        <button
-          onClick={() => setShowLegend(prev => !prev)}
-          className="ml-3 mt-1 text-xs text-blue-500 underline"
+        <Box
+          sx={{
+            margintop: 2,
+            position: "fixed",
+            bottom: 16,
+            left: 6,
+            zIndex: 2000,
+            background: "primary",
+            padding: 1,
+            borderRadius: 2,
+            maxHeight: "6rem",
+            boxShadow: 0,
+            maxWidth: 260,
+          }}
         >
-          {showLegend ? "Skjul tegnforklaring" : "Vis tegnforklaring"}
-        </button>
 
-        {showLegend && (
-          <div className="mt-0.5 ml-3 flex flex-col gap-0.5 ">
-            <LegendItem
-              color="#4285f4"
-              size={15}
-              text=" Din posisjon"
-              bordercolor="white"
-            />
-            <div className="mt-1 flex flex-row gap-4">
+          {showLegend && (
+            <div className="mt-0.5 ml-2 flex flex-col gap-0.5 ">
               <LegendItem
-                color="#15803d"
-                text="Valgt utstyr"
-                bordercolor="black"
+                color="#4285f4"
+                size={15}
+                text=" Din posisjon"
+                bordercolor="white"
               />
+              <div className="mt-1 flex flex-row gap-4">
+                <LegendItem
+                  color="#15803d"
+                  text="Valgt utstyr"
+                  bordercolor="black"
+                />
+                <LegendItem
+                  color="#2563eb"
+                  text="Annet utstyr"
+                  bordercolor="black"
+                />
+              </div>
               <LegendItem
                 color="#2563eb"
-                text="Annet utstyr"
+                size={26}
+                label="7"
+                text="Cluster med utstyr"
                 bordercolor="black"
               />
-            </div>
-            <LegendItem
-              color="#2563eb"
-              size={26}
-              label="7"
-              text="Antall utstyr med delt lokasjon"
-              bordercolor="black"
-            />
-          </div>)}
+            </div>)}
+          <button
+            onClick={() => setShowLegend(prev => !prev)}
+            className="ml-2 mt-0 text-xs text-black-100 underline cursor-pointer"
+          >
+            {showLegend ? "Skjul tegnforklaring" : "Vis tegnforklaring"}
+          </button>
 
+        </Box>
       </div>
+
 
       {/* Toggle button */}
       <button

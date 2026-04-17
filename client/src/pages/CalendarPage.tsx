@@ -209,27 +209,17 @@ export const CalendarPage = () => {
             pt: 4,
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              px: 2,
-              py: 1,
-              fontWeight: 600,
-              letterSpacing: 0.3,
-            }}
-          >
-            {name}
-          </Typography>
+
           <IconButton onClick={handleGoBackToHomePage} className="absolute">
             <ArrowBackIcon />
           </IconButton>
           <Box>
-            <Typography variant="h3" pl="10px">{name}</Typography>
+            <Typography variant="h4" pl="16px">{name}</Typography>
           </Box>
           <Box/>
 
 
-            <Box sx={{ display: "flex", gap: 4 }}>
+            <Box sx={{ display: "flex", gap: 4 }} >
             <Box sx={{ flex: 1, py: 3 }}>
               {mode === "view" && (
                 <Paper
@@ -322,7 +312,7 @@ export const CalendarPage = () => {
                     fontWeight: mode === "book" ? "bold" : "normal",
                   }}
                 >
-                  Book
+                  Book 
                 </Typography>
 
                 <Typography
@@ -332,7 +322,7 @@ export const CalendarPage = () => {
                     fontWeight: mode === "view" ? "bold" : "normal",
                   }}
                 >
-                  View
+                  Se bookinger
                 </Typography>
               </Box>
 
@@ -347,7 +337,6 @@ export const CalendarPage = () => {
                       if (date) setFocusedDate(date);
                     }}
                   />
-
                   {selectedRange.start && selectedRange.end && (
                     <Button sx={{ mt: 2 }} onClick={() => setPopupOpen(true)}>
                       Book
