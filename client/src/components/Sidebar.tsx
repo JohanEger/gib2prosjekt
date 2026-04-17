@@ -17,6 +17,7 @@ import {
   TextField,
   FormControlLabel,
   IconButton,
+  Avatar,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -203,6 +204,40 @@ export const Sidebar = ({
     });
   };
 
+
+
+  const getMarkerStyle = (size: number, color: string, bordercolor: string) => ({
+    margin: 0.1,
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    background: color,
+    border: `2px solid ${bordercolor}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: size * 0.5,
+  });
+
+  type LegendItemProps = {
+    color: string;
+    size?: number;
+    label?: string;
+    text: string;
+    bordercolor: string;
+  };
+
+  const LegendItem = ({ color, size = 18, label, text, bordercolor }: LegendItemProps) => (
+    <div className="flex items-center gap-2">
+      <div style={getMarkerStyle(size, color, bordercolor)}>
+        {label}
+      </div>
+      <span className="text-xs">{text}</span>
+    </div>
+  );
+
+  const [showLegend, setShowLegend] = useState(true);
+
   return (
     <>
       {/* Sidebar */}
@@ -235,16 +270,53 @@ export const Sidebar = ({
                 }
               }}
               className={`text-black cursor-pointer transition-all duration-200 rounded p-2 
-                ${
-                  selectedEquipmentId === item.id
-                    ? "bg-blue-900 text-white ring-2 ring-blue-100"
-                    : "bg-white text-black hover:scale-105 hover:shadow-lg"
+                ${selectedEquipmentId === item.id
+                  ? "bg-green-800 text-white ring-2 ring-blue-100"
+                  : "bg-white text-black hover:scale-105 hover:shadow-lg"
                 }`}
             >
               {item.name}
             </Box>
           ))}
         </ul>
+
+        {/* Tegnbeskrivelse */}
+        <button
+          onClick={() => setShowLegend(prev => !prev)}
+          className="ml-3 mt-1 text-xs text-blue-500 underline"
+        >
+          {showLegend ? "Skjul tegnforklaring" : "Vis tegnforklaring"}
+        </button>
+
+        {showLegend && (
+          <div className="mt-0.5 ml-3 flex flex-col gap-0.5 ">
+            <LegendItem
+              color="#4285f4"
+              size={15}
+              text=" Din posisjon"
+              bordercolor="white"
+            />
+            <div className="mt-1 flex flex-row gap-4">
+              <LegendItem
+                color="#15803d"
+                text="Valgt utstyr"
+                bordercolor="black"
+              />
+              <LegendItem
+                color="#2563eb"
+                text="Annet utstyr"
+                bordercolor="black"
+              />
+            </div>
+            <LegendItem
+              color="#2563eb"
+              size={26}
+              label="7"
+              text="Antall utstyr med delt lokasjon"
+              bordercolor="black"
+            />
+          </div>)}
+
       </div>
 
       {/* Toggle button */}
