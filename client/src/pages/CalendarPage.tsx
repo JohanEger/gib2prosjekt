@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import * as React from "react";
 import {
   Paper,
@@ -9,19 +8,15 @@ import {
   MenuItem,
   IconButton,
 } from "@mui/material";
-=======
-import React, { useEffect, useState } from "react";
-import { Paper, Typography, Button, Box, Divider } from "@mui/material";
->>>>>>> dev
+import { useEffect, useState } from "react";
+import { Divider } from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import type { DateValue } from "react-aria-components";
-import { getLocalTimeZone, today as todayAria } from "@internationalized/date";
+import { getLocalTimeZone, parseDate, today as todayAria } from "@internationalized/date";
 import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar";
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
-<<<<<<< HEAD
-import { useEffect, useState } from "react";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from "react-router-dom";
 
@@ -29,10 +24,8 @@ import { useNavigate } from "react-router-dom";
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
-=======
-import { API_BASE } from "@/apiBase";
+//import { API_BASE } from "@/apiBase";
 import { useAuth } from "../hooks/useAuth";
->>>>>>> dev
 
 interface Booking {
   id: string;
@@ -87,48 +80,8 @@ export const CalendarPage = () => {
   }>({});
   const [focusedDate, setFocusedDate] = useState<DateValue>(today);
   const [bookings, setBookings] = useState<Booking[]>([]);
-<<<<<<< HEAD
-
-  const [popupOpen, setPopupOpen] = React.useState(false);
-  const [selectedBooking, setSelectedBooking] = React.useState<
-    Booking | undefined
-  >();
-  const [openDialog, setOpenDialog] = React.useState(false);
-
-  const maxDateObj = new Date(today.year + 1, today.month - 1, today.day);
-  const maxDateStr = `${maxDateObj.getFullYear()}-${(maxDateObj.getMonth() + 1).toString().padStart(2, "0")}-${maxDateObj.getDate().toString().padStart(2, "0")}`;
-  const maxDate = parseDate(maxDateStr);
-
-  const navigate = useNavigate();
-
-  const handleGoBackToHomePage = () => {
-    navigate("/", { state: { openEquipmentId: id, openEquipmentName: name } });
-  };
-
-  const handleRangeChange = (range: { start?: DateValue; end?: DateValue }) => {
-    if (!range.start || !range.end) {
-      setSelectedRange(range);
-      return;
-    }
-    if (rangeOverlapsBooking(range, bookings)) {
-      console.warn("Kan ikke booke over allerede bookede dager");
-      return;
-    }
-    setSelectedRange(range);
-  };
-
-  const handleGoToToday = () => {
-    setSelectedRange({ start: today, end: today });
-    setFocusedDate(today);
-    setSelectedYear(today.year);
-  };
-
-  const handleOpenPopup = () => setPopupOpen(true);
-  const handleClosePopup = () => setPopupOpen(false);
-=======
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
->>>>>>> dev
 
   const fetchBookings = async () => {
     try {
@@ -139,7 +92,7 @@ export const CalendarPage = () => {
       const parsedBookings = data.map((b: any) => {
         const start = new Date(b.start_time);
         const end = new Date(b.end_time);
-
+        
         return {
           id: b.id,
           equipmentId: b.equipment_id,
@@ -155,22 +108,46 @@ export const CalendarPage = () => {
           createdAt: new Date(b.created_at),
         };
       });
-
       setBookings(parsedBookings);
       console.log(parsedBookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     }
-  };
-
-  useEffect(() => {
+    };
+    
+    useEffect(() => {
     fetchBookings();
-  }, [id]);
+    }, [id]);
 
+      
+/*   const maxDateObj = new Date(today.year + 1, today.month - 1, today.day);
+  const maxDateStr = `${maxDateObj.getFullYear()}-${(maxDateObj.getMonth() + 1).toString().padStart(2, "0")}-${maxDateObj.getDate().toString().padStart(2, "0")}`;
+  const maxDate = parseDate(maxDateStr); */
+
+  
   const handleRangeChange = (range: { start?: DateValue; end?: DateValue }) => {
     setSelectedRange(range);
   };
 
+    
+   const navigate = useNavigate();
+  
+    const handleGoBackToHomePage = () => {
+      navigate("/", { state: { openEquipmentId: id, openEquipmentName: name } });
+    };
+  
+  const handleGoToToday = () => {
+    setSelectedRange({ start: today, end: today });
+    setFocusedDate(today);
+    setSelectedYear(today.year);
+  };
+  
+  const [selectedYear, setSelectedYear] = useState<number>(today.year); //La til for å få appen til å kjøre, ta vekk?
+  
+  const handleOpenPopup = () => setPopupOpen(true);
+  const handleClosePopup = () => setPopupOpen(false); 
+  
+  
   const handleDateClick = async (date: DateValue) => {
     try {
       const iso = `${focusedDate.year}-${date.month.toString().padStart(2, "0")}-${date.day.toString().padStart(2, "0")}T00:00:00`;
@@ -217,11 +194,10 @@ export const CalendarPage = () => {
       setSelectedBooking(null);
     }
   };
-
+  
   return (
     <>
       <NavBar />
-<<<<<<< HEAD
       <Box sx={{ mt: "8em", display: "flex", justifyContent: "center", px: 1 }}>
         <Paper
           elevation={0}
@@ -233,20 +209,8 @@ export const CalendarPage = () => {
             pt: 4,
           }}
         >
-          <IconButton onClick={handleGoBackToHomePage} className="absolute">
-            <ArrowBackIcon />
-          </IconButton>
-          <Box>
-            <Typography variant="h3" pl="10px">{name}</Typography>
-          </Box>
-          <Box
-=======
-
-      <Box sx={{ mt: "8em", display: "flex", justifyContent: "center" }}>
-        <Paper sx={{ maxWidth: 1000, p: 4 }}>
           <Typography
             variant="h5"
->>>>>>> dev
             sx={{
               px: 2,
               py: 1,
@@ -256,8 +220,16 @@ export const CalendarPage = () => {
           >
             {name}
           </Typography>
+          <IconButton onClick={handleGoBackToHomePage} className="absolute">
+            <ArrowBackIcon />
+          </IconButton>
+          <Box>
+            <Typography variant="h3" pl="10px">{name}</Typography>
+          </Box>
+          <Box/>
 
-          <Box sx={{ display: "flex", gap: 4 }}>
+
+            <Box sx={{ display: "flex", gap: 4 }}>
             <Box sx={{ flex: 1, py: 3 }}>
               {mode === "view" && (
                 <Paper
@@ -397,16 +369,18 @@ export const CalendarPage = () => {
           </Box>
         </Paper>
       </Box>
-      {selectedRange.start && selectedRange.end && (
-        <BookingPopup
-          open={popupOpen}
-          onClose={() => setPopupOpen(false)}
-          startDate={selectedRange.start}
-          endDate={selectedRange.end}
-          equipmentId={id}
-          fetchBookings={fetchBookings}
-        />
-      )}
+      {
+        selectedRange.start && selectedRange.end && (
+          <BookingPopup
+            open={popupOpen}
+            onClose={() => setPopupOpen(false)}
+            startDate={selectedRange.start}
+            endDate={selectedRange.end}
+            equipmentId={id}
+            fetchBookings={fetchBookings}
+          />
+        )
+      }
     </>
   );
 };
