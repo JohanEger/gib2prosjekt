@@ -1,27 +1,66 @@
 import { useAuth } from "../hooks/useAuth";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export const NavBar = () => {
-  const { logout, user: currentUser } = useAuth();
+  const { logout, user } = useAuth();
+  const location = useLocation();
+
+  const linkStyle = (path: string) =>
+    `relative text-sm font-medium transition ${
+      location.pathname === path
+        ? "text-white"
+        : "text-gray-300 hover:text-white"
+    }`;
 
   return (
-    <nav className="bg-blue-900 text-white px-6 py-4 flex justify-between items-center z-50 fixed top-0 left-0 w-full shadow-lg">
-      <div className="flex items-center space-x-6">
-        <Link to="/" className="hover:text-gray-400 transition">
-          Hjem
-        </Link>
-      </div>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-blue-900 border-b border-blue-800 shadow-md">
+      <div className="w-full px-6 py-4 flex justify-between items-center">
+        {/* Logo */}
+        <div className="flex items-center gap-10">
+          <Link
+            to="/"
+            className="text-lg font-semibold tracking-wide text-white"
+          >
+            UtstyrsApp
+          </Link>
 
-      <div className="flex items-center space-x-4">
-        {currentUser && (
-          <span className="text-sm">Hei, {currentUser.username}</span>
-        )}
-        <button
-          onClick={logout}
-          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition"
-        >
-          Logg ut
-        </button>
+          <div className="flex items-center gap-6">
+            <Link to="/" className={linkStyle("/")}>
+              Hjem
+              {location.pathname === "/" && (
+                <span className="absolute-bottom-1 left-0 w-full h-[2px] bg-white rounded"></span>
+              )}
+            </Link>
+
+            <Link
+              to="/registerequipment"
+              className={linkStyle("/registerequipment")}
+            >
+              Registrer utstyr
+              {location.pathname === "/registerequipment" && (
+                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-white rounded"></span>
+              )}
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-200">
+              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-800">
+                {user.username.charAt(0).toUpperCase()}
+              </div>
+              <span>{user.username}</span>
+            </div>
+          )}
+
+          <button
+            onClick={logout}
+            className="text-sm font-medium text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer"
+          >
+            Logg ut
+          </button>
+        </div>
       </div>
     </nav>
   );

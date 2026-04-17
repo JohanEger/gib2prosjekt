@@ -70,11 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: string,
     email: string,
     password: string,
+    phoneNumber: string,
   ) => {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, email, password, phone_number : phoneNumber }),
     });
 
     if (!res.ok) {
@@ -94,7 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

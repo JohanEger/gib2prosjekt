@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import {
   MdDirectionsBike,
+  MdDirectionsBus,
   MdDirectionsCar,
   MdDirectionsWalk,
 } from "react-icons/md";
@@ -15,9 +16,10 @@ const MODE_ICON: Record<RouteTravelMode, ReactElement> = {
   walk: <MdDirectionsWalk className={MODE_ICON_CLASS} aria-hidden />,
   bike: <MdDirectionsBike className={MODE_ICON_CLASS} aria-hidden />,
   drive: <MdDirectionsCar className={MODE_ICON_CLASS} aria-hidden />,
+  bus: <MdDirectionsBus className={MODE_ICON_CLASS} aria-hidden />,
 };
 
-const MODES: RouteTravelMode[] = ["walk", "bike", "drive"];
+const MODES: RouteTravelMode[] = ["walk", "bike", "drive", "bus"];
 
 type TravelModeSelectorProps = {
   value: RouteTravelMode;
@@ -45,7 +47,7 @@ export function TravelModeSelector({
         Velg transportmiddel
       </p>
       <div
-        className={`grid grid-cols-3 gap-1.5 rounded-xl p-1.5 ${
+        className={`grid grid-cols-4 gap-1.5 rounded-xl p-1.5 ${
           isDark
             ? "border border-zinc-500/90 bg-zinc-950 shadow-inner"
             : "border border-zinc-200 bg-zinc-100"
@@ -79,7 +81,7 @@ export function TravelModeSelector({
           isDark ? "text-zinc-400" : "text-zinc-500"
         }`}
       >
-        Kollektiv krever egen API (f.eks. Entur) — ikke støttet her.
+        Bussruter bruker Entur. Sanntidsdata kan mangle utenfor aktiv avgang.
       </p>
     </div>
   );

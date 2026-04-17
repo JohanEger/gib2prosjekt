@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.booking import BookingSchema, BookingCreate
 from app.database import get_database
-from app.services.booking import get_bookings_by_equipment,create_booking
+from app.services.booking import get_bookings_by_equipment,create_booking, get_booking_for_date
 from geoalchemy2.shape import to_shape, from_shape
 from shapely.geometry import Point
 import uuid
@@ -106,3 +106,51 @@ async def create_booking_endpoint(
         longitude=p.x,
         created_at=new_booking.created_at,
     )
+
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+@router.get("/get_booking_for_date")
+async def get_booking_for_date(
+    equipment_id: uuid.UUID,
+    start_time: str,
+    db: AsyncSession = Depends(get_database),
+):
+    from datetime import datetime, timedelta
+
+    if not start_time:
+        raise ValueError("start_time is required")
+
+    date = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+
+    if date.tzinfo is not None:
+        date = date.replace(tzinfo=None)
+
+    start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_day = start_of_day + timedelta(days=1)
+
+    result = await db.execute(
+        select(Booking)
+        .options(selectinload(Booking.user))
+        .where(
+            Booking.equipment_id == equipment_id,
+            Booking.start_time < end_of_day,
+            Booking.end_time >= start_of_day,
+        )
+    )
+    
+    booking = result.scalars().first()
+
+    if not booking:
+        return None
+
+    return {
+        "id": str(booking.id),
+        "start_time": booking.start_time,
+        "end_time": booking.end_time,
+        "user": {
+            "id": str(booking.user.id) if booking.user else None,
+            "email": booking.user.email if booking.user else None,
+            "name": booking.user.username if booking.user else None,
+        },
+    }

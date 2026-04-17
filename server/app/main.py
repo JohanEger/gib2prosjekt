@@ -81,7 +81,7 @@ app.include_router(location.router)
 app.include_router(equipment.router)
 app.include_router(route.router)
 app.include_router(booking.router)
-
+    
 
 @app.get("/health")
 async def health(db: AsyncSession = Depends(get_database)):

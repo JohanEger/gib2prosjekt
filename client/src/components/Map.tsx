@@ -3,7 +3,9 @@ import {
   TileLayer,
   Marker,
   GeoJSON,
+  Polyline,
   Tooltip,
+  useMapEvents,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import {
@@ -14,7 +16,6 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import type { LineString } from "geojson";
 import L from "leaflet";
 import { UserLocationMarker } from "./UserLocationMarker";
 import {
@@ -23,14 +24,18 @@ import {
 } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import type { EquipmentFilters } from "../types/equipmentFilters";
+import type { Equipment } from "../types/equipment";
+import type { RouteLiveVehicle, RouteResponse } from "../types/routeResponse";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { LogPosition } from "../types/logPositions";
 import { LogMapLayer } from "./LogMapLayer";
+import MapControl from "./MapControl";
 
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+//const API_BASE =
+import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 // --- Typer -------------------------------------------------------------------
 
@@ -46,9 +51,8 @@ type Coordinates = {
   lng: number;
 };
 
-type RouteResponse = LineString & {
-  meters?: number;
-  seconds?: number;
+type ResetClusterFilterOnMapClickProps = {
+  onReset: () => void;
 };
 
 interface MapProps {
@@ -61,6 +65,9 @@ interface MapProps {
   LogPositions: LogPosition[];
   showLogMode: boolean;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
+  activeEquipment: Equipment | null;
+  setActiveEquipment: Dispatch<SetStateAction<Equipment | null>>;
+  setSelectedClusterEquipmentIds: Dispatch<SetStateAction<string[] | null>>;
 }
 
 interface MarkerClusterLike extends L.Layer {
@@ -76,23 +83,43 @@ interface MarkerClusterLike extends L.Layer {
 
 const TRONDHEIM_CENTER: [number, number] = [63.43, 10.4];
 
-const emptyLineString = (): LineString => ({
+const emptyRouteResponse = (): RouteResponse => ({
   type: "LineString",
   coordinates: [],
+  meters: 0,
+  seconds: 0,
 });
+
+const ResetClusterFilterOnMapClick = ({
+  onReset,
+}: ResetClusterFilterOnMapClickProps) => {
+  useMapEvents({
+    click: () => {
+      onReset();
+    },
+  });
+
+  return null;
+};
 
 const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
     className: "",
-    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${
-      active ? "bg-green-700" : "bg-blue-600"
-    }"></div>`,
+    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${active ? "bg-green-700" : "bg-blue-600"
+      }"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
 
 const ICON_IDLE = makeEquipmentIcon(false);
 const ICON_ACTIVE = makeEquipmentIcon(true);
+const makeLiveBusIcon = (linePublicCode?: string | null) =>
+  L.divIcon({
+    className: "",
+    html: `<div class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-violet-600 text-[11px] font-bold text-white shadow-lg">${linePublicCode ?? "B"}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
 
 const createClusterIcon = (cluster: MarkerClusterLike) =>
   L.divIcon({
@@ -100,6 +127,20 @@ const createClusterIcon = (cluster: MarkerClusterLike) =>
     html: `<div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-blue-600 text-sm font-bold text-white shadow-md">${cluster.getChildCount()}</div>`,
     iconSize: L.point(40, 40, true),
   });
+
+const TRANSIT_LEG_STYLE = {
+  foot: {
+    color: "#38bdf8",
+    weight: 5,
+    opacity: 0.95,
+    dashArray: "10 10",
+  },
+  bus: {
+    color: "#a855f7",
+    weight: 7,
+    opacity: 0.95,
+  },
+} as const;
 
 function isValidRoutePayload(data: unknown): data is RouteResponse {
   if (!data || typeof data !== "object") return false;
@@ -124,17 +165,40 @@ export const Map = ({
   onRoutePanelChange,
   selectedEquipmentId,
   LogPositions,
+  activeEquipment,
+  setActiveEquipment,
+  setSelectedClusterEquipmentIds,
 }: MapProps) => {
   const { latitude, longitude } = useGeolocation();
-
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null); // Måtte legge til, blir denne riktig?
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
-  const [route, setRoute] = useState<LineString>(emptyLineString());
+  const [route, setRoute] = useState<RouteResponse>(emptyRouteResponse());
   const [routeVersion, setRouteVersion] = useState(0);
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
+  const [mapType, setMapType] = useState<string>("alidade_smooth");
   const [showLogMode, setShowLogMode] = useState(false);
+  const getEquipment = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/equipment/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        console.error("Failed to fetch equipment:", res.status);
+        return null;
+      }
+
+      const data: Equipment = await res.json();
+      setActiveEquipment(data);
+    } catch (err) {
+      console.error("Error fetching equipment:", err);
+    }
+  };
+
+
   console.log(LogPositions);
   const isClusterSelected = (cluster: MarkerClusterLike) => {
     return cluster.getAllChildMarkers().some((m) => {
@@ -234,13 +298,23 @@ export const Map = ({
   };
 
   // --- Effect 2: hent rute --------------------------------------------------
+  // --- Effect 2: fly til markerte koordinater --------------------------------------
+  useEffect(() => {
+    if (!activeEquipment || !mapRef.current) return;
+
+    mapRef.current.flyTo([activeEquipment.lat, activeEquipment.lng], 16, {
+      duration: 0.6,
+    });
+  }, [activeEquipment]);
+
+  // --- Effect 3: hent rute --------------------------------------------------
   useEffect(() => {
     const canRoute =
       coordinates !== null && latitude != null && longitude != null;
 
     if (!canRoute) {
       startTransition(() => {
-        setRoute(emptyLineString());
+        setRoute(emptyRouteResponse());
         onRoutePanelChange({ status: "idle" });
       });
       return;
@@ -267,10 +341,15 @@ export const Map = ({
           ) {
             console.warn("Rute-API:", (data as { detail: string }).detail);
           }
-          setRoute(emptyLineString());
+          setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "error" });
-        } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
-          setRoute(emptyLineString());
+
+          /*         } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
+                    setRoute(emptyLineString()); OBS endra ved merging men usikker på denne eller den under*/
+
+        } else if ((data.meters ?? 0) <= 0) {
+          setRoute(emptyRouteResponse());
+
           onRoutePanelChange({ status: "no_route" });
         } else {
           setRoute(data);
@@ -278,17 +357,25 @@ export const Map = ({
             status: "ready",
             meters: data.meters ?? 0,
             seconds: data.seconds ?? 0,
+            transit: data.transit,
           });
+          if (mapRef.current && data.coordinates.length > 0) {
+            const LatLngs = data.coordinates.map(
+              ([lng, lat]) => [lat, lng] as [number, number],
+            );
+            const bounds = L.latLngBounds(LatLngs);
+
+            mapRef.current.fitBounds(bounds, {
+              padding: [50, 50],
+              animate: true,
+            });
+          }
         }
         setRouteVersion((v) => v + 1);
-
-        mapRef.current?.flyTo([coordinates.lat, coordinates.lng], 16, {
-          duration: 0.6,
-        });
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Error fetching route:", err);
-          setRoute(emptyLineString());
+          setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "error" });
           setRouteVersion((v) => v + 1);
         }
@@ -306,11 +393,22 @@ export const Map = ({
   };
 
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
+  const liveVehicles: RouteLiveVehicle[] = route.transit
+    ? route.transit.legs
+      .filter((leg) => leg.mode === "bus" && leg.liveVehicle)
+      .map((leg) => leg.liveVehicle as RouteLiveVehicle)
+    : [];
+  const transitLegs = route.transit?.legs ?? [];
 
   // --- Render --------------------------------------------------------------
 
   return (
     <div className="relative h-screen w-full">
+      <div className="absolute bottom-6 right-4 z-30">
+        <div className="bg-white rounded-xl shadow-lg border p-2">
+          <MapControl setMap={setMapType} />
+        </div>
+      </div>
       <MapContainer
         ref={mapRef}
         center={TRONDHEIM_CENTER}
@@ -319,18 +417,75 @@ export const Map = ({
         zoomControl={false}
         className="absolute inset-0 z-0"
       >
-        <TileLayer
-          attribution="© OpenStreetMap contributors © Stadia Maps"
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+        <ResetClusterFilterOnMapClick
+          onReset={() => setSelectedClusterEquipmentIds(null)}
         />
 
-        {coordinates && route.coordinates.length > 0 && (
+        {mapType == "satellite" ? (
+          <TileLayer
+            attribution="© OpenStreetMap contributors © Stadia Maps © Esri"
+            url={
+              mapType === "satellite"
+                ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                : `https://tiles.stadiamaps.com/tiles/${mapType}/{z}/{x}/{y}{r}.png`
+            }
+          />
+        ) : (
+          <TileLayer
+            attribution="© OpenStreetMap contributors © Stadia Maps"
+            url={`https://tiles.stadiamaps.com/tiles/${mapType}/{z}/{x}/{y}{r}.png`}
+          />
+        )}
+
+        {travelMode !== "bus" && coordinates && route.coordinates.length > 0 && (
           <GeoJSON
             key={`${travelMode}-${routeVersion}`}
             data={route}
             style={ROUTE_LINE_STYLE[travelMode]}
           />
         )}
+
+        {travelMode === "bus" &&
+          transitLegs.map((leg, index) => {
+            if (leg.coordinates.length === 0) return null;
+
+            return (
+              <Polyline
+                key={`${leg.mode}-${leg.serviceJourneyId ?? index}-${routeVersion}`}
+                positions={leg.coordinates.map(([lng, lat]) => [lat, lng] as [number, number])}
+                pathOptions={TRANSIT_LEG_STYLE[leg.mode]}
+              >
+                <Tooltip direction="top" offset={[0, -6]} opacity={1}>
+                  <div className="min-w-28 px-2 py-1 text-sm">
+                    <div className="font-semibold">
+                      {leg.mode === "bus" ? leg.linePublicCode ?? "?" : "Gå"}
+                    </div>
+                    <div>
+                      {leg.fromName ?? "Start"} til {leg.toName ?? "Mål"}
+                    </div>
+                  </div>
+                </Tooltip>
+              </Polyline>
+            );
+          })}
+
+        {travelMode === "bus" &&
+          liveVehicles.map((vehicle) => (
+            <Marker
+              key={`${vehicle.serviceJourneyId}-${vehicle.date}`}
+              position={[vehicle.latitude, vehicle.longitude]}
+              icon={makeLiveBusIcon(vehicle.linePublicCode)}
+            >
+              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                <div className="min-w-36 px-2 py-1 text-sm">
+                  <div className="font-semibold">
+                    {vehicle.linePublicCode ?? ""}
+                  </div>
+                  <div>{vehicle.destinationName ?? "Live-posisjon"}</div>
+                </div>
+              </Tooltip>
+            </Marker>
+          ))}
 
         <MarkerClusterGroup
           key={selectedEquipmentId ?? "none"}
@@ -355,11 +510,11 @@ export const Map = ({
                 <div class="min-w-52">
                   <ul class="space-y-1 text-sm">
                     ${items
-                      .map(
-                        (item) =>
-                          `<li class="rounded px-2 py-1">${item.name}</li>`,
-                      )
-                      .join("")}
+                  .map(
+                    (item) =>
+                      `<li class="rounded px-2 py-1">${item.name}</li>`,
+                  )
+                  .join("")}
                   </ul>
                 </div>
               `;
@@ -377,6 +532,17 @@ export const Map = ({
                 .layer;
               cluster.closeTooltip();
               cluster.unbindTooltip();
+            },
+            clusterclick: (e: L.LeafletEvent) => {
+              const cluster = (e as unknown as { layer: MarkerClusterLike })
+                .layer;
+              const children = cluster.getAllChildMarkers();
+
+              const items = children
+                .map((m) => markerDataRef.current.get(m))
+                .filter((d): d is EquipmentMarker => Boolean(d));
+
+              setSelectedClusterEquipmentIds(items.map((item) => item.id));
             },
           }}
         >
@@ -407,9 +573,29 @@ export const Map = ({
                 </Tooltip>
               </Marker>
             ))}
+          {markers.map((marker) => (
+            <Marker
+              key={marker.id}
+              position={[marker.lat, marker.lng]}
+              icon={activeEquipment?.id === marker.id ? ICON_ACTIVE : ICON_IDLE}
+              ref={(ref) => {
+                if (ref) markerDataRef.current.set(ref, marker);
+              }}
+              eventHandlers={{
+                click: () => {
+                  setSelectedClusterEquipmentIds(null);
+                  getEquipment(marker.id);
+                },
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                <div className="min-w-32 px-2 py-1 text-sm">{marker.name}</div>
+              </Tooltip>
+            </Marker>
+          ))}
         </MarkerClusterGroup>
 
-        <LogMapLayer logPositions={LogPositions} 
+        <LogMapLayer logPositions={LogPositions}
         />
 
         <UserLocationMarker />

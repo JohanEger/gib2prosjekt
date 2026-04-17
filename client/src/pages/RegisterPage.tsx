@@ -18,12 +18,15 @@ export default function RegisterPage() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errors, setErrors] = useState<{
         username?: string;
         email?: string;
         password?: string;
         confirmPassword?: string;
+        phoneNumber?:
+        string;
     }>({});
     const [serverError, setServerError] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -58,6 +61,12 @@ export default function RegisterPage() {
                 "Passordene matcher ikke";
         }
 
+        if (!phoneNumber) {
+            newErrors.phoneNumber = "Telefonnummer kreves";
+        } else if (!/^\+?[0-9\s-]{8,15}$/.test(phoneNumber)) {
+            newErrors.phoneNumber = "Ugyldig telefonnummer";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -70,7 +79,7 @@ export default function RegisterPage() {
 
         setSubmitting(true);
         try {
-            await register(username, email, password);
+            await register(username, email, password, phoneNumber);
             navigate("/");
         } catch (err) {
             setServerError(
@@ -128,6 +137,16 @@ export default function RegisterPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             error={!!errors.email}
                             helperText={errors.email}
+                        />
+
+                        <TextField
+                            label="Telefonnummer"
+                            fullWidth
+                            margin="normal"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            error={!!errors.phoneNumber}
+                            helperText={errors.phoneNumber}
                         />
 
                         <TextField

@@ -6,13 +6,13 @@ import type { RoutePanelState } from "../types/routePanelState";
 import { useState, type SetStateAction } from "react";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { LogPosition } from "../types/logPositions";
-import { LogMapLayer } from "@/components/LogMapLayer";
+import type { Equipment } from "../types/equipment";
 
 export const HomePage = () => {
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(
     null,
   );
-  const [activeEquipment, setActiveEquipment] = useState(null);
+  //const [activeEquipment, setActiveEquipment] = useState(null);
   const [filters, setFilters] = useState<EquipmentFilters>({
     committee: [],
     distance: 0,
@@ -21,10 +21,12 @@ export const HomePage = () => {
   });
 
   const [findEquipment, setFindEquipment] = useState<Coordinates | null>(null);
+  const [activeEquipment, setActiveEquipment] = useState<Equipment | null>(null);
   const [travelMode, setTravelMode] = useState<RouteTravelMode>("walk");
   const [routePanel, setRoutePanel] = useState<RoutePanelState>({
     status: "idle",
   });
+  const [selectedClusterEquipmentIds, setSelectedClusterEquipmentIds] = useState<string[] | null>(null);
 
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
   const [showLogMode, setShowLogMode] = useState(false);
@@ -86,6 +88,10 @@ export const HomePage = () => {
         setShowLogMode={setShowLogMode}
         onShowLog={handleShowLog}
         setLogPositions={setLogPositions}
+        activeEquipment={activeEquipment}
+        setActiveEquipment={setActiveEquipment}
+        selectedClusterEquipmentIds={selectedClusterEquipmentIds}
+        setSelectedClusterEquipmentIds={setSelectedClusterEquipmentIds}
       />
 
       <Map
@@ -98,6 +104,9 @@ export const HomePage = () => {
         LogPositions={logPositions}
         showLogMode={showLogMode}
         setShowLogMode={setShowLogMode}
+        activeEquipment={activeEquipment}
+        setActiveEquipment={setActiveEquipment}
+        setSelectedClusterEquipmentIds={setSelectedClusterEquipmentIds}
       />
     </div>
   );
