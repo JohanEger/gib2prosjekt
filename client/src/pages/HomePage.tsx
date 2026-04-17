@@ -34,6 +34,7 @@ export const HomePage = () => {
     setFindEquipment(null);
   };
 
+
   type Coordinates = {
     lat: number;
     lng: number;
@@ -66,6 +67,7 @@ export const HomePage = () => {
       console.error("Feil ved henting av logg:", err);
     }
   };
+
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">

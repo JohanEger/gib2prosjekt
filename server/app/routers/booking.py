@@ -19,9 +19,6 @@ from app.services.booking import get_5_last_bookings_by_equipment
 router = APIRouter(prefix="/booking", tags=["booking"])
 
 
-
-
-
 @router.get("/booking_for_equipment/{equipment_id}", response_model=list[BookingSchema])
 async def get_bookings_for_equipment(
     equipment_id: uuid.UUID,
@@ -53,8 +50,11 @@ async def get_5_latest_booking_for_equipment(
     bookings = await get_5_last_bookings_by_equipment(equipment_id, session)
 
     result = []
+    now = datetime.now()
 
     for b in bookings:
+        if b.start_time >= now:
+            continue
         try:
             p = to_shape(b.booking_destination)
             result.append({

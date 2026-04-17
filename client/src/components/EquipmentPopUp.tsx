@@ -37,7 +37,7 @@ type Props = {
   onShowLog: (equipmentId: string) => Promise<void>;
   setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
   setLogPositions: React.Dispatch<
-    React.SetStateAction<{ lat: number; lng: number; created_at: string }[]>
+    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>
   >;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   clearSelection: () => void;
@@ -76,6 +76,8 @@ export const EquipmentPopUp = ({
     if (!fiveLatestID) return; // viktig guard
 
     const handleShowLog = async () => {
+      setLogError(null);
+      setFiveLatestID(null)
       setShowLogMode(true);
       setLogLoading(true);
       setLogError(null);
@@ -92,6 +94,15 @@ export const EquipmentPopUp = ({
         }
 
         const data = await res.json();
+
+        if (Array.isArray(data) && data.length === 0) {
+          setLogError("Ingen logg tilgjengelig")
+          setLogPositions([]); 
+          return;
+
+        }
+
+
         console.log(data);
         setLogPositions(data);
       } catch (err) {
@@ -118,6 +129,7 @@ export const EquipmentPopUp = ({
       SetFindEquipment({ lat, lng }); // vis ruten
     }
   };
+
 
   useEffect(() => {
     async function loadAddress() {
@@ -161,6 +173,7 @@ export const EquipmentPopUp = ({
           SetFindEquipment(null);
           setSelectedEquipmentId?.(null);
           clearSelection();
+          setLogPositions([]);
           onClose();
         }}
         className="absolute top-4 left-50"
@@ -201,13 +214,25 @@ export const EquipmentPopUp = ({
       <Typography>{description}</Typography>
       <Button
         variant="text"
-        onClick={() => setFiveLatestID(id)}
+        onClick={() => { setFiveLatestID(id);}}
         className="underline italic cursor-pointer hover:text-blue-600 transition"
         title="Trykk for å se siste 5 posisjoner"
       >
-        {" "}
-        Se posisjonslogg{" "}
+        {" "}Se posisjonslogg{" "}
+
       </Button>
+      {logError && (
+        <p className="text-sm text-red-600"> Har ingen tidligere bookinger
+          <Button
+            variant="text"
+            onClick={() => { setFiveLatestID(null); setLogError(null); setShowLogMode(false); }}
+            className="ml-2 cursor-pointer hover:text-red-800">
+            X
+          </Button>
+        </p>
+
+      )}
+
 
       <Link
         to={`/calendar/${id}/${name}`}
@@ -253,12 +278,12 @@ export const EquipmentPopUp = ({
 
             {(routePanel.status === "idle" ||
               routePanel.status === "loading") && (
-              <p className="text-sm font-medium text-sky-200/90">
-                {routePanel.status === "loading"
-                  ? "Beregner rute…"
-                  : "Henter posisjon og rute…"}
-              </p>
-            )}
+                <p className="text-sm font-medium text-sky-200/90">
+                  {routePanel.status === "loading"
+                    ? "Beregner rute…"
+                    : "Henter posisjon og rute…"}
+                </p>
+              )}
 
             {routePanel.status === "ready" && (
               <div className="grid grid-cols-2 gap-2">
