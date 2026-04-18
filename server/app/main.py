@@ -68,6 +68,8 @@ origins = [
     "http://tba4250s01.it.ntnu.no",
     "http://tba4250s01.it.ntnu.no:80",
     "http://tba4250s01.it.ntnu.no:5001",
+    "https://tba4250s01.it.ntnu.no",
+    "https://tba4250s01.it.ntnu.no:443",
 ]
 
 app.add_middleware(
