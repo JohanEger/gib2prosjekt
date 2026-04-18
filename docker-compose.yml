@@ -1,10 +1,16 @@
-﻿services:
+services:
   client:
-    build: ./client
+    build:
+      context: ./client
+      args:
+        # Nettleseren på verten må nå API på localhost; tom verdi ved bygg gir feil base-URL i bundlet JS.
+        VITE_BACKEND_BASE_URL: http://localhost:5001
     env_file:
       - client/.env
     ports:
       - "80:80"
+    networks: 
+      - gib2-network
     depends_on:
       - server
 
@@ -13,20 +19,46 @@
     env_file:
       - server/.env
     ports:
-      - "5000:5000"
+      - "5001:5001"
+    networks: 
+      - gib2-network
+    restart: unless-stopped
+    volumes:
+      - ./server:/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    command:
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 5001"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health').read()\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
 
   db:
     image: postgis/postgis:16-3.4
+    platform: linux/amd64
     container_name: my_postgis
     env_file:
       - db/.env
     ports:
-      - "5823:5432"
+      - "6543:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
+    networks: 
+      - gib2-network
+    healthcheck:
+      # Må matche POSTGRES_USER / POSTGRES_DB i db/.env (standard postgres-image lager ikke brukeren «postgres» hvis du setter egen bruker).
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" -h localhost -p 5432"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
   db-data:
+networks:
+  gib2-network:
