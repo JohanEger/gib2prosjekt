@@ -1,13 +1,30 @@
-import React, { useEffect, useState } from "react";
-import { Paper, Typography, Button, Box, Divider } from "@mui/material";
+import * as React from "react";
+import {
+  Paper,
+  Typography,
+  Button,
+  Box,
+  Select,
+  MenuItem,
+  IconButton,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { Divider } from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import type { DateValue } from "react-aria-components";
-import { getLocalTimeZone, today as todayAria } from "@internationalized/date";
+import { getLocalTimeZone, parseDate, today as todayAria } from "@internationalized/date";
 import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar";
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
-import { API_BASE } from "@/apiBase";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useNavigate } from "react-router-dom";
+
+
+const API_BASE =
+  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+
+//import { API_BASE } from "@/apiBase";
 import { useAuth } from "../hooks/useAuth";
 
 interface Booking {
@@ -75,7 +92,7 @@ export const CalendarPage = () => {
       const parsedBookings = data.map((b: any) => {
         const start = new Date(b.start_time);
         const end = new Date(b.end_time);
-
+        
         return {
           id: b.id,
           equipmentId: b.equipment_id,
@@ -91,22 +108,46 @@ export const CalendarPage = () => {
           createdAt: new Date(b.created_at),
         };
       });
-
       setBookings(parsedBookings);
       console.log(parsedBookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     }
-  };
-
-  useEffect(() => {
+    };
+    
+    useEffect(() => {
     fetchBookings();
-  }, [id]);
+    }, [id]);
 
+      
+/*   const maxDateObj = new Date(today.year + 1, today.month - 1, today.day);
+  const maxDateStr = `${maxDateObj.getFullYear()}-${(maxDateObj.getMonth() + 1).toString().padStart(2, "0")}-${maxDateObj.getDate().toString().padStart(2, "0")}`;
+  const maxDate = parseDate(maxDateStr); */
+
+  
   const handleRangeChange = (range: { start?: DateValue; end?: DateValue }) => {
     setSelectedRange(range);
   };
 
+    
+   const navigate = useNavigate();
+  
+    const handleGoBackToHomePage = () => {
+      navigate("/", { state: { openEquipmentId: id, openEquipmentName: name } });
+    };
+  
+  const handleGoToToday = () => {
+    setSelectedRange({ start: today, end: today });
+    setFocusedDate(today);
+    setSelectedYear(today.year);
+  };
+  
+  const [selectedYear, setSelectedYear] = useState<number>(today.year); //La til for å få appen til å kjøre, ta vekk?
+  
+  const handleOpenPopup = () => setPopupOpen(true);
+  const handleClosePopup = () => setPopupOpen(false); 
+  
+  
   const handleDateClick = async (date: DateValue) => {
     try {
       const iso = `${focusedDate.year}-${date.month.toString().padStart(2, "0")}-${date.day.toString().padStart(2, "0")}T00:00:00`;
@@ -152,27 +193,40 @@ export const CalendarPage = () => {
       console.error("FETCH FAILED:", err);
       setSelectedBooking(null);
     }
+
+    const handleGoToToday = () => {
+    setSelectedRange({ start: today, end: today });
+    setFocusedDate(today);
+    setSelectedYear(today.year);
+  };
   };
 
+  
   return (
     <>
       <NavBar />
+      <Box sx={{ mt: "8em", display: "flex", justifyContent: "center", px: 1 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: "1000px",
+            minHeight: "70vh",
+            p: 4,
+            pt: 4,
+          }}
+        >
 
-      <Box sx={{ mt: "8em", display: "flex", justifyContent: "center" }}>
-        <Paper sx={{ maxWidth: 1000, p: 4 }}>
-          <Typography
-            variant="h5"
-            sx={{
-              px: 2,
-              py: 1,
-              fontWeight: 600,
-              letterSpacing: 0.3,
-            }}
-          >
-            {name}
-          </Typography>
+          <IconButton onClick={handleGoBackToHomePage} className="absolute">
+            <ArrowBackIcon />
+          </IconButton>
+          <Box>
+            <Typography variant="h4" pl="16px">{name}</Typography>
+          </Box>
+          <Box/>
 
-          <Box sx={{ display: "flex", gap: 4 }}>
+
+            <Box sx={{ display: "flex", gap: 4 }} >
             <Box sx={{ flex: 1, py: 3 }}>
               {mode === "view" && (
                 <Paper
@@ -265,7 +319,7 @@ export const CalendarPage = () => {
                     fontWeight: mode === "book" ? "bold" : "normal",
                   }}
                 >
-                  Book
+                  Book 
                 </Typography>
 
                 <Typography
@@ -275,13 +329,14 @@ export const CalendarPage = () => {
                     fontWeight: mode === "view" ? "bold" : "normal",
                   }}
                 >
-                  View
+                  Se bookinger
                 </Typography>
               </Box>
 
               {/* BOOK MODE */}
               {mode === "book" && (
                 <>
+                    <Button variant="text" sx={{fontSize: "0.65rem", color: "black", textTransform: "none"}} onClick={handleGoToToday}>Gå til i dag</Button>
                   <BookingRangeCalendar
                     focusedValue={focusedDate}
                     isDateBooked={(date) => isDateBooked(date, bookings)}
@@ -290,7 +345,6 @@ export const CalendarPage = () => {
                       if (date) setFocusedDate(date);
                     }}
                   />
-
                   {selectedRange.start && selectedRange.end && (
                     <Button sx={{ mt: 2 }} onClick={() => setPopupOpen(true)}>
                       Book
@@ -312,16 +366,19 @@ export const CalendarPage = () => {
           </Box>
         </Paper>
       </Box>
-      {selectedRange.start && selectedRange.end && (
-        <BookingPopup
-          open={popupOpen}
-          onClose={() => setPopupOpen(false)}
-          startDate={selectedRange.start}
-          endDate={selectedRange.end}
-          equipmentId={id}
-          fetchBookings={fetchBookings}
-        />
-      )}
+      {
+        selectedRange.start && selectedRange.end && (
+          <BookingPopup
+            open={popupOpen}
+            onClose={() => setPopupOpen(false)}
+            startDate={selectedRange.start}
+            endDate={selectedRange.end}
+            equipmentId={id}
+            fetchBookings={fetchBookings}
+          />
+        )
+      }
     </>
+    
   );
 };
