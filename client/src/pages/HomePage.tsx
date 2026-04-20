@@ -29,6 +29,9 @@ export const HomePage = () => {
   const [selectedClusterEquipmentIds, setSelectedClusterEquipmentIds] = useState<string[] | null>(null);
 
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
+  const currentPosition = activeEquipment
+    ? { lat: activeEquipment.lat, lng: activeEquipment.lng }
+    : null;
   const [showLogMode, setShowLogMode] = useState(false);
 
   const clearSelection = () => {
@@ -101,6 +104,7 @@ export const HomePage = () => {
         onRoutePanelChange={setRoutePanel}
         selectedEquipmentId={selectedEquipmentId}
         logPositions={logPositions}
+        currentPosition={currentPosition}
         LogPositions={logPositions}
         showLogMode={showLogMode}
         setShowLogMode={setShowLogMode}

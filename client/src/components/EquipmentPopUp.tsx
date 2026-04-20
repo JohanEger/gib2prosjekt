@@ -85,7 +85,7 @@ export const EquipmentPopUp = ({
 
     const handleShowLog = async () => {
       setLogError(null);
-      setFiveLatestID(null)
+      setFiveLatestID(null);
       setShowLogMode(true);
       setLogLoading(true);
       setLogError(null);

@@ -3,3 +3,8 @@ export type LogPosition = {
   lng: number;
   start_time: string;
 };
+
+export type CurrentPosition = {
+  lat: number;
+  lng: number;
+};
