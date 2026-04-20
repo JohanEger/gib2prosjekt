@@ -152,5 +152,6 @@ async def get_booking_for_date(
             "id": str(booking.user.id) if booking.user else None,
             "email": booking.user.email if booking.user else None,
             "name": booking.user.username if booking.user else None,
+            "phone_number": booking.user.phone_number if booking.user else None,
         },
     }
