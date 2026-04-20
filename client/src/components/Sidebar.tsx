@@ -232,7 +232,7 @@ export const Sidebar = ({
   };
 
   const LegendItem = ({ color, size = 18, label, text, bordercolor }: LegendItemProps) => (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 shrink-0 text-xs">
       <div style={getMarkerStyle(size, color, bordercolor)}>
         {label}
       </div>
@@ -246,11 +246,12 @@ export const Sidebar = ({
       ? equipment
       : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
 
+
   return (
     <>
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white
+        className={`fixed top-0 left-0 h-screen w-45 sm:w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
@@ -260,7 +261,7 @@ export const Sidebar = ({
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-3 p-4 mt-20 max-h-47/64 overflow-y-auto overflow-x-hidden">
+        <ul className="relative flex flex-col gap-3 p-1 sm:p-4 mt-20 max-h-45/64 sm:max-h-47/64 overflow-y-auto overflow-x-hidden">
           {visibleEquipment.map((item) => (
             <Box
               sx={{ borderRadius: 4 }}
@@ -297,26 +298,26 @@ export const Sidebar = ({
             left: 6,
             zIndex: 2000,
             background: "primary",
-            padding: 1,
+            padding: {xs: 0.5, sm: 1},
             borderRadius: 2,
-            maxHeight: "6rem",
+            maxHeight: {xs: "7rem", sm: "6rem"},
             boxShadow: 0,
             maxWidth: 260,
           }}
         >
 
           {showLegend && (
-            <div className="mt-0.5 ml-2 flex flex-col gap-0.5 ">
+            <div className="sm:mt-0.5 ml-2 flex flex-col gap-0.5 ">
               <LegendItem
                 color="#4285f4"
                 size={15}
-                text=" Din posisjon"
+                text="Din posisjon"
                 bordercolor="white"
               />
-              <div className="mt-1 flex flex-row gap-4">
+              <div className="mt-0.5 sm:mt-1 flex flex-col sm:flex-row gap-0.5 sm:gap-4">
                 <LegendItem
                   color="#15803d"
-                  text="Valgt utstyr"
+                  text= "Valgt utstyr"
                   bordercolor="black"
                 />
                 <LegendItem
@@ -350,8 +351,8 @@ export const Sidebar = ({
           setOpen(!open);
           setShowFilter(false);
         }}
-        className={`fixed top-1/2 z-50 p-1 transition-all duration-300 cursor-pointer
-        ${open ? "left-64" : "left-0"}`}
+        className={`fixed top-1/2 z-40 p-1 transition-all duration-300 cursor-pointer
+        ${open ? "left-44 sm:left-64" : "left-0"}`}
       >
         <img
           src={arrow}
@@ -400,7 +401,7 @@ export const Sidebar = ({
       {/* Filters */}
       {showFilter && (
         <Box
-          className="fixed z-30 top-20 left-72 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
+          className="fixed z-30 top-20 left-50 sm:left-72 flex bg-white shadow-lg w-[10rem] sm:w-[16rem] p-4 flex flex-col gap-1 sm:gap-4"
           sx={{ borderRadius: "0.5rem" }}
         >
           <Box className="flex items-center justify-between mb-1 ml-1">
@@ -410,7 +411,7 @@ export const Sidebar = ({
             </IconButton>
           </Box>
 
-          <FormControl sx={{ width: 200 }}>
+          <FormControl sx={{ width: { xs: 130, sm: 200 } }}>
             <InputLabel>Komité</InputLabel>
             <Select
               multiple
@@ -440,7 +441,7 @@ export const Sidebar = ({
             />
           </Box>
 
-          <FormControl sx={{ width: 200 }}>
+          <FormControl sx={{ width: { xs: 130, sm: 200 } }}>
             <InputLabel>Type utstyr</InputLabel>
             <Select
               value={filters.typeOfEquipment}
@@ -465,16 +466,18 @@ export const Sidebar = ({
           </FormControl>
 
           <FormControlLabel
+          sx={{ "& .MuiFormControlLabel-label": { fontSize: { xs: 11, sm: 14 },},}}
             control={
               <Checkbox
                 checked={filters.available}
                 onChange={handleAvailableChange}
               />
             }
+
             label="Kun tilgjengelig"
           />
 
-          <Button variant="outlined" onClick={resetFilters}>
+          <Button variant="outlined" onClick={resetFilters} sx={{ fontSize: { xs: "10px", sm: "14px" } }}>
             Nullstill filtre
           </Button>
         </Box>
