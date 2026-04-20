@@ -213,12 +213,12 @@ export default function BookingPopup({
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "flex-end",
+                justifyContent: "center",
                 gap: 1,
                 mt: 2,
               }}
             >
-              <Button onClick={onClose} variant="outlined">
+              <Button onClick={onClose} variant="outlined" sx={{ mr: 1 }}>
                 Lukk
               </Button>
               <Button
@@ -226,7 +226,7 @@ export default function BookingPopup({
                 disabled={!startHour || !endHour}
                 onClick={handleBooking}
               >
-                Bekreft bokking
+                Bekreft booking
               </Button>
             </Box>
           </Box>

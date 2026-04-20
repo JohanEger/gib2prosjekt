@@ -27,10 +27,15 @@ import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { Equipment } from "../types/equipment";
 import type { RouteLiveVehicle, RouteResponse } from "../types/routeResponse";
 import { useGeolocation } from "../hooks/useGeolocation";
-import { API_BASE } from "../apiBase";
+//import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import type { LogPosition } from "../types/logPositions";
+import { LogMapLayer } from "./LogMapLayer";
 import MapControl from "./MapControl";
+
+const API_BASE =
+import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 // --- Typer -------------------------------------------------------------------
 
@@ -55,6 +60,11 @@ interface MapProps {
   coordinates: Coordinates | null;
   travelMode: RouteTravelMode;
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
+  selectedEquipmentId: string | null;
+  logPositions: { lat: number; lng: number; start_time: string }[];
+  LogPositions: LogPosition[];
+  showLogMode: boolean;
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   activeEquipment: Equipment | null;
   setActiveEquipment: Dispatch<SetStateAction<Equipment | null>>;
   setSelectedClusterEquipmentIds: Dispatch<SetStateAction<string[] | null>>;
@@ -95,9 +105,8 @@ const ResetClusterFilterOnMapClick = ({
 const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
     className: "",
-    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${
-      active ? "bg-blue-600" : "bg-zinc-400"
-    }"></div>`,
+    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${active ? "bg-green-700" : "bg-blue-600"
+      }"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
@@ -154,12 +163,14 @@ export const Map = ({
   coordinates,
   travelMode,
   onRoutePanelChange,
+  selectedEquipmentId,
+  LogPositions,
   activeEquipment,
   setActiveEquipment,
   setSelectedClusterEquipmentIds,
 }: MapProps) => {
   const { latitude, longitude } = useGeolocation();
-
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null); // Måtte legge til, blir denne riktig?
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
   const [route, setRoute] = useState<RouteResponse>(emptyRouteResponse());
   const [routeVersion, setRouteVersion] = useState(0);
@@ -167,7 +178,7 @@ export const Map = ({
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
   const [mapType, setMapType] = useState<string>("alidade_smooth");
-
+  const [showLogMode, setShowLogMode] = useState(false);
   const getEquipment = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -187,7 +198,35 @@ export const Map = ({
     }
   };
 
-  // --- Effect 1: hent markers ----------------------------------------------
+
+  console.log(LogPositions);
+  const isClusterSelected = (cluster: MarkerClusterLike) => {
+    return cluster.getAllChildMarkers().some((m) => {
+      const data = markerDataRef.current.get(m);
+      return data?.id === selectedEquipmentId;
+    });
+  };
+
+  // --- Farget cluster
+
+  const createClusterIcon = (cluster: MarkerClusterLike) => {
+    const selected = isClusterSelected(cluster);
+
+    return L.divIcon({
+      className: "marker-cluster marker-cluster-custom",
+      html: `
+      <div class="
+        flex h-10 w-10 items-center justify-center rounded-full border-2 border-black
+        ${selected ? "bg-green-700" : "bg-blue-600"}
+        text-sm font-bold text-white shadow-md
+      ">
+        ${cluster.getChildCount()}
+      </div>
+    `,
+      iconSize: L.point(40, 40, true),
+    });
+  };
+
   useEffect(() => {
     const ac = new AbortController();
 
@@ -243,6 +282,22 @@ export const Map = ({
     longitude,
   ]);
 
+  const fetchLog = async (equipmentId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/booking/log/${equipmentId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      const data = await res.json();
+      setLogPositions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // --- Effect 2: hent rute --------------------------------------------------
   // --- Effect 2: fly til markerte koordinater --------------------------------------
   useEffect(() => {
     if (!activeEquipment || !mapRef.current) return;
@@ -288,8 +343,13 @@ export const Map = ({
           }
           setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "error" });
+
+          /*         } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
+                    setRoute(emptyLineString()); OBS endra ved merging men usikker på denne eller den under*/
+
         } else if ((data.meters ?? 0) <= 0) {
           setRoute(emptyRouteResponse());
+
           onRoutePanelChange({ status: "no_route" });
         } else {
           setRoute(data);
@@ -326,10 +386,17 @@ export const Map = ({
     return () => ac.abort();
   }, [coordinates, latitude, longitude, travelMode, onRoutePanelChange]);
 
+  // --- Log ------------------------------------------------------------------
+
+  type Props = {
+    logPositions: LogPosition[];
+  };
+
+  const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
   const liveVehicles: RouteLiveVehicle[] = route.transit
     ? route.transit.legs
-        .filter((leg) => leg.mode === "bus" && leg.liveVehicle)
-        .map((leg) => leg.liveVehicle as RouteLiveVehicle)
+      .filter((leg) => leg.mode === "bus" && leg.liveVehicle)
+      .map((leg) => leg.liveVehicle as RouteLiveVehicle)
     : [];
   const transitLegs = route.transit?.legs ?? [];
 
@@ -421,6 +488,7 @@ export const Map = ({
           ))}
 
         <MarkerClusterGroup
+          key={selectedEquipmentId ?? "none"}
           chunkedLoading
           showCoverageOnHover={false}
           spiderfyOnMaxZoom={false}
@@ -442,11 +510,11 @@ export const Map = ({
                 <div class="min-w-52">
                   <ul class="space-y-1 text-sm">
                     ${items
-                      .map(
-                        (item) =>
-                          `<li class="rounded px-2 py-1">${item.name}</li>`,
-                      )
-                      .join("")}
+                  .map(
+                    (item) =>
+                      `<li class="rounded px-2 py-1">${item.name}</li>`,
+                  )
+                  .join("")}
                   </ul>
                 </div>
               `;
@@ -478,6 +546,33 @@ export const Map = ({
             },
           }}
         >
+          {!showLogMode &&
+            markers.map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={
+                  selectedEquipmentId === marker.id ? ICON_ACTIVE : ICON_IDLE
+                }
+                ref={(ref) => {
+                  if (ref) markerDataRef.current.set(ref, marker);
+                }}
+                eventHandlers={{
+                  click: () => {
+                    setActiveMarkerId((prev) =>
+                      prev === marker.id ? null : marker.id,
+                    );
+                    fetchLog(marker.id);
+                  },
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                  <div className="min-w-32 px-2 py-1 text-sm">
+                    {marker.name}
+                  </div>
+                </Tooltip>
+              </Marker>
+            ))}
           {markers.map((marker) => (
             <Marker
               key={marker.id}
@@ -499,6 +594,9 @@ export const Map = ({
             </Marker>
           ))}
         </MarkerClusterGroup>
+
+        <LogMapLayer logPositions={LogPositions}
+        />
 
         <UserLocationMarker />
       </MapContainer>

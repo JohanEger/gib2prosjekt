@@ -1,4 +1,5 @@
-import { Typography, Box, Divider } from "@mui/material";
+import { Description } from "@headlessui/react";
+import { Typography, Box, IconButton, Divider } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
@@ -7,6 +8,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DirectionsBusFilledIcon from "@mui/icons-material/DirectionsBusFilled";
 import DirectionsWalkIcon from "@mui/icons-material/DirectionsWalk";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
+import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
 import { TravelModeSelector } from "./TravelModeSelector";
 import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
@@ -28,14 +30,23 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  findEquipment: Coordinates | null;
   functional_status: FunctionalStatus;
   functional_status_comment?: string | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
+  onClose: () => void;
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
   routePanel: RoutePanelState;
   /** True når kart-ruten er beregnet til dette utstyrets posisjon */
   isRouteTarget: boolean;
+  onShowLog: (equipmentId: string) => Promise<void>;
+  setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
+  setLogPositions: React.Dispatch<
+    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>
+  >;
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
+  clearSelection: () => void;
 };
 
 export const EquipmentPopUp = ({
@@ -46,16 +57,87 @@ export const EquipmentPopUp = ({
   id,
   func,
   booked,
+  findEquipment,
   functional_status,
   functional_status_comment,
   SetFindEquipment,
+  onClose,
   travelMode,
   setTravelMode,
   routePanel,
   isRouteTarget,
+  setSelectedEquipmentId,
+  setLogPositions,
+  setShowLogMode,
+  clearSelection,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logError, setLogError] = useState<string | null>(null);
+  const [logLoading, setLogLoading] = useState(false);
+  const [fiveLatestID, setFiveLatestID] = useState<string | null>(null);
+
+  // --- Se fem siste posisjoner logg -------
+  const API_BASE = "http://localhost:5001";
+
+  useEffect(() => {
+    if (!fiveLatestID) return; // viktig guard
+
+    const handleShowLog = async () => {
+      setLogError(null);
+      setFiveLatestID(null)
+      setShowLogMode(true);
+      setLogLoading(true);
+      setLogError(null);
+
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API_BASE}/booking/log/${fiveLatestID}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (Array.isArray(data) && data.length === 0) {
+          setLogError("Ingen logg tilgjengelig")
+          setLogPositions([]); 
+          return;
+
+        }
+
+
+        console.log(data);
+        setLogPositions(data);
+      } catch (err) {
+        console.error(err);
+        setLogError("Kunne ikke hente logg");
+      } finally {
+        setLogLoading(false);
+      }
+    };
+
+    handleShowLog();
+  }, [fiveLatestID, setLogPositions, setShowLogMode]);
+
+  // ----
+
+  const toggleRoute = () => {
+    if (
+      findEquipment &&
+      findEquipment.lat === lat &&
+      findEquipment.lng === lng
+    ) {
+      SetFindEquipment(null); // skjul ruten
+    } else {
+      SetFindEquipment({ lat, lng }); // vis ruten
+    }
+  };
+
   const statusLabel: Record<FunctionalStatus, string> = {
   functional: "Alt i orden",
   broken: "Ødelagt",
@@ -110,11 +192,27 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
+  // Var i dev nedenfor: className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
+
   return (
     <Paper
       elevation={3}
-      className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
+      className="w-full max-h-screen overflow-y-auto pl-2 pr-2 pb-26 bg-black text-white flex flex-col items-center gap-4 relative"
+      onClick={(e) => e.stopPropagation()}
     >
+      <IconButton
+        onClick={() => {
+          SetFindEquipment(null);
+          setSelectedEquipmentId?.(null);
+          clearSelection();
+          setLogPositions([]);
+          onClose();
+        }}
+        className="absolute top-4 left-50"
+      >
+        <CloseIcon />
+      </IconButton>
+
       <Typography variant="h4">{name}</Typography>
 
       <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
@@ -122,14 +220,14 @@ export const EquipmentPopUp = ({
           <>
             <CancelIcon className="text-red-500" fontSize="small" />
             <Typography className="text-red-500 font-semibold">
-              Booket
+              Status nå: Booket
             </Typography>
           </>
         ) : (
           <>
             <CheckCircleIcon className="text-green-500" fontSize="small" />
             <Typography className="text-green-500 font-semibold">
-              Ledig
+              Status nå: Ledig
             </Typography>
           </>
         )}
@@ -146,10 +244,31 @@ export const EquipmentPopUp = ({
         )}
       </Typography>
       <Typography>{description}</Typography>
+      <Button
+        variant="text"
+        onClick={() => { setFiveLatestID(id);}}
+        className="underline italic cursor-pointer hover:text-blue-600 transition"
+        title="Trykk for å se siste 5 posisjoner"
+      >
+        {" "}Se posisjonslogg{" "}
+
+      </Button>
+      {logError && (
+        <p className="text-sm text-red-600"> Har ingen registrert logg
+          <Button
+            variant="text"
+            onClick={() => { setFiveLatestID(null); setLogError(null); setShowLogMode(false); }}
+            className="ml-2 cursor-pointer hover:text-red-800">
+            X
+          </Button>
+        </p>
+
+      )}
+
 
       <Link
         to={`/calendar/${id}/${name}`}
-        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
         hover:from-blue-600 hover:to-indigo-700
         text-white font-semibold rounded-xl shadow-lg
         transition-all duration-300 hover:scale-105 hover:shadow-xl"
@@ -159,7 +278,7 @@ export const EquipmentPopUp = ({
 
       <Link
           to={`/reportEquipment/${id}/${name}`}
-          className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+          className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
           hover:from-blue-600 hover:to-indigo-700
           text-white font-semibold rounded-xl shadow-lg
           transition-all duration-300 hover:scale-105 hover:shadow-xl"
@@ -168,13 +287,15 @@ export const EquipmentPopUp = ({
       </Link>
 
       <Button
-        onClick={() => SetFindEquipment({ lat, lng })}
-        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+        onClick={toggleRoute}
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
   hover:from-blue-600 hover:to-indigo-700
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
       >
-        Finn vei
+        {findEquipment && findEquipment.lat === lat && findEquipment.lng === lng
+          ? "Skjul vei"
+          : "Finn vei"}
       </Button>
 
       <div className="w-full max-w-[22rem] px-4 pb-10">
@@ -186,7 +307,7 @@ export const EquipmentPopUp = ({
         />
 
         {isRouteTarget ? (
-          <div className="mt-5 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
+          <div className="mt-2 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold tracking-tight text-white">
                 Ruteinformasjon
@@ -200,12 +321,12 @@ export const EquipmentPopUp = ({
 
             {(routePanel.status === "idle" ||
               routePanel.status === "loading") && (
-              <p className="text-sm font-medium text-sky-200/90">
-                {routePanel.status === "loading"
-                  ? "Beregner rute…"
-                  : "Henter posisjon og rute…"}
-              </p>
-            )}
+                <p className="text-sm font-medium text-sky-200/90">
+                  {routePanel.status === "loading"
+                    ? "Beregner rute…"
+                    : "Henter posisjon og rute…"}
+                </p>
+              )}
 
             {routePanel.status === "ready" && (
               <div className="space-y-3">
@@ -355,7 +476,7 @@ export const EquipmentPopUp = ({
       </div>
 
       <div className="mt-auto w-full max-w-[22rem] px-4 pb-8">
-        <div className="rounded-xl border border-zinc-300 bg-white p-4 text-center shadow-sm">
+        <div className="rounded-xl border border-zinc-300 bg-white p-4 text-center shadow-sm mb-20">
           <div className="space-y-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">

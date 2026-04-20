@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import arrow from "../assets/arrow.svg";
+import CloseIcon from "@mui/icons-material/Close";
 import { EquipmentPopUp } from "./EquipmentPopUp";
 import {
   Box,
@@ -15,6 +16,8 @@ import {
   Checkbox,
   TextField,
   FormControlLabel,
+  IconButton,
+  Avatar,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -24,8 +27,9 @@ import type { RoutePanelState } from "../types/routePanelState";
 import type { Equipment } from "../types/equipment";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { API_BASE } from "../apiBase";
+import type { LogPosition } from "./LogMapLayer";
 
-const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -47,11 +51,18 @@ type Coordinates = {
 interface SidebarProps {
   filters: EquipmentFilters;
   setFilters: React.Dispatch<React.SetStateAction<EquipmentFilters>>;
-  SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
   findEquipment: Coordinates | null;
+  SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
   routePanel: RoutePanelState;
+  setSelectedEquipmentId: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedEquipmentId: string | null;
+  clearSelection: () => void;
+
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onShowLog: (equipmentId: string) => Promise<void>;
+  setLogPositions: React.Dispatch<React.SetStateAction<LogPosition[]>>;
   activeEquipment: Equipment | null;
   setActiveEquipment: React.Dispatch<React.SetStateAction<Equipment | null>>;
   selectedClusterEquipmentIds: string[] | null;
@@ -63,11 +74,17 @@ interface SidebarProps {
 export const Sidebar = ({
   filters,
   setFilters,
-  SetFindEquipment,
   findEquipment,
+  SetFindEquipment,
   travelMode,
   setTravelMode,
   routePanel,
+  setSelectedEquipmentId,
+  selectedEquipmentId,
+  setShowLogMode,
+  onShowLog,
+  setLogPositions,
+  clearSelection,
   activeEquipment,
   setActiveEquipment,
   selectedClusterEquipmentIds,
@@ -88,7 +105,9 @@ export const Sidebar = ({
       try {
         const params = new URLSearchParams();
 
-        filters.committee.forEach((c) => params.append("committee", c));
+        filters.committee.forEach((c) =>
+          params.append("committee", c.toLowerCase()),
+        );
 
         if (filters.distance > 0) {
           params.append("euclidean_distance", filters.distance.toString());
@@ -141,6 +160,13 @@ export const Sidebar = ({
     }
   };
 
+  const handleCloseEquipment = () => {
+    setActiveEquipment(null);
+    SetFindEquipment(null);
+  };
+
+  const handleCloseFilterCard = () => setShowFilter(false);
+
   const handleChangeCommittee = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     setFilters((prev) => ({
@@ -182,6 +208,39 @@ export const Sidebar = ({
     setSelectedClusterEquipmentIds(null);
   };
 
+
+
+  const getMarkerStyle = (size: number, color: string, bordercolor: string) => ({
+    margin: 0.1,
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    background: color,
+    border: `2px solid ${bordercolor}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: size * 0.5,
+  });
+
+  type LegendItemProps = {
+    color: string;
+    size?: number;
+    label?: string;
+    text: string;
+    bordercolor: string;
+  };
+
+  const LegendItem = ({ color, size = 18, label, text, bordercolor }: LegendItemProps) => (
+    <div className="flex items-center gap-2">
+      <div style={getMarkerStyle(size, color, bordercolor)}>
+        {label}
+      </div>
+      <span className="text-xs">{text}</span>
+    </div>
+  );
+
+  const [showLegend, setShowLegend] = useState(false);
   const visibleEquipment =
     selectedClusterEquipmentIds === null
       ? equipment
@@ -197,23 +256,93 @@ export const Sidebar = ({
       >
         <Box className="flex justify-end relative top-20 right-2">
           <Button onClick={() => setShowFilter(!showFilter)}>
-            <TuneIcon color="primary" />
+            <TuneIcon className="text-blue-500 hover:scale-105 transition-transform" />
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-3 p-4 mt-24 max-h-3/4 overflow-y-auto overflow-x-hidden">
+        <ul className="relative flex flex-col gap-3 p-4 mt-20 max-h-47/64 overflow-y-auto overflow-x-hidden">
           {visibleEquipment.map((item) => (
             <Box
-              sx={{ borderRadius: 4, bgcolor: "white" }}
+              sx={{ borderRadius: 4 }}
               key={item.id}
-              onClick={() => getEquipment(item.id)}
-              className="text-black cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg rounded p-2"
+              onClick={() => {
+                if (selectedEquipmentId === item.id) {
+                  setSelectedEquipmentId(null);
+                  setActiveEquipment(null);
+                  SetFindEquipment(null);
+                  setLogPositions([]);
+                } else {
+                  setSelectedEquipmentId(item.id);
+                  getEquipment(item.id);
+                  setLogPositions([]);
+                }
+              }}
+              className={`text-black cursor-pointer transition-all duration-200 rounded p-2 
+                ${selectedEquipmentId === item.id
+                  ? "bg-green-800 text-white ring-2 ring-blue-100"
+                  : "bg-white text-black hover:scale-105 hover:shadow-lg"
+                }`}
             >
               {item.name}
             </Box>
           ))}
         </ul>
+
+        {/* Tegnbeskrivelse */}
+        <Box
+          sx={{
+            margintop: 2,
+            position: "fixed",
+            bottom: 16,
+            left: 6,
+            zIndex: 2000,
+            background: "primary",
+            padding: 1,
+            borderRadius: 2,
+            maxHeight: "6rem",
+            boxShadow: 0,
+            maxWidth: 260,
+          }}
+        >
+
+          {showLegend && (
+            <div className="mt-0.5 ml-2 flex flex-col gap-0.5 ">
+              <LegendItem
+                color="#4285f4"
+                size={15}
+                text=" Din posisjon"
+                bordercolor="white"
+              />
+              <div className="mt-1 flex flex-row gap-4">
+                <LegendItem
+                  color="#15803d"
+                  text="Valgt utstyr"
+                  bordercolor="black"
+                />
+                <LegendItem
+                  color="#2563eb"
+                  text="Annet utstyr"
+                  bordercolor="black"
+                />
+              </div>
+              <LegendItem
+                color="#2563eb"
+                size={26}
+                label="7"
+                text="Cluster med utstyr"
+                bordercolor="black"
+              />
+            </div>)}
+          <button
+            onClick={() => setShowLegend(prev => !prev)}
+            className="ml-2 mt-0 text-xs text-black-100 underline cursor-pointer"
+          >
+            {showLegend ? "Skjul tegnforklaring" : "Vis tegnforklaring"}
+          </button>
+
+        </Box>
       </div>
+
 
       {/* Toggle button */}
       <button
@@ -234,9 +363,9 @@ export const Sidebar = ({
 
       {/* Equipment popup */}
       <div
-        className={`fixed top-0 right-0 w-[30rem] h-screen
-        transform transition-transform duration-300 z-40
-        ${activeEquipment ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-24 right-4 w-[90%] sm:w-[30rem]
+                    max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl duration-300 z-40 
+        ${activeEquipment ? "translate-x-0 opacity-100 " : "translate-x-full opacity-0 pointer-events-none"}`}
       >
         {activeEquipment && (
           <EquipmentPopUp
@@ -249,7 +378,9 @@ export const Sidebar = ({
             functional_status_comment={activeEquipment.functional_status_comment}
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
+            findEquipment={findEquipment}
             SetFindEquipment={SetFindEquipment}
+            onClose={handleCloseEquipment}
             travelMode={travelMode}
             setTravelMode={setTravelMode}
             routePanel={routePanel}
@@ -258,6 +389,10 @@ export const Sidebar = ({
               findEquipment.lat === activeEquipment.lat &&
               findEquipment.lng === activeEquipment.lng
             }
+            setShowLogMode={setShowLogMode}
+            onShowLog={onShowLog}
+            setLogPositions={setLogPositions}
+            clearSelection={clearSelection}
           />
         )}
       </div>
@@ -268,7 +403,12 @@ export const Sidebar = ({
           className="fixed z-30 top-20 left-72 flex bg-white shadow-lg w-[16rem] p-4 flex flex-col gap-4"
           sx={{ borderRadius: "0.5rem" }}
         >
-          <Typography variant="h6">Filtre</Typography>
+          <Box className="flex items-center justify-between mb-1 ml-1">
+            <Typography variant="h6">Filtre</Typography>
+            <IconButton onClick={handleCloseFilterCard} className="absolute">
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
           <FormControl sx={{ width: 200 }}>
             <InputLabel>Komité</InputLabel>
