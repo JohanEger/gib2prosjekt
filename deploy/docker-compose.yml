@@ -1,0 +1,70 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /root/tba4250s01.it.ntnu.no.crt:/etc/nginx/certs/tba4250s01.it.ntnu.no.crt:ro
+      - /root/tba4250s01.it.ntnu.no.key:/etc/nginx/certs/tba4250s01.it.ntnu.no.key:ro
+    networks:
+      - gib2-network
+    depends_on:
+      - client
+      - server
+    restart: unless-stopped
+
+  client:
+    image: ${DOCKER_USERNAME}/tba4250-gib-2-client:latest
+    expose:
+      - "80"
+    networks:
+      - gib2-network
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  server:
+    image: ${DOCKER_USERNAME}/tba4250-gib-2-server:latest
+    env_file:
+      - server.env
+    expose:
+      - "5001"
+    networks:
+      - gib2-network
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 5001"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health').read()\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: gib2_postgis
+    env_file:
+      - db.env
+    expose:
+      - "5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - gib2-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h localhost -p 5432"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  gib2-network:

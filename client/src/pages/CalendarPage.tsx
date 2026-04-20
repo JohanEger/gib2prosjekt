@@ -193,7 +193,14 @@ export const CalendarPage = () => {
       console.error("FETCH FAILED:", err);
       setSelectedBooking(null);
     }
+
+    const handleGoToToday = () => {
+    setSelectedRange({ start: today, end: today });
+    setFocusedDate(today);
+    setSelectedYear(today.year);
   };
+  };
+
   
   return (
     <>
@@ -329,6 +336,7 @@ export const CalendarPage = () => {
               {/* BOOK MODE */}
               {mode === "book" && (
                 <>
+                    <Button variant="text" sx={{fontSize: "0.65rem", color: "black", textTransform: "none"}} onClick={handleGoToToday}>Gå til i dag</Button>
                   <BookingRangeCalendar
                     focusedValue={focusedDate}
                     isDateBooked={(date) => isDateBooked(date, bookings)}
@@ -371,5 +379,6 @@ export const CalendarPage = () => {
         )
       }
     </>
+    
   );
 };

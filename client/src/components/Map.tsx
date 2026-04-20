@@ -27,14 +27,14 @@ import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { Equipment } from "../types/equipment";
 import type { RouteLiveVehicle, RouteResponse } from "../types/routeResponse";
 import { useGeolocation } from "../hooks/useGeolocation";
-import { API_BASE } from "../apiBase";
+//import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { LogPosition } from "../types/logPositions";
 import { LogMapLayer } from "./LogMapLayer";
 import MapControl from "./MapControl";
 
-//const API_BASE =
+const API_BASE =
 import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 // --- Typer -------------------------------------------------------------------
