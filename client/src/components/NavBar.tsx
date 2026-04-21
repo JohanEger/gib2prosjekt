@@ -14,9 +14,9 @@ export const NavBar = () => {
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-blue-900 border-b border-blue-800 shadow-md">
-      <div className="w-full px-6 py-4 flex justify-between items-center">
+      <div className="w-full px-3 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-5 sm:gap-10">
           <Link
             to="/"
             className="text-lg font-semibold tracking-wide text-white"
@@ -56,7 +56,7 @@ export const NavBar = () => {
 
           <button
             onClick={logout}
-            className="text-sm font-medium text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer"
+            className="text-xs sm:text-sm font-medium text-white bg-red-600 hover:bg-red-700 px-2 sm:px-4 py-1 sm:py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer"
           >
             Logg ut
           </button>

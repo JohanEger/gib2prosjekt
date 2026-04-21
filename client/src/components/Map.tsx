@@ -63,6 +63,7 @@ interface MapProps {
   selectedEquipmentId: string | null;
   logPositions: { lat: number; lng: number; start_time: string }[];
   LogPositions: LogPosition[];
+  currentPosition?: { lat: number; lng: number } | null;
   showLogMode: boolean;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   activeEquipment: Equipment | null;
@@ -165,6 +166,7 @@ export const Map = ({
   onRoutePanelChange,
   selectedEquipmentId,
   LogPositions,
+  currentPosition,
   activeEquipment,
   setActiveEquipment,
   setSelectedClusterEquipmentIds,
@@ -595,7 +597,7 @@ export const Map = ({
           ))}
         </MarkerClusterGroup>
 
-        <LogMapLayer logPositions={LogPositions}
+        <LogMapLayer logPositions={LogPositions} currentPosition={currentPosition}
         />
 
         <UserLocationMarker />

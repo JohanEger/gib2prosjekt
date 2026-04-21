@@ -53,7 +53,7 @@ async def get_5_latest_booking_for_equipment(
     now = datetime.now()
 
     for b in bookings:
-        if b.start_time >= now:
+        if b.start_time > now:
             continue
         try:
             p = to_shape(b.booking_destination)
