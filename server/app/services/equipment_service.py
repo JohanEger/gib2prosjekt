@@ -155,7 +155,7 @@ async def register_new_equipment(session, newEquipment: NewEquipment):
         description = newEquipment.description,
         type_of_equipment = newEquipment.type,
         owner_id = owner_id,
-         current_pos=func.ST_SetSRID(
+        home_pos=func.ST_SetSRID(
         func.ST_MakePoint(newEquipment.longitude, newEquipment.latitude),
         4326
     )
