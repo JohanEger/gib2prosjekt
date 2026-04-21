@@ -61,6 +61,7 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
     const [progress, setProgress] = useState(0);
     const [isPlaying, setPlaying] = useState(true);
     const livePoint = currentPosition;
+    const isMobile = window.innerWidth < 640;
 
     const sortede = useMemo(() => { //Brukes ikke nå
         return [...logPositions].sort(
@@ -186,8 +187,8 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
         if (points.length < 2) return;
 
         map.fitBounds(points, {
-            paddingTopLeft: [350,50],
-            paddingBottomRight: [600,30],
+            paddingTopLeft: isMobile ? [40, 5] : [350, 50],
+            paddingBottomRight: isMobile ? [40, 200] : [600, 30],
         });
     }, [logPositions, currentPosition, map]);
 
@@ -228,7 +229,7 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
 
             {logPositions.length > 1 && (
                 <Button onClick={toggleLog}
-                    className="absolute text-xl cursor-pointer top-22 right-200 z-[9999]">
+                    className="absolute text-xl cursor-pointer top-17 sm:top-21 left-1/2 -translate-x-1/2 sm:left-2/5 z-[9999]">
                     {isPlaying ? (
                         <>
                             Stopp animasjon <StopIcon />

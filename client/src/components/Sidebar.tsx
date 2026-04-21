@@ -70,7 +70,7 @@ interface SidebarProps {
   setSelectedClusterEquipmentIds: React.Dispatch<
     React.SetStateAction<string[] | null>
   >;
-  
+
 }
 
 export const Sidebar = ({
@@ -262,17 +262,19 @@ export const Sidebar = ({
     <>
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-screen w-45 sm:w-64 bg-gray-800 text-white
-        transform transition-transform duration-300 z-40
-        ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed bottom-0 sm:bottom-auto sm:top-0 left-0 h-90 sm:h-screen w-45 sm:w-64 bg-gray-800 text-white
+        transform transition-transform duration-300 z-40 rounded sm:rounded-none
+        ${open
+            ? "translate-y-0 sm:translate-y-0 sm:translate-x-0"
+            : "translate-y-full sm:translate-y-0 sm:-translate-x-full"}`}
       >
-        <Box className="flex justify-end relative top-20 right-2">
+        <Box className="flex justify-end relative top-4 sm:top-20 right-2">
           <Button onClick={() => setShowFilter(!showFilter)}>
             <TuneIcon className="text-blue-500 hover:scale-105 transition-transform" />
           </Button>
         </Box>
 
-        <ul className="relative flex flex-col gap-3 p-1 sm:p-4 mt-20 max-h-45/64 sm:max-h-47/64 overflow-y-auto overflow-x-hidden">
+        <ul className="relative flex flex-col gap-3 p-1 sm:p-4 mt-6 sm:mt-20 max-h-19/30 sm:max-h-45/64 sm:max-h-47/64 overflow-y-auto overflow-x-hidden">
           {visibleEquipment.map((item) => (
             <Box
               sx={{ borderRadius: 4 }}
@@ -305,17 +307,17 @@ export const Sidebar = ({
         {/* Tegnbeskrivelse */}
         <Box
           sx={{
+            width: "100%",
+            mx: "auto",
             margintop: 2,
             position: "fixed",
-            bottom: 16,
-            left: 6,
+            bottom: 10,
             zIndex: 2000,
-            background: "primary",
+            backgroundColor: "#1f2937",
             padding: { xs: 0.5, sm: 1 },
             borderRadius: 2,
-            maxHeight: { xs: "7rem", sm: "6rem" },
+            maxHeight: { xs: "9rem", sm: "6rem" },
             boxShadow: 0,
-            maxWidth: 260,
           }}
         >
 
@@ -364,21 +366,23 @@ export const Sidebar = ({
           setOpen(!open);
           setShowFilter(false);
         }}
-        className={`fixed top-1/2 z-40 p-1 transition-all duration-300 cursor-pointer
-        ${open ? "left-44 sm:left-64" : "left-0"}`}
-      >
+        className={`fixed z-5 p-1 transition-all duration-300 cursor-pointer
+        ${open
+            ? "bottom-[22rem] mb-1 left-22 -translate-x-1/2 sm:top-1/2 sm:left-64 sm:translate-x-0 sm:-translate-y-1/2"
+            : "bottom-4 left-22 -translate-x-1/2 sm:top-1/2 sm:left-0 sm:translate-x-0 sm:-translate-y-1/2"}
+        `}>
         <img
           src={arrow}
           alt="Toggle"
           className={`w-7 h-7 transition-transform duration-300
-          ${open ? "rotate-90" : "rotate-270"}`}
+          ${open ? "rotate-0 sm:rotate-90" : "rotate-180 sm:rotate-270"}`}
         />
       </button>
 
       {/* Equipment popup */}
       <div
-        className={`fixed top-24 right-4 w-[90%] sm:w-[30rem]
-                    max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl duration-300 z-40 
+        className={`fixed bottom-2 sm:top-24 right-1 sm:right-4 w-[12rem] sm:w-[30rem]
+                    max-h-[42vh] sm:max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl duration-300 z-40 
         ${activeEquipment ? "translate-x-0 opacity-100 " : "translate-x-full opacity-0 pointer-events-none"}`}
       >
         {activeEquipment && (
@@ -416,7 +420,7 @@ export const Sidebar = ({
       {/* Filters */}
       {showFilter && (
         <Box
-          className="fixed z-30 top-20 left-50 sm:left-72 flex bg-white shadow-lg w-[10rem] sm:w-[16rem] p-4 flex flex-col gap-1 sm:gap-4"
+          className="fixed z-55 bottom-2 sm:top-20 left-50 sm:left-72 flex bg-white shadow-lg w-[11rem] sm:w-[16rem] p-4 flex flex-col gap-1 sm:gap-4"
           sx={{ borderRadius: "0.5rem" }}
         >
           <Box className="flex items-center justify-between mb-1 ml-1">
