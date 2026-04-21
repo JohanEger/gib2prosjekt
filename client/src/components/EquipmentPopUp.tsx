@@ -43,8 +43,9 @@ type Props = {
   onShowLog: (equipmentId: string) => Promise<void>;
   setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
   setLogPositions: React.Dispatch<
-    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>
-  >;
+    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>>;
+  setLogError: React.Dispatch<React.SetStateAction<string | null>>;
+  setFiveLatestID: React.Dispatch<React.SetStateAction<string | null>>;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   clearSelection: () => void;
 };
@@ -107,9 +108,7 @@ export const EquipmentPopUp = ({
           setLogError("Ingen logg tilgjengelig")
           setLogPositions([]);
           return;
-
         }
-
 
         console.log(data);
         setLogPositions(data);
@@ -162,6 +161,10 @@ export const EquipmentPopUp = ({
       ? `${minutes} min forsinket`
       : `${Math.abs(minutes)} min foran skjema`;
   };
+
+  useEffect(() => {
+    setLogError(null);
+  }, [id]);
 
   useEffect(() => {
     async function loadAddress() {

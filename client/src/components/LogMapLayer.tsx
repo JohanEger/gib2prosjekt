@@ -1,4 +1,4 @@
-import { Marker, Tooltip, Polyline } from "react-leaflet";
+import { Marker, Tooltip, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "react-bootstrap";
@@ -29,11 +29,11 @@ const createNowIcon = () =>
     L.divIcon({
         className: "",
         html: `
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div class="h-4 w-4 rounded-full bg-green-800 border border-black"></div>
-        <span class="text-black font-bold text-sm">#Nå</span>
-      </div>
-    `,
+        <div style="display:flex; align-items:center; gap:6px;">
+            <div class="h-4 w-4 rounded-full opacity;0"></div>
+            <span class="text-black font-bold text-sm">#Nå</span>
+        </div>
+        `,
         iconSize: [60, 20],
         iconAnchor: [6, 10],
     });
@@ -54,7 +54,7 @@ const movingDotIcon = L.divIcon({
 });
 
 
-// ----
+// ---
 
 
 export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
@@ -80,7 +80,7 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
 
     const isAtStart = progress === 0;
     const isAtEnd = progress === 1;
-    const hasEnoughLog = sorted.length >= 2;
+    const hasEnoughLog = sorted.length >= 1;
 
     const showDot =
         sorted.length > 1 &&
@@ -169,6 +169,29 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
 
     //---
 
+
+
+
+    // Zoome ut på kartet for å se alle punktene:
+    const map = useMap();
+
+    useEffect(() => {
+        const points: [number, number][] = [
+            ...logPositions.map(p => [p.lat, p.lng] as [number, number]),
+            ...(currentPosition
+                ? [[currentPosition.lat, currentPosition.lng] as [number, number]]
+                : []),
+        ];
+
+        if (points.length < 2) return;
+
+        map.fitBounds(points, {
+            paddingTopLeft: [350,50],
+            paddingBottomRight: [600,30],
+        });
+    }, [logPositions, currentPosition, map]);
+
+
     return (
         <>
             {/* Linje mellom punkter */}
@@ -177,7 +200,7 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
                     pathOptions={{ color: "green", weight: 2, dashArray: "2 5" }}
                 />)}
 
-            {currentPosition && (
+            {currentPosition && basePath.length >= 2 && (
                 <Marker
                     position={[currentPosition.lat, currentPosition.lng]}
                     icon={createNowIcon()}
@@ -203,7 +226,7 @@ export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
                 ))}
 
 
-            {logPositions.length > 0 && (
+            {logPositions.length > 1 && (
                 <Button onClick={toggleLog}
                     className="absolute text-xl cursor-pointer top-22 right-200 z-[9999]">
                     {isPlaying ? (

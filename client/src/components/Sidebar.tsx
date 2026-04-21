@@ -59,7 +59,8 @@ interface SidebarProps {
   setSelectedEquipmentId: React.Dispatch<React.SetStateAction<string | null>>;
   selectedEquipmentId: string | null;
   clearSelection: () => void;
-
+  setLogError: React.Dispatch<React.SetStateAction<string | null>>;
+  setFiveLatestID: React.Dispatch<React.SetStateAction<string | null>>;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   onShowLog: (equipmentId: string) => Promise<void>;
   setLogPositions: React.Dispatch<React.SetStateAction<LogPosition[]>>;
@@ -69,6 +70,7 @@ interface SidebarProps {
   setSelectedClusterEquipmentIds: React.Dispatch<
     React.SetStateAction<string[] | null>
   >;
+  
 }
 
 export const Sidebar = ({
@@ -83,6 +85,8 @@ export const Sidebar = ({
   selectedEquipmentId,
   setShowLogMode,
   onShowLog,
+  setLogError,
+  setFiveLatestID,
   setLogPositions,
   clearSelection,
   activeEquipment,
@@ -208,6 +212,12 @@ export const Sidebar = ({
     setSelectedClusterEquipmentIds(null);
   };
 
+  const resetLogState = () => {
+    setLogPositions([]);
+    setShowLogMode(false);
+    setLogError(null);
+    setFiveLatestID(null);
+  };
 
 
   const getMarkerStyle = (size: number, color: string, bordercolor: string) => ({
@@ -247,6 +257,7 @@ export const Sidebar = ({
       : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
 
 
+
   return (
     <>
       {/* Sidebar */}
@@ -272,10 +283,12 @@ export const Sidebar = ({
                   setActiveEquipment(null);
                   SetFindEquipment(null);
                   setLogPositions([]);
+                  resetLogState();
                 } else {
                   setSelectedEquipmentId(item.id);
                   getEquipment(item.id);
                   setLogPositions([]);
+                  resetLogState();
                 }
               }}
               className={`text-black cursor-pointer transition-all duration-200 rounded p-2 
@@ -298,9 +311,9 @@ export const Sidebar = ({
             left: 6,
             zIndex: 2000,
             background: "primary",
-            padding: {xs: 0.5, sm: 1},
+            padding: { xs: 0.5, sm: 1 },
             borderRadius: 2,
-            maxHeight: {xs: "7rem", sm: "6rem"},
+            maxHeight: { xs: "7rem", sm: "6rem" },
             boxShadow: 0,
             maxWidth: 260,
           }}
@@ -317,7 +330,7 @@ export const Sidebar = ({
               <div className="mt-0.5 sm:mt-1 flex flex-col sm:flex-row gap-0.5 sm:gap-4">
                 <LegendItem
                   color="#15803d"
-                  text= "Valgt utstyr"
+                  text="Valgt utstyr"
                   bordercolor="black"
                 />
                 <LegendItem
@@ -391,9 +404,11 @@ export const Sidebar = ({
               findEquipment.lng === activeEquipment.lng
             }
             setShowLogMode={setShowLogMode}
+            setFiveLatestID={setFiveLatestID}
             onShowLog={onShowLog}
             setLogPositions={setLogPositions}
             clearSelection={clearSelection}
+            setLogError={setLogError}
           />
         )}
       </div>
@@ -466,7 +481,7 @@ export const Sidebar = ({
           </FormControl>
 
           <FormControlLabel
-          sx={{ "& .MuiFormControlLabel-label": { fontSize: { xs: 11, sm: 14 },},}}
+            sx={{ "& .MuiFormControlLabel-label": { fontSize: { xs: 11, sm: 14 }, }, }}
             control={
               <Checkbox
                 checked={filters.available}
