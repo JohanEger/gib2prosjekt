@@ -19,7 +19,7 @@ export default function WelcomePage() {
                         Velkommen til
                     </Typography>
                     <Typography variant="h4" gutterBottom>
-                        "[Hybrutstyr?]"
+                        Hybridas UtstyrsApp
                         {/* "[Appnavn]"*/}
                     </Typography>
 

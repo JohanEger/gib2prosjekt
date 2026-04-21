@@ -10,11 +10,12 @@ import {
   Box,
   Snackbar,
   Alert,
+  IconButton,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
 import { useState } from "react";
 import { NavBar } from "@/components/NavBar";
-
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddressSearch from "@/components/calendar/AddressSearchBox";
 import { API_BASE } from "@/apiBase";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +25,7 @@ type Coordinates = {
 };
 
 export default function RegisterEquipment() {
-  const committeeNames = ["turingen", "arrkom", "bedkom", "ståpels"];
+  const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
@@ -39,6 +40,10 @@ export default function RegisterEquipment() {
   };
   const navigate = useNavigate();
 
+  const handleGoBackToHomePage = () => {
+    navigate("/", {});
+  };
+
   const isFormValid =
     name.trim() !== "" &&
     type.trim() !== "" &&
@@ -51,7 +56,7 @@ export default function RegisterEquipment() {
       name,
       description,
       type,
-      committee,
+      committee: committee.toLowerCase(),
       latitude: coords?.lat,
       longitude: coords?.lng,
     };
@@ -98,11 +103,19 @@ export default function RegisterEquipment() {
           {registeredName} ble registrert 🎉
         </Alert>
       </Snackbar>
-      <Box className="flex justify-center items-center min-h-screen bg-blue">
+      <Box className="flex justify-center items-start sm:items-center min-h-screen px-4 pt-20 sm:pt-0 bg-blue">
         <Paper
           elevation={4}
-          className="p-8 rounded-2xl w-full max-w-md flex flex-col gap-5"
+          className="relative p-8 rounded-2xl w-full max-w-md flex flex-col gap-5"
         >
+          <IconButton onClick={handleGoBackToHomePage} sx={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+          }} >
+            <ArrowBackIcon />
+          </IconButton>
+
           {/* Tittel */}
           <Typography variant="h5" className="font-semibold text-center">
             Registrer utstyr

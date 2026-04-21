@@ -43,8 +43,9 @@ type Props = {
   onShowLog: (equipmentId: string) => Promise<void>;
   setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
   setLogPositions: React.Dispatch<
-    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>
-  >;
+    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>>;
+  setLogError: React.Dispatch<React.SetStateAction<string | null>>;
+  setFiveLatestID: React.Dispatch<React.SetStateAction<string | null>>;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   clearSelection: () => void;
 };
@@ -85,7 +86,7 @@ export const EquipmentPopUp = ({
 
     const handleShowLog = async () => {
       setLogError(null);
-      setFiveLatestID(null)
+      setFiveLatestID(null);
       setShowLogMode(true);
       setLogLoading(true);
       setLogError(null);
@@ -105,11 +106,9 @@ export const EquipmentPopUp = ({
 
         if (Array.isArray(data) && data.length === 0) {
           setLogError("Ingen logg tilgjengelig")
-          setLogPositions([]); 
+          setLogPositions([]);
           return;
-
         }
-
 
         console.log(data);
         setLogPositions(data);
@@ -139,9 +138,9 @@ export const EquipmentPopUp = ({
   };
 
   const statusLabel: Record<FunctionalStatus, string> = {
-  functional: "Alt i orden",
-  broken: "Ødelagt",
-  lost: "Tapt",
+    functional: "Alt i orden",
+    broken: "Ødelagt",
+    lost: "Tapt",
   };
 
   const formatClock = (value?: string | null) => {
@@ -162,6 +161,10 @@ export const EquipmentPopUp = ({
       ? `${minutes} min forsinket`
       : `${Math.abs(minutes)} min foran skjema`;
   };
+
+  useEffect(() => {
+    setLogError(null);
+  }, [id]);
 
   useEffect(() => {
     async function loadAddress() {
@@ -188,16 +191,14 @@ export const EquipmentPopUp = ({
         setLoading(false);
       }
     }
-
     loadAddress();
   }, [lat, lng]);
 
-  // Var i dev nedenfor: className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
 
   return (
     <Paper
       elevation={3}
-      className="w-full max-h-screen overflow-y-auto pl-2 pr-2 pb-26 bg-black text-white flex flex-col items-center gap-4 relative"
+      className="z-50 w-full max-h-[76vh] overflow-y-auto pl-2 pr-2 pb-2 bg-black text-white flex flex-col items-center gap-4 relative"
       onClick={(e) => e.stopPropagation()}
     >
       <IconButton
@@ -208,7 +209,7 @@ export const EquipmentPopUp = ({
           setLogPositions([]);
           onClose();
         }}
-        className="absolute top-4 left-50"
+        className="absolute top-4 right-3 self-end"
       >
         <CloseIcon />
       </IconButton>
@@ -246,8 +247,8 @@ export const EquipmentPopUp = ({
       <Typography>{description}</Typography>
       <Button
         variant="text"
-        onClick={() => { setFiveLatestID(id);}}
-        className="underline italic cursor-pointer hover:text-blue-600 transition"
+        onClick={() => { setFiveLatestID(id); }} //Har skjult muligheten for posisjonslogg på mobil
+        className="hidden sm:inline underline italic cursor-pointer hover:text-blue-600 transition"
         title="Trykk for å se siste 5 posisjoner"
       >
         {" "}Se posisjonslogg{" "}
@@ -277,12 +278,12 @@ export const EquipmentPopUp = ({
       </Link>
 
       <Link
-          to={`/reportEquipment/${id}/${name}`}
-          className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+        to={`/reportEquipment/${id}/${name}`}
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
           hover:from-blue-600 hover:to-indigo-700
           text-white font-semibold rounded-xl shadow-lg
           transition-all duration-300 hover:scale-105 hover:shadow-xl"
-        >
+      >
         Meld tapt/ødelagt
       </Link>
 
@@ -377,20 +378,18 @@ export const EquipmentPopUp = ({
                       {routePanel.transit.legs.map((leg, index) => (
                         <div
                           key={`${leg.mode}-${leg.serviceJourneyId ?? index}`}
-                          className={`rounded-lg border px-3 py-2.5 ${
-                            leg.mode === "bus"
-                              ? "border-violet-400/50 bg-violet-950/40 shadow-[0_0_0_1px_rgba(139,92,246,0.12)]"
-                              : "border-sky-400/40 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.10)]"
-                          }`}
+                          className={`rounded-lg border px-3 py-2.5 ${leg.mode === "bus"
+                            ? "border-violet-400/50 bg-violet-950/40 shadow-[0_0_0_1px_rgba(139,92,246,0.12)]"
+                            : "border-sky-400/40 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.10)]"
+                            }`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
-                                  leg.mode === "bus"
-                                    ? "bg-violet-500/25 text-violet-100"
-                                    : "bg-sky-500/20 text-sky-100"
-                                }`}
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${leg.mode === "bus"
+                                  ? "bg-violet-500/25 text-violet-100"
+                                  : "bg-sky-500/20 text-sky-100"
+                                  }`}
                               >
                                 {leg.mode === "bus" ? (
                                   <DirectionsBusFilledIcon sx={{ fontSize: 14 }} />
@@ -483,13 +482,12 @@ export const EquipmentPopUp = ({
                 Status
               </div>
               <div
-                className={`mt-1 text-sm font-semibold ${
-                  functional_status === "functional"
-                    ? "text-green-500"
-                    : functional_status === "broken"
-                      ? "text-red-500"
-                      : "text-amber-500"
-                }`}
+                className={`mt-1 text-sm font-semibold ${functional_status === "functional"
+                  ? "text-green-500"
+                  : functional_status === "broken"
+                    ? "text-red-500"
+                    : "text-amber-500"
+                  }`}
               >
                 {statusLabel[functional_status]}
               </div>
@@ -506,7 +504,7 @@ export const EquipmentPopUp = ({
           </div>
         </div>
       </div>
-    
+
     </Paper>
   );
 };
