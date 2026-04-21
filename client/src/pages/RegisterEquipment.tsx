@@ -15,7 +15,7 @@ import {
 import type { SelectChangeEvent } from "@mui/material";
 import { useState } from "react";
 import { NavBar } from "@/components/NavBar";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddressSearch from "@/components/calendar/AddressSearchBox";
 import { API_BASE } from "@/apiBase";
 import { useNavigate } from "react-router-dom";
@@ -52,14 +52,17 @@ export default function RegisterEquipment() {
     coords !== null;
 
   const handleRegister = async () => {
+    if (!coords) return;
+
     const register = {
       name,
       description,
       type,
       committee: committee.toLowerCase(),
-      latitude: coords?.lat,
-      longitude: coords?.lng,
+      latitude: coords.lat,
+      longitude: coords.lng,
     };
+
     try {
       const res = await fetch(`${API_BASE}/equipment/register_equipment`, {
         method: "POST",
@@ -69,19 +72,23 @@ export default function RegisterEquipment() {
         body: JSON.stringify(register),
       });
 
+      const text = await res.text();
+
       if (!res.ok) {
+        console.error("Backend error:", text);
         throw new Error("Kunne ikke lagre");
       }
 
-      const data = await res.json();
-      console.log("Lagret:", data);
+      const data = JSON.parse(text);
+
       setSuccessOpen(true);
       setRegisteredName(data.name);
+
       setTimeout(() => {
         navigate("/");
       }, 3000);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
 
@@ -108,11 +115,14 @@ export default function RegisterEquipment() {
           elevation={4}
           className="relative p-8 rounded-2xl w-full max-w-md flex flex-col gap-5"
         >
-          <IconButton onClick={handleGoBackToHomePage} sx={{
-            position: "absolute",
-            top: 16,
-            left: 16,
-          }} >
+          <IconButton
+            onClick={handleGoBackToHomePage}
+            sx={{
+              position: "absolute",
+              top: 16,
+              left: 16,
+            }}
+          >
             <ArrowBackIcon />
           </IconButton>
 
@@ -160,6 +170,7 @@ export default function RegisterEquipment() {
             rows={3}
             fullWidth
           />
+          <Typography>Angi lagringssted for utstyr</Typography>
           <AddressSearch setCoords={setCoords}></AddressSearch>
 
           {/* Knapp */}
