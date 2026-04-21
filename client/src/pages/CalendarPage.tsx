@@ -13,15 +13,18 @@ import { useEffect, useState } from "react";
 import { Divider } from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import type { DateValue } from "react-aria-components";
-import { getLocalTimeZone, parseDate, today as todayAria } from "@internationalized/date";
+import {
+  getLocalTimeZone,
+  parseDate,
+  today as todayAria,
+} from "@internationalized/date";
 import { BookingRangeCalendar } from "@/components/calendar/BookingRangeCalendar";
 import { BookedDatesCalendar } from "@/components/calendar/BookedDatesCalendar";
 import BookingPopup from "@/components/BookingPopup";
 import { useParams } from "react-router-dom";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import TodayIcon from '@mui/icons-material/Today';
-
 
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
@@ -40,6 +43,7 @@ interface Booking {
   latitude: number;
   longitude: number;
   createdAt: Date;
+  phone_number: number;
 }
 
 function dateValueToDate(d: DateValue): Date {
@@ -131,7 +135,6 @@ export const CalendarPage = () => {
     setSelectedRange(range);
   };
 
-
   const navigate = useNavigate();
 
   const handleGoBackToHomePage = () => {
@@ -197,6 +200,7 @@ export const CalendarPage = () => {
         createdAt: new Date(data.created_at),
         username: data.user.name,
         email: data.user.email,
+        phone_number: data.user.phone_number,
       };
       setSelectedBooking(parsedBooking);
     } catch (err) {
@@ -204,8 +208,12 @@ export const CalendarPage = () => {
       setSelectedBooking(null);
     }
 
+    const handleGoToToday = () => {
+      setSelectedRange({ start: today, end: today });
+      setFocusedDate(today);
+      setSelectedYear(today.year);
+    };
   };
-
 
   return (
     <>
@@ -222,12 +230,13 @@ export const CalendarPage = () => {
             pt: 4,
           }}
         >
-
           <IconButton onClick={handleGoBackToHomePage} className="absolute">
             <ArrowBackIcon />
           </IconButton>
           <Box>
-            <Typography variant="h4" pl="16px">{name}</Typography>
+            <Typography variant="h4" pl="16px">
+              {name}
+            </Typography>
           </Box>
           <Box />
 
@@ -260,49 +269,70 @@ export const CalendarPage = () => {
                       <Typography variant="caption" color="text.secondary">
                         Startdato
                       </Typography>
-                      <Typography variant="body1">
-                        {selectedBooking.start_time.toLocaleDateString()}
-                      </Typography>
-                    </Box>
-              
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Sluttdato
-                      </Typography>
-                      <Typography variant="body1">
-                        {selectedBooking.end_time.toLocaleDateString()}
-                      </Typography>
-                    </Box>
-              
-                    <Divider />
-              
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Bruker
-                      </Typography>
-                      <Typography variant="body1">
-                        {selectedBooking.username}
-                      </Typography>
-                    </Box>
-              
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        E-post
-                      </Typography>
-                      <Typography variant="body1">
-                        {selectedBooking.email}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </>
-              ) : (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  textAlign="center"
-                >
-                  Ingen booking valgt
-                </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1.5,
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Startdato
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.start_time.toLocaleDateString()}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Sluttdato
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.end_time.toLocaleDateString()}
+                          </Typography>
+                        </Box>
+
+                        <Divider />
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Bruker
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.username}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            E-post
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.email}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Telefonnummer
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedBooking.phone_number}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      textAlign="center"
+                    >
+                      Ingen booking valgt
+                    </Typography>
+                  )}
+                </Paper>
               )}
               </Paper>
               )}
@@ -325,7 +355,7 @@ export const CalendarPage = () => {
                     cursor: "pointer",
                     fontWeight: mode === "book" ? "bold" : "normal",
                   }}
-                  >
+                >
                   Book
                 </Typography>
 
@@ -424,18 +454,16 @@ export const CalendarPage = () => {
           </Box>
         </Paper>
       </Box>
-      {
-        selectedRange.start && selectedRange.end && (
-          <BookingPopup
+      {selectedRange.start && selectedRange.end && (
+        <BookingPopup
           open={popupOpen}
           onClose={() => setPopupOpen(false)}
           startDate={selectedRange.start}
           endDate={selectedRange.end}
           equipmentId={id}
           fetchBookings={fetchBookings}
-          />
-        )
-      }
+        />
+      )}
     </>
   );
 };

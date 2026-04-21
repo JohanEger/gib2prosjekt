@@ -5,6 +5,7 @@ import {
   GeoJSON,
   Polyline,
   Tooltip,
+  Circle,
   useMapEvents,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
@@ -35,7 +36,7 @@ import { LogMapLayer } from "./LogMapLayer";
 import MapControl from "./MapControl";
 
 const API_BASE =
-import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 // --- Typer -------------------------------------------------------------------
 
@@ -106,8 +107,9 @@ const ResetClusterFilterOnMapClick = ({
 const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
     className: "",
-    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${active ? "bg-green-700" : "bg-blue-600"
-      }"></div>`,
+    html: `<div class="h-4 w-4 rounded-full border-2 border-black ${
+      active ? "bg-green-700" : "bg-blue-600"
+    }"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
@@ -199,7 +201,6 @@ export const Map = ({
       console.error("Error fetching equipment:", err);
     }
   };
-
 
   console.log(LogPositions);
   const isClusterSelected = (cluster: MarkerClusterLike) => {
@@ -348,7 +349,6 @@ export const Map = ({
 
           /*         } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
                     setRoute(emptyLineString()); OBS endra ved merging men usikker på denne eller den under*/
-
         } else if ((data.meters ?? 0) <= 0) {
           setRoute(emptyRouteResponse());
 
@@ -397,8 +397,8 @@ export const Map = ({
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
   const liveVehicles: RouteLiveVehicle[] = route.transit
     ? route.transit.legs
-      .filter((leg) => leg.mode === "bus" && leg.liveVehicle)
-      .map((leg) => leg.liveVehicle as RouteLiveVehicle)
+        .filter((leg) => leg.mode === "bus" && leg.liveVehicle)
+        .map((leg) => leg.liveVehicle as RouteLiveVehicle)
     : [];
   const transitLegs = route.transit?.legs ?? [];
 
@@ -439,13 +439,15 @@ export const Map = ({
           />
         )}
 
-        {travelMode !== "bus" && coordinates && route.coordinates.length > 0 && (
-          <GeoJSON
-            key={`${travelMode}-${routeVersion}`}
-            data={route}
-            style={ROUTE_LINE_STYLE[travelMode]}
-          />
-        )}
+        {travelMode !== "bus" &&
+          coordinates &&
+          route.coordinates.length > 0 && (
+            <GeoJSON
+              key={`${travelMode}-${routeVersion}`}
+              data={route}
+              style={ROUTE_LINE_STYLE[travelMode]}
+            />
+          )}
 
         {travelMode === "bus" &&
           transitLegs.map((leg, index) => {
@@ -454,13 +456,15 @@ export const Map = ({
             return (
               <Polyline
                 key={`${leg.mode}-${leg.serviceJourneyId ?? index}-${routeVersion}`}
-                positions={leg.coordinates.map(([lng, lat]) => [lat, lng] as [number, number])}
+                positions={leg.coordinates.map(
+                  ([lng, lat]) => [lat, lng] as [number, number],
+                )}
                 pathOptions={TRANSIT_LEG_STYLE[leg.mode]}
               >
                 <Tooltip direction="top" offset={[0, -6]} opacity={1}>
                   <div className="min-w-28 px-2 py-1 text-sm">
                     <div className="font-semibold">
-                      {leg.mode === "bus" ? leg.linePublicCode ?? "?" : "Gå"}
+                      {leg.mode === "bus" ? (leg.linePublicCode ?? "?") : "Gå"}
                     </div>
                     <div>
                       {leg.fromName ?? "Start"} til {leg.toName ?? "Mål"}
@@ -512,11 +516,11 @@ export const Map = ({
                 <div class="min-w-52">
                   <ul class="space-y-1 text-sm">
                     ${items
-                  .map(
-                    (item) =>
-                      `<li class="rounded px-2 py-1">${item.name}</li>`,
-                  )
-                  .join("")}
+                      .map(
+                        (item) =>
+                          `<li class="rounded px-2 py-1">${item.name}</li>`,
+                      )
+                      .join("")}
                   </ul>
                 </div>
               `;
@@ -601,6 +605,9 @@ export const Map = ({
         />
 
         <UserLocationMarker />
+        {latitude != null && longitude != null && filters.distance > 0 && (
+          <Circle center={[latitude, longitude]} radius={filters.distance} />
+        )}
       </MapContainer>
     </div>
   );
