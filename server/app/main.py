@@ -11,7 +11,7 @@ from app.routers import booking, equipment, location, route
 from app.routers.auth import router as auth_router
 from app.routing.pipeline import preload_all_graphs
 from app.seeds.seed_data import (
-    seed_Bookings,
+    #seed_Bookings,
     seed_equipment,
     seed_groups,
     seed_users,
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     await seed_groups()
     await seed_users()
     await seed_equipment()
-    await seed_Bookings()
+    #await seed_Bookings()
 
     # --- Rutegrafer (OSMnx) ---
     # Last alle grafer ved oppstart slik at første request ikke må vente på

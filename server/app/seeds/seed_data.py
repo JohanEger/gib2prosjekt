@@ -146,6 +146,7 @@ async def seed_equipment():
         session.add_all(equipment)
         await session.commit()
 
+"""
 async def seed_Bookings():
     async with SessionLocal() as session:
         today = datetime.utcnow()
@@ -183,3 +184,4 @@ async def seed_Bookings():
         )
         session.add(booking)
         await session.commit()
+        """
