@@ -35,7 +35,7 @@ import { LogMapLayer } from "./LogMapLayer";
 import MapControl from "./MapControl";
 
 const API_BASE =
-import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
+  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 // --- Typer -------------------------------------------------------------------
 
@@ -122,12 +122,6 @@ const makeLiveBusIcon = (linePublicCode?: string | null) =>
     iconAnchor: [16, 16],
   });
 
-const createClusterIcon = (cluster: MarkerClusterLike) =>
-  L.divIcon({
-    className: "marker-cluster marker-cluster-custom",
-    html: `<div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-blue-600 text-sm font-bold text-white shadow-md">${cluster.getChildCount()}</div>`,
-    iconSize: L.point(40, 40, true),
-  });
 
 const TRANSIT_LEG_STYLE = {
   foot: {
@@ -222,7 +216,7 @@ export const Map = ({
         ${selected ? "bg-green-700" : "bg-blue-600"}
         text-sm font-bold text-white shadow-md
       ">
-        ${cluster.getChildCount()}
+        ${Math.ceil(cluster.getChildCount() / 2)}
       </div>
     `,
       iconSize: L.point(40, 40, true),
@@ -507,25 +501,34 @@ export const Map = ({
                 .filter((d): d is EquipmentMarker => Boolean(d));
 
               if (items.length === 0) return;
-
+          {/* Hvis vi vil ha listen med alt utstyret: Så dumt ut nå det var mye utstyr og ikke hele syntes
               const html = `
-                <div class="min-w-52">
+                <div class="min-w-52 overflow-y-auto pointer-events-auto">
                   <ul class="space-y-1 text-sm">
                     ${items
                   .map(
                     (item) =>
-                      `<li class="rounded px-2 py-1">${item.name}</li>`,
-                  )
-                  .join("")}
+                      `<li class="rounded px-2 py-1">${item.name}</li>`).join("")}
                   </ul>
                 </div>
               `;
+              */}
 
+              const html = `
+                <div class="min-w-52 overflow-y-auto pointer-events-auto">
+                  <ul class="space-y-1 text-sm">Trykk for å se i sidebar hvilket utstyr som finnes her
+                    
+                  </ul>
+                </div>
+              `;
+              
+              console.log(items.map(i => i.name));
               cluster.bindTooltip(html, {
                 direction: "top",
                 offset: [0, -10],
                 opacity: 1,
                 sticky: false,
+                interactive: true,
               });
               cluster.openTooltip();
             },
@@ -561,11 +564,8 @@ export const Map = ({
                 }}
                 eventHandlers={{
                   click: () => {
-                    setActiveMarkerId((prev) =>
-                      prev === marker.id ? null : marker.id,
-                    );
-                    fetchLog(marker.id);
-                  },
+                    setActiveMarkerId(marker.id);
+                  }
                 }}
               >
                 <Tooltip direction="top" offset={[0, -10]} opacity={1}>
@@ -580,9 +580,7 @@ export const Map = ({
               key={marker.id}
               position={[marker.lat, marker.lng]}
               icon={activeEquipment?.id === marker.id ? ICON_ACTIVE : ICON_IDLE}
-              ref={(ref) => {
-                if (ref) markerDataRef.current.set(ref, marker);
-              }}
+
               eventHandlers={{
                 click: () => {
                   setSelectedClusterEquipmentIds(null);

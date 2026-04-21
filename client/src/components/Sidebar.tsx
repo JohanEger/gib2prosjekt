@@ -273,6 +273,7 @@ export const Sidebar = ({
             <TuneIcon className="text-blue-500 hover:scale-105 transition-transform" />
           </Button>
         </Box>
+        
 
         <ul className="relative flex flex-col gap-3 p-1 sm:p-4 mt-6 sm:mt-20 max-h-19/30 sm:max-h-45/64 sm:max-h-47/64 overflow-y-auto overflow-x-hidden">
           {visibleEquipment.map((item) => (

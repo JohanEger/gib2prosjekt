@@ -198,7 +198,7 @@ export const EquipmentPopUp = ({
   return (
     <Paper
       elevation={3}
-      className="z-50 w-full max-h-[76vh] overflow-y-auto pl-2 pr-2 pb-2 bg-black text-white flex flex-col items-center gap-1 sm:gap-4 relative"
+      className="z-50 w-full max-h-[80vh] overflow-y-auto pl-2 pr-2 pb-2 bg-black text-white flex flex-col items-center gap-1 sm:gap-4 relative"
       onClick={(e) => e.stopPropagation()}
     >
       <IconButton
@@ -209,7 +209,7 @@ export const EquipmentPopUp = ({
           setLogPositions([]);
           onClose();
         }}
-        className="absolute top-4 right-3 self-end"
+        className="absolute top-2 right-3 self-end"
       >
         <CloseIcon />
       </IconButton>
