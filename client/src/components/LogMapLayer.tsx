@@ -1,4 +1,4 @@
-import { Marker, Tooltip, Polyline } from "react-leaflet";
+import { Marker, Tooltip, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "react-bootstrap";
@@ -13,15 +13,29 @@ export type LogPosition = {
 
 type Props = {
     logPositions: LogPosition[];
+    currentPosition?: { lat: number; lng: number } | null;
 };
 
 const createLogIcon = (i: number) =>
     L.divIcon({
         className: "",
-        html: `<div class="h-4 w-4 rounded-full bg-green-800  border border-black}">
-  <span class="ml-4 text-black font-bold text-sm">#${i + 1}</span></div>`,
+        html: `<div class="h-4 w-4 rounded-full bg-green-800  border border-black">
+            <span class="ml-4 text-black font-bold text-sm">#${i + 1}</span></div>`,
         iconSize: [10, 10],
         iconAnchor: [5, 5],
+    });
+
+const createNowIcon = () =>
+    L.divIcon({
+        className: "",
+        html: `
+        <div style="display:flex; align-items:center; gap:6px;">
+            <div class="h-4 w-4 rounded-full opacity;0"></div>
+            <span class="text-black font-bold text-sm">#Nå</span>
+        </div>
+        `,
+        iconSize: [60, 20],
+        iconAnchor: [6, 10],
     });
 
 // --- MovingDot stil ----
@@ -40,30 +54,33 @@ const movingDotIcon = L.divIcon({
 });
 
 
-// ----
+// ---
 
 
-
-
-// ----
-
-
-export const LogMapLayer = ({ logPositions }: Props) => {
+export const LogMapLayer = ({ logPositions, currentPosition }: Props) => {
     const [progress, setProgress] = useState(0);
     const [isPlaying, setPlaying] = useState(true);
+    const livePoint = currentPosition;
+
+    const sortede = useMemo(() => { //Brukes ikke nå
+        return [...logPositions].sort(
+            (a, b) =>
+                new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+        );
+    }, [logPositions, currentPosition]);
 
 
     const sorted = useMemo(() => {
         return [...logPositions].sort(
             (a, b) =>
-                new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+                new Date(b.start_time).getTime() -
+                new Date(a.start_time).getTime()
         );
     }, [logPositions]);
 
-
-
     const isAtStart = progress === 0;
     const isAtEnd = progress === 1;
+    const hasEnoughLog = sorted.length >= 1;
 
     const showDot =
         sorted.length > 1 &&
@@ -106,7 +123,7 @@ export const LogMapLayer = ({ logPositions }: Props) => {
     }, [sorted, isPlaying]);
 
 
-    const getPoint = (points: LogPosition[], t: number) => {
+    const getPoint = (points: any[], t: number) => {
         const maxIndex = points.length - 1;
         const scaled = t * maxIndex;
         const i = Math.floor(scaled);
@@ -123,36 +140,93 @@ export const LogMapLayer = ({ logPositions }: Props) => {
 
         };
     };
-    const reversed = [...sorted].reverse();
-    const movingPos = sorted.length > 1 ? getPoint(reversed, progress) : null;
+
+    const path = useMemo(() => {
+        const history = [...logPositions].sort(
+            (a, b) =>
+                new Date(a.start_time).getTime() -
+                new Date(b.start_time).getTime()
+        );
+
+        return currentPosition
+            ? [...history, currentPosition]
+            : history;
+    }, [logPositions, currentPosition]);
+
+    const basePath = currentPosition
+        ? [currentPosition, ...sorted]
+        : sorted;
+
+    const movingPos =
+        basePath.length > 1 ? getPoint(basePath, progress) : null;
+
+    const polylinePositions: [number, number][] = [
+        ...(currentPosition
+            ? [[currentPosition.lat, currentPosition.lng] as [number, number]]
+            : []),
+        ...sorted.map((p): [number, number] => [p.lat, p.lng]),
+    ];
 
     //---
+
+
+
+
+    // Zoome ut på kartet for å se alle punktene:
+    const map = useMap();
+
+    useEffect(() => {
+        const points: [number, number][] = [
+            ...logPositions.map(p => [p.lat, p.lng] as [number, number]),
+            ...(currentPosition
+                ? [[currentPosition.lat, currentPosition.lng] as [number, number]]
+                : []),
+        ];
+
+        if (points.length < 2) return;
+
+        map.fitBounds(points, {
+            paddingTopLeft: [350,50],
+            paddingBottomRight: [600,30],
+        });
+    }, [logPositions, currentPosition, map]);
+
 
     return (
         <>
             {/* Linje mellom punkter */}
-            <Polyline
-                positions={sorted.map((p) => [p.lat, p.lng])}
-                pathOptions={{ color: "green", weight: 2, dashArray: "2 5" }}
-            />
+            {hasEnoughLog && (
+                <Polyline positions={polylinePositions}
+                    pathOptions={{ color: "green", weight: 2, dashArray: "2 5" }}
+                />)}
 
-            {sorted.map((p, i) => (
+            {currentPosition && basePath.length >= 2 && (
                 <Marker
-                    key={`${p.lat}-${p.lng}-${p.start_time}`}
-                    position={[p.lat, p.lng]}
-                    icon={createLogIcon(i)}
+                    position={[currentPosition.lat, currentPosition.lng]}
+                    icon={createNowIcon()}
                 >
-                    <Tooltip>
-                        <div>
-                            <div className="font-semibold">#1 er forrige sted utstyret ble booket, #2 før der igjen osv.
-                            </div>
-                            {/* <div>{new Date(p.start_time).toLocaleString()}</div> TODO: fikse denne? */}
-                        </div>
-                    </Tooltip>
+                    <Tooltip>Nåværende posisjon</Tooltip>
                 </Marker>
-            ))}
+            )}
+            {hasEnoughLog &&
+                sorted.map((p, i) => (
+                    <Marker
+                        key={`${p.lat}-${p.lng}-${p.start_time}`}
+                        position={[p.lat, p.lng]}
+                        icon={createLogIcon(i)}
+                    >
+                        <Tooltip>
+                            <div>
+                                <div className="font-semibold">#1 er forrige sted utstyret ble booket, #2 før der igjen osv.
+                                </div>
+                                {/* <div>{new Date(p.start_time).toLocaleString()}</div> TODO: fikse denne? */}
+                            </div>
+                        </Tooltip>
+                    </Marker>
+                ))}
 
-            {logPositions.length > 0 && (
+
+            {logPositions.length > 1 && (
                 <Button onClick={toggleLog}
                     className="absolute text-xl cursor-pointer top-22 right-200 z-[9999]">
                     {isPlaying ? (
@@ -169,7 +243,7 @@ export const LogMapLayer = ({ logPositions }: Props) => {
 
             {movingPos && showDot && (
                 <Marker
-                    zIndexOffset={1000}
+                    zIndexOffset={100}
                     position={[movingPos.lat, movingPos.lng]}
                     icon={movingDotIcon}
                 />
