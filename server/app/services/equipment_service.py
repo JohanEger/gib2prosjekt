@@ -36,11 +36,11 @@ def build_equipment_query(committee: list[str] | None, euclidean_distance: float
     if committee:
         stmt = (
             stmt.join(Equipment.owner)
-            .where(Group.name.in_(committee))
+            .where(func.lower(Group.name).in_([func.lower(c) for c in committee]))
         )
     if type_of_equipment:
-        stmt = stmt.where(Equipment.type_of_equipment == type_of_equipment) 
-    
+        stmt = stmt.where(func.lower(Equipment.type_of_equipment) == func.lower(type_of_equipment))
+
     if available is not None:
         current_time = datetime.utcnow()
         active_bookings = select(Booking.id).where(
