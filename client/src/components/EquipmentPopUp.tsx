@@ -46,7 +46,8 @@ type Props = {
   onShowLog: (equipmentId: string) => Promise<void>;
   setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
   setLogPositions: React.Dispatch<
-    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>>;
+    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>
+  >;
   setLogError: React.Dispatch<React.SetStateAction<string | null>>;
   setFiveLatestID: React.Dispatch<React.SetStateAction<string | null>>;
   setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
@@ -107,7 +108,7 @@ export const EquipmentPopUp = ({
         const data = await res.json();
 
         if (Array.isArray(data) && data.length === 0) {
-          setLogError("Ingen logg tilgjengelig")
+          setLogError("Ingen logg tilgjengelig");
           setLogPositions([]);
           return;
         }
@@ -198,34 +199,35 @@ export const EquipmentPopUp = ({
 
   const [minimized, setMinimized] = useState(false);
 
-
   return (
     <Paper
       elevation={3}
       sx={{ borderRadius: 0 }}
       className={`z-50 w-full ${minimized ? "sm:h-[20vh] sm:top-0 sm:bottom-auto h-[50vh] bottom-0" : "h-screen"} 
-       overflow-y-auto fixed pt-0 sm:pt-15 right-0 top-0 pb-10 sm:pb-2 bg-black 
+       overflow-y-auto fixed pt-0 sm:pt-15 right-0 top-0 pb-10 sm:pb-2 bg-black top-4
       text-white flex flex-col items-center gap-1 sm:gap-3 relative`}
       //className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
       onClick={(e) => e.stopPropagation()}
     >
-
-
-      <Box className="sticky top-0 mt-0 sm:mt-0 z-10 grid grid-cols-[1fr_auto_1fr] whitespace-nowrap items-center bg-white text-black px-3 py-1 sm:py-4 border-b border-zinc-200">
-
+      <Box className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center bg-white text-black px-3 py-1 sm:py-4 border-b border-zinc-200">
+        {/* Venstre spacer */}
         <div />
 
-        {/* Mobil */}
-        <Typography className="block sm:hidden text-lg font-semibold text-center " sx={{ fontWeight: 700 }}>
-          {name}
-        </Typography>
+        {/* Tittel */}
+        <div className="min-w-0 text-center px-2">
+          {/* Mobil */}
+          <Typography className="block sm:hidden text-lg font-semibold break-words">
+            {name}
+          </Typography>
 
-        {/* PC */}
-        <Typography className="hidden sm:block text-center pt-4" variant="h4">
-          {name}
-        </Typography>
+          {/* PC */}
+          <Typography className="hidden sm:block" variant="h4">
+            <span className="break-words">{name}</span>
+          </Typography>
+        </div>
 
-        <div className="flex justify-end pt-0 sm:pt-4">
+        {/* Lukkeknapp */}
+        <div className="flex justify-end">
           <IconButton
             onClick={() => {
               SetFindEquipment(null);
@@ -238,7 +240,6 @@ export const EquipmentPopUp = ({
             <CloseIcon />
           </IconButton>
         </div>
-
       </Box>
 
       <Typography className="text-center">Type: {description}</Typography>
@@ -274,25 +275,32 @@ export const EquipmentPopUp = ({
 
       <Button
         variant="text"
-        onClick={() => { setFiveLatestID(id); }}
+        onClick={() => {
+          setFiveLatestID(id);
+        }}
         className="underline italic text-center cursor-pointer hover:text-blue-600 transition"
         title="Trykk for å se siste 5 posisjoner"
       >
-        {" "}Se posisjonslogg{" "}
-
+        {" "}
+        Se posisjonslogg{" "}
       </Button>
       {logError && (
-        <p className="text-sm text-red-600"> Har ingen registrert logg
+        <p className="text-sm text-red-600">
+          {" "}
+          Har ingen registrert logg
           <Button
             variant="text"
-            onClick={() => { setFiveLatestID(null); setLogError(null); setShowLogMode(false); }}
-            className="ml-2 cursor-pointer hover:text-red-800">
+            onClick={() => {
+              setFiveLatestID(null);
+              setLogError(null);
+              setShowLogMode(false);
+            }}
+            className="ml-2 cursor-pointer hover:text-red-800"
+          >
             X
           </Button>
         </p>
-
       )}
-
 
       <Link
         to={`/calendar/${id}/${name}`}
@@ -349,12 +357,12 @@ export const EquipmentPopUp = ({
 
             {(routePanel.status === "idle" ||
               routePanel.status === "loading") && (
-                <p className="text-sm font-medium text-sky-200/90">
-                  {routePanel.status === "loading"
-                    ? "Beregner rute…"
-                    : "Henter posisjon og rute…"}
-                </p>
-              )}
+              <p className="text-sm font-medium text-sky-200/90">
+                {routePanel.status === "loading"
+                  ? "Beregner rute…"
+                  : "Henter posisjon og rute…"}
+              </p>
+            )}
 
             {routePanel.status === "ready" && (
               <div className="space-y-3">
@@ -405,21 +413,25 @@ export const EquipmentPopUp = ({
                       {routePanel.transit.legs.map((leg, index) => (
                         <div
                           key={`${leg.mode}-${leg.serviceJourneyId ?? index}`}
-                          className={`rounded-lg border px-3 py-2.5 ${leg.mode === "bus"
-                            ? "border-violet-400/50 bg-violet-950/40 shadow-[0_0_0_1px_rgba(139,92,246,0.12)]"
-                            : "border-sky-400/40 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.10)]"
-                            }`}
+                          className={`rounded-lg border px-3 py-2.5 ${
+                            leg.mode === "bus"
+                              ? "border-violet-400/50 bg-violet-950/40 shadow-[0_0_0_1px_rgba(139,92,246,0.12)]"
+                              : "border-sky-400/40 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.10)]"
+                          }`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${leg.mode === "bus"
-                                  ? "bg-violet-500/25 text-violet-100"
-                                  : "bg-sky-500/20 text-sky-100"
-                                  }`}
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                                  leg.mode === "bus"
+                                    ? "bg-violet-500/25 text-violet-100"
+                                    : "bg-sky-500/20 text-sky-100"
+                                }`}
                               >
                                 {leg.mode === "bus" ? (
-                                  <DirectionsBusFilledIcon sx={{ fontSize: 14 }} />
+                                  <DirectionsBusFilledIcon
+                                    sx={{ fontSize: 14 }}
+                                  />
                                 ) : (
                                   <DirectionsWalkIcon sx={{ fontSize: 14 }} />
                                 )}
@@ -452,7 +464,8 @@ export const EquipmentPopUp = ({
                               {leg.liveVehicle ? (
                                 <>
                                   <div className="text-emerald-300">
-                                    Live: {formatDelay(leg.liveVehicle.delaySeconds)}
+                                    Live:{" "}
+                                    {formatDelay(leg.liveVehicle.delaySeconds)}
                                   </div>
                                   <div className="text-zinc-400">
                                     Sist oppdatert{" "}
@@ -509,12 +522,13 @@ export const EquipmentPopUp = ({
                 Status
               </div>
               <div
-                className={`mt-1 text-sm font-semibold ${functional_status === "functional"
-                  ? "text-green-500"
-                  : functional_status === "broken"
-                    ? "text-red-500"
-                    : "text-amber-500"
-                  }`}
+                className={`mt-1 text-sm font-semibold ${
+                  functional_status === "functional"
+                    ? "text-green-500"
+                    : functional_status === "broken"
+                      ? "text-red-500"
+                      : "text-amber-500"
+                }`}
               >
                 {statusLabel[functional_status]}
               </div>
@@ -531,7 +545,6 @@ export const EquipmentPopUp = ({
           </div>
         </div>
       </div>
-
     </Paper>
   );
 };
