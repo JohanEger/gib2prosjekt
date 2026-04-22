@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from app.database import get_database
-from app.services.equipment_service import equipment_for_sidebar, get_equipment_popup, register_new_equipment, update_equipment_status
+from app.services.equipment_service import equipment_for_sidebar, get_all_committees, get_equipment_popup, register_new_equipment, update_equipment_status
 from app.schemas.equipment import EquipmentFilter, EquipmentSchema, NewEquipment
 from typing import List
 from app.dependencies import get_current_user
@@ -33,6 +33,11 @@ async def get_sidebar_equipment(
     )
     return await equipment_for_sidebar(session, filter=filter) 
 
+@router.get("/committees")
+async def get_committees(session = Depends(get_database)):
+    committees = await get_all_committees(session)
+    return committees
+
 @router.get("/{equipment_id}")
 async def get_equipment_popup_route(
     equipment_id: UUID,
@@ -55,6 +60,7 @@ async def create_equipment(
 ):
     equipment = await register_new_equipment(session, new_equipment)
     return equipment
+
 class EquipmentStatusUpdate(BaseModel):
     functional_status: FunctionalStatus
     functional_status_comment: str | None = None

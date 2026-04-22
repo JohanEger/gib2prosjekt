@@ -14,6 +14,8 @@ import { TravelModeSelector } from "./TravelModeSelector";
 import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { formatRouteDistance, formatRouteDuration } from "../utils/formatRoute";
+import MinimizeIcon from "@mui/icons-material/Minimize";
+import CropSquareIcon from "@mui/icons-material/CropSquare";
 
 type FunctionalStatus = "functional" | "lost" | "broken";
 
@@ -194,40 +196,63 @@ export const EquipmentPopUp = ({
     loadAddress();
   }, [lat, lng]);
 
+  const [minimized, setMinimized] = useState(false);
+
 
   return (
     <Paper
       elevation={3}
-      className="z-50 w-full max-h-[76vh] overflow-y-auto pl-2 pr-2 pb-2 bg-black text-white flex flex-col items-center gap-4 relative"
+      className={`z-50 w-full ${minimized ? "max-h-[42vh] sm:max-h-[24vh]" : "max-h-[77vh]"} overflow-y-auto pl-2 pr-2 pb-70 sm:pb-2 bg-black text-white flex flex-col items-center gap-1 sm:gap-4 relative`}
       onClick={(e) => e.stopPropagation()}
     >
-      <IconButton
-        onClick={() => {
-          SetFindEquipment(null);
-          setSelectedEquipmentId?.(null);
-          clearSelection();
-          setLogPositions([]);
-          onClose();
-        }}
-        className="absolute top-4 right-3 self-end"
-      >
-        <CloseIcon />
-      </IconButton>
+      <Box className="flex flex-row relative self-end">
+        <IconButton
+          onClick={() => setMinimized(!minimized)}
+          className="absolute right-2 top-2"
+        >
+          <span className="text-black-300 text-xl top-6">
+            {minimized ? <CropSquareIcon/> : <MinimizeIcon/>}
+          </span>
+        </IconButton>
 
-      <Typography variant="h4">{name}</Typography>
+        <IconButton
+          onClick={() => {
+            SetFindEquipment(null);
+            setSelectedEquipmentId?.(null);
+            clearSelection();
+            setLogPositions([]);
+            onClose();
+          }}
+          className="absolute top-2 right-3 "
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <>
+        {/* Mobil */}
+        <Typography className="block sm:hidden text-lg font-semibold text-center" sx={{ fontWeight: 700 }}>
+          {name}
+        </Typography>
 
-      <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
+        {/* PC */}
+        <Typography className="hidden sm:block" variant="h4">
+          {name}
+        </Typography>
+      </>
+      <Typography className="text-center">Type: {description}</Typography>
+
+      <Paper className="flex items-center gap-2 px-1.5 sm:px-4 py-2 rounded-full bg-black/20">
         {booked ? (
           <>
             <CancelIcon className="text-red-500" fontSize="small" />
-            <Typography className="text-red-500 font-semibold">
+            <Typography className="text-red-500 font-semibold text-center">
               Status nå: Booket
             </Typography>
           </>
         ) : (
           <>
             <CheckCircleIcon className="text-green-500" fontSize="small" />
-            <Typography className="text-green-500 font-semibold">
+            <Typography className="text-green-500 font-semibold text-center">
               Status nå: Ledig
             </Typography>
           </>
@@ -244,11 +269,11 @@ export const EquipmentPopUp = ({
           </>
         )}
       </Typography>
-      <Typography>{description}</Typography>
+
       <Button
         variant="text"
-        onClick={() => { setFiveLatestID(id); }} //Har skjult muligheten for posisjonslogg på mobil
-        className="hidden sm:inline underline italic cursor-pointer hover:text-blue-600 transition"
+        onClick={() => { setFiveLatestID(id); }}
+        className="underline italic text-center cursor-pointer hover:text-blue-600 transition"
         title="Trykk for å se siste 5 posisjoner"
       >
         {" "}Se posisjonslogg{" "}
@@ -270,7 +295,7 @@ export const EquipmentPopUp = ({
       <Link
         to={`/calendar/${id}/${name}`}
         className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-        hover:from-blue-600 hover:to-indigo-700
+        hover:from-blue-600 hover:to-indigo-700 text-center
         text-white font-semibold rounded-xl shadow-lg
         transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
@@ -280,7 +305,7 @@ export const EquipmentPopUp = ({
       <Link
         to={`/reportEquipment/${id}/${name}`}
         className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-          hover:from-blue-600 hover:to-indigo-700
+          hover:from-blue-600 hover:to-indigo-700 text-center
           text-white font-semibold rounded-xl shadow-lg
           transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
@@ -290,7 +315,7 @@ export const EquipmentPopUp = ({
       <Button
         onClick={toggleRoute}
         className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-  hover:from-blue-600 hover:to-indigo-700
+  hover:from-blue-600 hover:to-indigo-700 text-center
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
       >
@@ -308,7 +333,7 @@ export const EquipmentPopUp = ({
         />
 
         {isRouteTarget ? (
-          <div className="mt-2 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
+          <div className="mt-2 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner text-center">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold tracking-tight text-white">
                 Ruteinformasjon
@@ -332,7 +357,7 @@ export const EquipmentPopUp = ({
             {routePanel.status === "ready" && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
+                  <div className="rounded-lg border text-center border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                       Tid
                     </div>
@@ -340,7 +365,7 @@ export const EquipmentPopUp = ({
                       {formatRouteDuration(routePanel.seconds)}
                     </div>
                   </div>
-                  <div className="rounded-lg border border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
+                  <div className="rounded-lg border text-center border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                       Avstand
                     </div>

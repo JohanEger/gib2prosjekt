@@ -13,9 +13,9 @@ import {
   IconButton,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavBar } from "@/components/NavBar";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddressSearch from "@/components/calendar/AddressSearchBox";
 import { API_BASE } from "@/apiBase";
 import { useNavigate } from "react-router-dom";
@@ -25,14 +25,14 @@ type Coordinates = {
 };
 
 export default function RegisterEquipment() {
-  const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
+  const [committeeNames, setCommitteeNames] = useState<string[]>([]);
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [description, setDescription] = useState("");
   const [committee, setCommittee] = useState("");
   const [coords, setCoords] = useState<Coordinates | null>(null);
-  const [registeredName, setRegisteredName] = useState<String>("");
+  const [registeredName, setRegisteredName] = useState<string>("");
   const [successOpen, setSuccessOpen] = useState(false);
 
   const handleChangeCommittee = (event: SelectChangeEvent) => {
@@ -52,14 +52,17 @@ export default function RegisterEquipment() {
     coords !== null;
 
   const handleRegister = async () => {
+    if (!coords) return;
+
     const register = {
       name,
       description,
       type,
       committee: committee.toLowerCase(),
-      latitude: coords?.lat,
-      longitude: coords?.lng,
+      latitude: coords.lat,
+      longitude: coords.lng,
     };
+
     try {
       const res = await fetch(`${API_BASE}/equipment/register_equipment`, {
         method: "POST",
@@ -69,21 +72,45 @@ export default function RegisterEquipment() {
         body: JSON.stringify(register),
       });
 
+      const text = await res.text();
+
       if (!res.ok) {
+        console.error("Backend error:", text);
         throw new Error("Kunne ikke lagre");
       }
 
-      const data = await res.json();
-      console.log("Lagret:", data);
+      const data = JSON.parse(text);
+
       setSuccessOpen(true);
       setRegisteredName(data.name);
+
       setTimeout(() => {
         navigate("/");
       }, 3000);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
+
+  useEffect(() => {
+    async function loadCommittees() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE}/equipment/committees`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json();
+        setCommitteeNames(
+          Array.isArray(data)
+            ? data.map((name: string) => name.charAt(0).toUpperCase() + name.slice(1))
+            : []
+        );
+      } catch (err) {
+        console.error("Error loading committees:", err);
+      }
+    }
+    loadCommittees();
+  }, []);
 
   return (
     <>
@@ -100,7 +127,7 @@ export default function RegisterEquipment() {
           variant="filled"
           sx={{ width: "100%" }}
         >
-          {registeredName} ble registrert 🎉
+          {registeredName} ble registrert!
         </Alert>
       </Snackbar>
       <Box className="flex justify-center items-start sm:items-center min-h-screen px-4 pt-20 sm:pt-0 bg-blue">
@@ -108,11 +135,14 @@ export default function RegisterEquipment() {
           elevation={4}
           className="relative p-8 rounded-2xl w-full max-w-md flex flex-col gap-5"
         >
-          <IconButton onClick={handleGoBackToHomePage} sx={{
-            position: "absolute",
-            top: 16,
-            left: 16,
-          }} >
+          <IconButton
+            onClick={handleGoBackToHomePage}
+            sx={{
+              position: "absolute",
+              top: 16,
+              left: 16,
+            }}
+          >
             <ArrowBackIcon />
           </IconButton>
 
@@ -160,6 +190,7 @@ export default function RegisterEquipment() {
             rows={3}
             fullWidth
           />
+          <Typography>Angi lagringssted for utstyr</Typography>
           <AddressSearch setCoords={setCoords}></AddressSearch>
 
           {/* Knapp */}
