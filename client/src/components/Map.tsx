@@ -26,7 +26,7 @@ import type { RoutePanelState } from "../types/routePanelState";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { Equipment } from "../types/equipment";
 import type { RouteLiveVehicle, RouteResponse } from "../types/routeResponse";
-import { useGeolocation } from "../hooks/useGeolocation";
+import { useUserLocation } from "../hooks/useUserLocation";
 import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -158,7 +158,7 @@ export const Map = ({
   setActiveEquipment,
   setSelectedClusterEquipmentIds,
 }: MapProps) => {
-  const { latitude, longitude } = useGeolocation();
+  const { latitude, longitude } = useUserLocation();
 
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
   const [route, setRoute] = useState<RouteResponse>(emptyRouteResponse());

@@ -1,6 +1,7 @@
 import { Map } from "../components/Map";
 import { NavBar } from "../components/NavBar";
 import { Sidebar } from "../components/Sidebar";
+import { LocationStatusBanner } from "../components/LocationStatusBanner";
 import type { RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { useState } from "react";
@@ -31,6 +32,7 @@ export const HomePage = () => {
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <NavBar />
+      <LocationStatusBanner />
       <Sidebar
         filters={filters}
         setFilters={setFilters}

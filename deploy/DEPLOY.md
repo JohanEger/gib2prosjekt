@@ -1,30 +1,44 @@
 # Deploy GIB2 til VM `tba4250s01.it.ntnu.no`
 
 Komplett guide for å deploye dette prosjektet til NTNU-VM-en for gruppe 1.
-Tilpasset vårt oppsett (port 5001 for backend, etc.) - **ikke** identisk med
-guiden i `.github/docs/VIRTUAL_MACHINE.md`.
+Tilpasset vårt oppsett (HTTPS via nginx reverse proxy, port 5001 internt for
+backend, etc.) - **ikke** identisk med guiden i `.github/docs/VIRTUAL_MACHINE.md`.
 
 ---
 
 ## Oversikt
 
 ```
-┌──────────────────┐  push    ┌────────────┐  pull    ┌────────────────────────┐
-│ Lokal git repo   │ ───────► │ GitHub     │ ──┐      │ VM (tba4250s01)        │
-│ (denne mappa)    │          │ Actions    │   │      │  ┌──────────────────┐  │
-└──────────────────┘          └─────┬──────┘   │      │  │ docker compose   │  │
-                                    │ build    │      │  │  - client (80)   │  │
-                                    ▼          │      │  │  - server (5001) │  │
-                              ┌──────────┐     │      │  │  - db    (5432)  │  │
-                              │ Docker   │ ◄───┘      │  └──────────────────┘  │
-                              │ Hub      │ ───────────►                        │
-                              └──────────┘   pull     └────────────────────────┘
+                                                         ┌─ VM (tba4250s01) ─────────────────────┐
+                                                         │                                       │
+ Bruker (HTTPS) ─────────────────► port 443 ──► nginx ──┐│                                       │
+                                                        ││  ┌────────────────────────────────┐  │
+                                                        │└─►│  reverse proxy + TLS termin.   │  │
+                                                        │   │   /        → client:80         │  │
+                                                        │   │   /api/*   → server:5001       │  │
+                                                        │   └────────────────────────────────┘  │
+                                                        │                │                      │
+                                                        │   ┌────────────┴───────┐              │
+                                                        │   │ docker compose:    │              │
+                                                        │   │   nginx (80/443)   │              │
+                                                        │   │   client (intern)  │              │
+                                                        │   │   server (intern)  │              │
+                                                        │   │   db     (intern)  │              │
+                                                        │   └────────────────────┘              │
+                                                        └────────────────────────────────────────┘
+
+ Lokal git push ──► GitHub Actions ──► Docker Hub ──► VM kjører `docker compose pull && up`
 ```
 
-Frontend-image (nginx + ferdig-bygd React) og backend-image (FastAPI/uvicorn)
-bygges av GitHub Actions ved hver push til `main`, og publiseres til Docker Hub.
-VM-en kjører `docker compose pull && docker compose up -d` for å hente og kjøre
-nyeste images.
+- **HTTPS-only**: Alt brukertrafikk går via `https://tba4250s01.it.ntnu.no` (port 443).
+  Port 80 redirector til 443.
+- **Sertifikat**: NTNU provisjonerer automatisk og fornyer
+  `/root/tba4250s01.it.ntnu.no.{crt,key}` (gyldig GEANT TLS-cert, ingen warnings).
+- **Reverse proxy**: nginx terminerer TLS og proxyer `/api/*` til backend og
+  alt annet til frontend. Frontend, backend og DB er ikke eksponert direkte
+  utad - kun nginx.
+- **CI/CD**: GitHub Actions bygger images ved hver push til `main` og publiserer
+  til Docker Hub. VM-en henter med `docker compose pull && up -d`.
 
 ---
 
@@ -51,16 +65,26 @@ I GitHub-repoet: *Settings → Secrets and variables → Actions*
 | Navn | Verdi |
 |---|---|
 | `DOCKER_ACCESS_TOKEN` | PAT-en fra 1.1 |
-| `POSTGRES_PASSWORD` | Velg et sterkt passord. Brukes som DB-passord på VM. **NB: dette er i dag ikke faktisk i bruk i workflow-en, men opprett det likevel.** |
+| `POSTGRES_PASSWORD` | Sterkt **alfanumerisk** passord (KUN A-Z, a-z, 0-9 - se note under). Brukes som DB-passord på VM. |
+
+> **Viktig**: Bruk KUN alfanumeriske tegn i `POSTGRES_PASSWORD`. Spesialtegn som
+> `/`, `+`, `=` blir URL-encoded i `DATABASE_URL` (f.eks. `/` → `%2F`), og dette
+> bryter alembic sin `configparser`-parsing. Generer med:
+> `openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 32`
 
 **Variables** (Repository variables):
 
 | Navn | Verdi |
 |---|---|
-| `BACKEND_BASE_URL` | `http://tba4250s01.it.ntnu.no:5001` |
+| `BACKEND_BASE_URL` | `https://tba4250s01.it.ntnu.no/api` |
 | `DOCKER_USERNAME` | Docker Hub-brukernavnet ditt fra 1.1 |
-| `POSTGRES_DB_NAME` | `gib2db` |
-| `POSTGRES_USERNAME` | `app` |
+| `POSTGRES_DB_NAME` | `utstyrsoversikt` |
+| `POSTGRES_USERNAME` | `postgres` |
+
+> **NB om `BACKEND_BASE_URL`**: Den MÅ være `https://...` med `/api`-suffix
+> (ikke `:5001`). Denne URL-en bakes inn i client-bygget som `VITE_BACKEND_BASE_URL`,
+> og frontend bruker den som base for alle backend-kall. nginx på VM-en stripper
+> `/api/`-prefixet før den proxyer til backend (`/api/foo` → `server:5001/foo`).
 
 **Sett repoet til public** (`Settings → General → Danger Zone → Change visibility`).
 
@@ -95,6 +119,9 @@ Skriv `yes` på fingerprint-prompt, deretter NTNU-passord.
 
 > Får du "Permission denied"? Da har du sannsynligvis ikke blitt lagt til på
 > VM-en enda. Kontakt læringsassistent/faglærer.
+
+> Tips: Sett opp SSH-nøkkel-autentisering for å slippe å skrive passord
+> hver gang. Kjør lokalt: `ssh-copy-id <brukernavn>@tba4250s01.it.ntnu.no`.
 
 ### 2.2 Installer Docker Engine
 
@@ -147,7 +174,7 @@ sudo /local/admin/bin/do_pkgsync.sh
 
 ### 2.4 Firewall
 
-Eksponer portene vi bruker:
+Eksponer port **80** (HTTP→HTTPS redirect) og **443** (HTTPS).
 
 ```bash
 cd /etc/local/firewall.d
@@ -155,8 +182,7 @@ cd /etc/local/firewall.d
 # IPv4
 sudo tee ipv4-expose-docker-ports.conf > /dev/null <<'EOF'
 -I DOCKER-USER -p tcp -m conntrack --ctorigdstport 80 -j permit_ntnu
--I DOCKER-USER -p tcp -m conntrack --ctorigdstport 5001 -j permit_ntnu
--I DOCKER-USER -p tcp -m conntrack --ctorigdstport 5432 -j permit_ntnu
+-I DOCKER-USER -p tcp -m conntrack --ctorigdstport 443 -j permit_ntnu
 EOF
 
 # IPv6 (samme innhold)
@@ -165,10 +191,14 @@ sudo cp ipv4-expose-docker-ports.conf ipv6-expose-docker-ports.conf
 sudo /local/admin/bin/install-firewall.sh
 
 # Verifiser
-sudo iptables-save | grep DOCKER-USER
+sudo iptables -L DOCKER-USER -n -v | grep -E "(dpt:80|dpt:443)"
 ```
 
-> Port 80 åpen for alle (frontend), port 5001 og 5432 kun for NTNU-nett (backend + DB).
+> Vi åpner KUN 80 og 443. Backend (5001) og DB (5432) er ikke eksponert utad
+> - de er kun tilgjengelige via Docker-nettverket internt. Hvis du senere vil
+> kunne koble til DB-en eksternt med f.eks. DBeaver, kan du legge til
+> `--ctorigdstport 5432 -j permit_ntnu` i samme fil og kjøre install-scriptet
+> på nytt.
 
 ### 2.5 Frigjør port 80
 
@@ -178,6 +208,20 @@ sudo systemctl stop apache2
 sudo systemctl disable apache2
 sudo ss -lptn 'sport = :80'      # skal nå være tom
 ```
+
+### 2.6 Verifiser at SSL-sertifikatene finnes
+
+NTNU provisjonerer automatisk sertifikater for VM-en til `/root/`:
+
+```bash
+sudo sh -c 'ls -la /root/tba4250s01.it.ntnu.no.*'
+```
+
+Du skal se to filer:
+- `tba4250s01.it.ntnu.no.crt`
+- `tba4250s01.it.ntnu.no.key`
+
+Disse mountes inn i nginx-containeren read-only. Hvis de mangler, kontakt NTNU IT.
 
 ---
 
@@ -191,9 +235,24 @@ mkdir -p ~/gib2-deploy && cd ~/gib2-deploy
 
 ### 3.2 Lag `docker-compose.yml`
 
-Kopier innholdet fra `deploy/docker-compose.yml` i repoet (f.eks. via `nano docker-compose.yml` og lim inn).
+Kopier hele innholdet fra [`deploy/docker-compose.yml`](./docker-compose.yml) i
+repoet og lim inn på VM-en, f.eks.:
 
-### 3.3 Lag tre env-filer
+```bash
+nano docker-compose.yml
+# Lim inn, lagre med Ctrl+O, Enter, lukk med Ctrl+X.
+```
+
+### 3.3 Lag `nginx.conf`
+
+Kopier hele innholdet fra [`deploy/nginx.conf`](./nginx.conf) i repoet og lim
+inn:
+
+```bash
+nano nginx.conf
+```
+
+### 3.4 Lag tre env-filer
 
 **`.env`** (compose-substitusjon - leses automatisk av `docker compose`):
 
@@ -210,7 +269,7 @@ DOCKER_USERNAME=<ditt-dockerhub-brukernavn>
 nano server.env
 ```
 ```
-DATABASE_URL=postgresql+asyncpg://app:<sterkt-passord>@db:5432/gib2db
+DATABASE_URL=postgresql+asyncpg://postgres:<sterkt-passord>@db:5432/utstyrsoversikt
 JWT_SECRET_KEY=<32 tilfeldige bytes hex>
 ```
 
@@ -222,13 +281,18 @@ Generer JWT-key: `openssl rand -hex 32`
 nano db.env
 ```
 ```
-POSTGRES_DB=gib2db
-POSTGRES_USER=app
+POSTGRES_DB=utstyrsoversikt
+POSTGRES_USER=postgres
 POSTGRES_PASSWORD=<samme passord som i DATABASE_URL over>
 ```
 
-> Viktig: `POSTGRES_PASSWORD` her, passordet i `DATABASE_URL` (`server.env`) og
-> `POSTGRES_PASSWORD`-secret på GitHub MÅ være identiske.
+> **VIKTIG om passord**: `POSTGRES_PASSWORD` her, passordet i `DATABASE_URL`
+> (`server.env`) og `POSTGRES_PASSWORD`-secret på GitHub MÅ være identiske.
+> Bruk KUN alfanumeriske tegn (A-Z, a-z, 0-9) for å unngå URL-encoding-feil
+> med alembic. Generer med:
+> ```bash
+> openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 32
+> ```
 
 Sett rettigheter slik at andre brukere på VM-en ikke leser dem:
 
@@ -236,22 +300,39 @@ Sett rettigheter slik at andre brukere på VM-en ikke leser dem:
 chmod 600 .env server.env db.env
 ```
 
-### 3.4 Pull images og start
+### 3.5 Pull images og start
 
 ```bash
 sudo docker compose pull
 sudo docker compose up -d
+sudo docker compose ps           # alle 4 (nginx/client/server/db) skal være Up
 sudo docker compose logs -f
 ```
 
-Vent til server-loggen viser at den lytter på 5001 og DB er klar.
+Vent til:
+- `db` er `healthy`
+- `server` er `Up (healthy)` (kan ta ~30 sek pga. seeding/grafer)
+- `client` og `nginx` er `Up`
 
-### 3.5 Verifiser
+### 3.6 Verifiser
+
+Fra VM-en (rask sanity check):
+
+```bash
+curl -v https://tba4250s01.it.ntnu.no/api/health
+# Forventet: HTTP/2 200 + {"status":"ok","database":"connected"}
+
+curl -I http://tba4250s01.it.ntnu.no
+# Forventet: HTTP/1.1 301 Moved Permanently → Location: https://...
+```
 
 I nettleser (NTNU-nett/VPN):
-- http://tba4250s01.it.ntnu.no — frontend
-- http://tba4250s01.it.ntnu.no:5001/health — `{"status":"ok","database":"connected"}`
-- http://tba4250s01.it.ntnu.no:5001/docs — FastAPI Swagger UI
+- https://tba4250s01.it.ntnu.no — frontend (med 🔒 grønn lås, gyldig NTNU-cert)
+- https://tba4250s01.it.ntnu.no/api/health — `{"status":"ok","database":"connected"}`
+- https://tba4250s01.it.ntnu.no/api/docs — FastAPI Swagger UI
+
+> Du skal IKKE få SSL warning. Sertifikatet er signert av en offentlig CA
+> (GEANT) som alle nettlesere stoler på.
 
 ---
 
@@ -269,6 +350,31 @@ Når du pusher kode-endringer til `main`:
 
 Det er det. Ingen down-time utover noen sekunder mens containere restartes.
 
+> Hvis du endrer `nginx.conf` eller `docker-compose.yml`, kopier den nye versjonen
+> fra repoet inn på VM-en før du restarter. nginx-konfigen lastes inn ved start.
+
+### Oppdater bare nginx-konfig (uten å restarte alle containere)
+
+```bash
+sudo docker compose restart nginx
+```
+
+---
+
+## Eksterne tjenester
+
+### Stadia Maps (frontend map tiles)
+
+Stadia Maps bruker domain-basert autentisering. Etter deploy må du registrere
+VM-domenet i Stadia-dashboardet for å unngå 401-feil på tile-requests:
+
+1. Logg inn på https://client.stadiamaps.com/
+2. Gå til ditt prosjekt → "Allowed origins / domains"
+3. Legg til `https://tba4250s01.it.ntnu.no`
+4. Vent ~2 min → reload frontend → tiles skal laste 200 OK
+
+ArcGIS sine satellite tiles trenger ikke noe ekstra oppsett.
+
 ---
 
 ## Feilsøking
@@ -276,21 +382,47 @@ Det er det. Ingen down-time utover noen sekunder mens containere restartes.
 ### Sjekk container-status
 ```bash
 sudo docker compose ps
-sudo docker compose logs server      # eller client / db
+sudo docker compose logs nginx       # eller client / server / db
 sudo docker compose logs -f server   # følg loggen i sanntid
 ```
 
-### Server kommer ikke opp
-- Sjekk at `DATABASE_URL` i `server.env` peker på `@db:5432/...` (ikke localhost).
-- Sjekk at passord matcher mellom `server.env` og `db.env`.
-- `sudo docker compose logs db` for å se om Postgres startet ok.
+### nginx feiler ved oppstart
+- `sudo docker compose logs nginx` - syntaksfeil i `nginx.conf` vises tydelig.
+- `sudo docker compose exec nginx ls -la /etc/nginx/certs/` - skal vise to filer
+  (cert + key) read-only fra `/root/`. Hvis tom: cert-filer mangler eller
+  permission feil.
+
+### `curl: (7) Failed to connect ... port 443: Connection refused`
+- Firewall: `sudo iptables -L DOCKER-USER -n -v | grep 443`. Hvis tom, kjør
+  `sudo /local/admin/bin/install-firewall.sh` på nytt.
+
+### `SSL certificate problem`
+- Cert-mount feil i `docker-compose.yml`, eller cert-filene mangler i `/root/`.
+
+### Server kommer ikke opp / 502 fra `/api/...`
+- `sudo docker compose logs server --tail 50` - vanlig: alembic feiler pga.
+  passord med spesialtegn i `DATABASE_URL`. Fix:
+  1. `sudo docker compose down -v` (sletter DB-volume!)
+  2. Lag nytt alfanumerisk passord (se 3.4-noten).
+  3. Oppdater `db.env` + `server.env` med nytt passord.
+  4. `sudo docker compose up -d`.
+- Sjekk at `DATABASE_URL` peker på `@db:5432/...` (Docker-nettverket), ikke
+  `localhost`.
 
 ### Frontend laster, men API-kall feiler
 - Åpne DevTools → Network. Hvilken URL prøver fetcher å nå?
-  - Hvis `http://localhost:5001` → image ble bygget med feil `BACKEND_BASE_URL`.
-    Verifiser GitHub-variabelen og kjør client-workflowen på nytt.
-  - Hvis `http://tba4250s01.it.ntnu.no:5001` men feiler → sjekk firewall + at backend kjører.
-- Sjekk CORS i `server/app/main.py` (origins-listen).
+  - Hvis `http://localhost:5001` eller `http://...:5001` → image ble bygget
+    med feil `BACKEND_BASE_URL`. Verifiser GitHub-variabelen står til
+    `https://tba4250s01.it.ntnu.no/api` og kjør client-workflowen på nytt.
+  - Hvis `https://tba4250s01.it.ntnu.no/api/...` men feiler med CORS → sjekk
+    at https-origins er i `server/app/main.py`.
+- Mixed content (`Blocked ... insecure ...`) → frontend prøver `http://`-API
+  fra https-side. Samme fix som over.
+
+### Ingen geolocation-prompt
+- Geolocation API krever HTTPS i alle moderne nettlesere (unntatt på `localhost`).
+  Hvis du ser nettsiden over `http://`, blir prompt aldri vist. Sjekk at URL-en
+  starter med `https://` og at HTTP→HTTPS-redirect i nginx fungerer.
 
 ### Restart alt fra scratch (mister DB-data!)
 ```bash
