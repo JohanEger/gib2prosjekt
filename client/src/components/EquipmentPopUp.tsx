@@ -202,7 +202,7 @@ export const EquipmentPopUp = ({
   return (
     <Paper
       elevation={3}
-      className={`z-50 w-full ${minimized ? "max-h-[18vh]" : "max-h-[80vh]"} overflow-y-auto pl-2 pr-2 pb-70 sm:pb-2 bg-black text-white flex flex-col items-center gap-1 sm:gap-4 relative`}
+      className={`z-50 w-full ${minimized ? "max-h-[42vh] sm:max-h-[24vh]" : "max-h-[77vh]"} overflow-y-auto pl-2 pr-2 pb-70 sm:pb-2 bg-black text-white flex flex-col items-center gap-1 sm:gap-4 relative`}
       onClick={(e) => e.stopPropagation()}
     >
       <Box className="flex flex-row relative self-end">
@@ -210,7 +210,7 @@ export const EquipmentPopUp = ({
           onClick={() => setMinimized(!minimized)}
           className="absolute right-2 top-2"
         >
-          <span className="text-black-400 text-xl top-6">
+          <span className="text-black-300 text-xl top-6">
             {minimized ? <CropSquareIcon/> : <MinimizeIcon/>}
           </span>
         </IconButton>
@@ -223,7 +223,7 @@ export const EquipmentPopUp = ({
             setLogPositions([]);
             onClose();
           }}
-          className="absolute top-2 right-3 self-end"
+          className="absolute top-2 right-3 "
         >
           <CloseIcon />
         </IconButton>

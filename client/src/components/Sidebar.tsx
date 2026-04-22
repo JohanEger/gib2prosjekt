@@ -68,9 +68,7 @@ interface SidebarProps {
   activeEquipment: Equipment | null;
   setActiveEquipment: React.Dispatch<React.SetStateAction<Equipment | null>>;
   selectedClusterEquipmentIds: string[] | null;
-  setSelectedClusterEquipmentIds: React.Dispatch<
-    React.SetStateAction<string[] | null>
-  >;
+  setSelectedClusterEquipmentIds: React.Dispatch<React.SetStateAction<string[] | null>>;
 
 }
 
@@ -258,7 +256,6 @@ export const Sidebar = ({
       : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
 
 
-
   return (
     <>
       {/* Sidebar */}
@@ -384,8 +381,9 @@ export const Sidebar = ({
       {/* Equipment popup */}
       <div
         className={`fixed bottom-2 sm:top-24 right-1 sm:right-4 w-[12rem] sm:w-[30rem]
-                    max-h-[42vh] sm:max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl duration-300 z-40 
-        ${activeEquipment ? "translate-x-0 opacity-100 " : "translate-x-full opacity-0 pointer-events-none"}`}
+                    max-h-[42vh] sm:max-h-[77vh] rounded-2xl overflow-y-auto duration-300 z-40 
+        ${activeEquipment ? "translate-x-0 opacity-100 pointer-events-auto" : "translate-x-full opacity-0 pointer-events-none"}`}
+        
       >
         {activeEquipment && (
           <EquipmentPopUp
