@@ -204,7 +204,7 @@ export const EquipmentPopUp = ({
       elevation={3}
       sx={{ borderRadius: 0 }}
       className={`z-50 w-full ${minimized ? "sm:h-[20vh] sm:top-0 sm:bottom-auto h-[50vh] bottom-0" : "h-screen"} 
-       overflow-y-auto fixed pt-0 sm:pt-15 right-0 top-0 pb-10 sm:pb-2 bg-black 
+       overflow-y-auto fixed pt-0 sm:pt-15 right-0 top-0 pb-10 sm:pb-2 bg-black top-4
       text-white flex flex-col items-center gap-1 sm:gap-3 relative`}
       //className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
       onClick={(e) => e.stopPropagation()}
