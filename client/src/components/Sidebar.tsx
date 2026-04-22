@@ -25,7 +25,7 @@ import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import type { Equipment } from "../types/equipment";
-import { useGeolocation } from "../hooks/useGeolocation";
+import { useUserLocation } from "../hooks/useUserLocation";
 import { API_BASE } from "../apiBase";
 import type { LogPosition } from "./LogMapLayer";
 
@@ -104,7 +104,7 @@ export const Sidebar = ({
     new Set(equipment.map((eq) => eq.type_of_equipment)),
   );
 
-  const { latitude, longitude } = useGeolocation();
+  const { latitude, longitude } = useUserLocation();
 
   useEffect(() => {
     async function loadEquipment() {

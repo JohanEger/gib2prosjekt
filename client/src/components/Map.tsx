@@ -27,16 +27,13 @@ import type { RoutePanelState } from "../types/routePanelState";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { Equipment } from "../types/equipment";
 import type { RouteLiveVehicle, RouteResponse } from "../types/routeResponse";
-import { useGeolocation } from "../hooks/useGeolocation";
-//import { API_BASE } from "../apiBase";
+import { useUserLocation } from "../hooks/useUserLocation";
+import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { LogPosition } from "../types/logPositions";
 import { LogMapLayer } from "./LogMapLayer";
 import MapControl from "./MapControl";
-
-const API_BASE =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? "http://localhost:5001";
 
 // --- Typer -------------------------------------------------------------------
 
@@ -177,7 +174,8 @@ export const Map = ({
   setSelectedClusterEquipmentIds,
   setSidebarOpen,
 }: MapProps) => {
-  const { latitude, longitude } = useGeolocation();
+  const { latitude, longitude } = useUserLocation();
+
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
   const [route, setRoute] = useState<RouteResponse>(emptyRouteResponse());
   const [routeVersion, setRouteVersion] = useState(0);
