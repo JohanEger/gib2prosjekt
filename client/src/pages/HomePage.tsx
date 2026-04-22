@@ -30,10 +30,11 @@ export const HomePage = () => {
   const [logError, setLogError] = useState<string | null>(null);
   const [fiveLatestID, setFiveLatestID] = useState<string | null>(null);
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
-  const currentPosition = activeEquipment
-    ? { lat: activeEquipment.lat, lng: activeEquipment.lng }
-    : null;
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showLogMode, setShowLogMode] = useState(false);
+  const currentPosition = activeEquipment
+  ? { lat: activeEquipment.lat, lng: activeEquipment.lng }
+  : null;
 
   const clearSelection = () => {
     setSelectedEquipmentId(null);
@@ -98,6 +99,8 @@ export const HomePage = () => {
         setLogError={setLogError}
         setFiveLatestID={setFiveLatestID}
         setSelectedClusterEquipmentIds={setSelectedClusterEquipmentIds}
+        open = {sidebarOpen}
+        setOpen = {setSidebarOpen}
       />
 
       <Map
@@ -106,6 +109,7 @@ export const HomePage = () => {
         travelMode={travelMode}
         onRoutePanelChange={setRoutePanel}
         selectedEquipmentId={selectedEquipmentId}
+        setSelectedEquipmentId={setSelectedEquipmentId}
         logPositions={logPositions}
         currentPosition={currentPosition}
         LogPositions={logPositions}
@@ -114,6 +118,7 @@ export const HomePage = () => {
         activeEquipment={activeEquipment}
         setActiveEquipment={setActiveEquipment}
         setSelectedClusterEquipmentIds={setSelectedClusterEquipmentIds}
+        setSidebarOpen={setSidebarOpen}
       />
     </div>
   );
