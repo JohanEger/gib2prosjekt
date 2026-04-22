@@ -42,7 +42,7 @@ const MapControl = ({ setMap }: MapControlProps) => {
           }}
         >
           <div
-            className={`w-10 sm:w-16 h-10 sm:h-6 overflow-hidden rounded-lg border-2 ${
+            className={`w-10 sm:w-16 h-10 sm:h-12 overflow-hidden rounded-lg border-2 ${
               activeMap === m.id ? "border-blue-500" : "border-gray-200"
             }`}
           >
