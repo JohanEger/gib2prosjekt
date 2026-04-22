@@ -29,6 +29,7 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { API_BASE } from "../apiBase";
 import type { LogPosition } from "./LogMapLayer";
 
+
 const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
 
 const ITEM_HEIGHT = 48;
