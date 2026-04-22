@@ -34,6 +34,7 @@ export default function RegisterEquipment() {
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [registeredName, setRegisteredName] = useState<string>("");
   const [successOpen, setSuccessOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleChangeCommittee = (event: SelectChangeEvent) => {
     setCommittee(event.target.value);
@@ -76,7 +77,15 @@ export default function RegisterEquipment() {
 
       if (!res.ok) {
         console.error("Backend error:", text);
-        throw new Error("Kunne ikke lagre");
+        let detail = "Kunne ikke lagre utstyret.";
+        try {
+          const parsed = JSON.parse(text);
+          if (typeof parsed?.detail === "string") detail = parsed.detail;
+        } catch {
+          // body var ikke JSON – behold default-meldingen
+        }
+        setErrorMessage(detail);
+        return;
       }
 
       const data = JSON.parse(text);
@@ -89,6 +98,7 @@ export default function RegisterEquipment() {
       }, 3000);
     } catch (e) {
       console.error(e);
+      setErrorMessage("Nettverksfeil – kunne ikke nå serveren.");
     }
   };
 
@@ -128,6 +138,21 @@ export default function RegisterEquipment() {
           sx={{ width: "100%" }}
         >
           {registeredName} ble registrert!
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={errorMessage !== null}
+        autoHideDuration={5000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setErrorMessage(null)}
+          severity="error"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {errorMessage}
         </Alert>
       </Snackbar>
       <Box className="flex justify-center items-start sm:items-center min-h-screen px-4 pt-20 sm:pt-0 bg-blue">
