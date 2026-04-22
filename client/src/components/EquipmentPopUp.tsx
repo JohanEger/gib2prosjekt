@@ -1,4 +1,5 @@
-import { Typography, Box, Divider } from "@mui/material";
+import { Description } from "@headlessui/react";
+import { Typography, Box, IconButton, Divider } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
@@ -7,11 +8,14 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DirectionsBusFilledIcon from "@mui/icons-material/DirectionsBusFilled";
 import DirectionsWalkIcon from "@mui/icons-material/DirectionsWalk";
 import LocationPinIcon from "@mui/icons-material/LocationPin";
+import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
 import { TravelModeSelector } from "./TravelModeSelector";
 import { MODE_LABEL, type RouteTravelMode } from "../types/routeTravelMode";
 import type { RoutePanelState } from "../types/routePanelState";
 import { formatRouteDistance, formatRouteDuration } from "../utils/formatRoute";
+import MinimizeIcon from "@mui/icons-material/Minimize";
+import CropSquareIcon from "@mui/icons-material/CropSquare";
 
 type FunctionalStatus = "functional" | "lost" | "broken";
 
@@ -28,14 +32,24 @@ type Props = {
   description: string;
   func: () => void;
   booked: boolean;
+  findEquipment: Coordinates | null;
   functional_status: FunctionalStatus;
   functional_status_comment?: string | null;
   SetFindEquipment: React.Dispatch<React.SetStateAction<Coordinates | null>>;
+  onClose: () => void;
   travelMode: RouteTravelMode;
   setTravelMode: React.Dispatch<React.SetStateAction<RouteTravelMode>>;
   routePanel: RoutePanelState;
   /** True når kart-ruten er beregnet til dette utstyrets posisjon */
   isRouteTarget: boolean;
+  onShowLog: (equipmentId: string) => Promise<void>;
+  setSelectedEquipmentId?: React.Dispatch<React.SetStateAction<string | null>>;
+  setLogPositions: React.Dispatch<
+    React.SetStateAction<{ lat: number; lng: number; start_time: string }[]>>;
+  setLogError: React.Dispatch<React.SetStateAction<string | null>>;
+  setFiveLatestID: React.Dispatch<React.SetStateAction<string | null>>;
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
+  clearSelection: () => void;
 };
 
 export const EquipmentPopUp = ({
@@ -46,20 +60,89 @@ export const EquipmentPopUp = ({
   id,
   func,
   booked,
+  findEquipment,
   functional_status,
   functional_status_comment,
   SetFindEquipment,
+  onClose,
   travelMode,
   setTravelMode,
   routePanel,
   isRouteTarget,
+  setSelectedEquipmentId,
+  setLogPositions,
+  setShowLogMode,
+  clearSelection,
 }: Props) => {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logError, setLogError] = useState<string | null>(null);
+  const [logLoading, setLogLoading] = useState(false);
+  const [fiveLatestID, setFiveLatestID] = useState<string | null>(null);
+
+  // --- Se fem siste posisjoner logg -------
+  const API_BASE = "http://localhost:5001";
+
+  useEffect(() => {
+    if (!fiveLatestID) return; // viktig guard
+
+    const handleShowLog = async () => {
+      setLogError(null);
+      setFiveLatestID(null);
+      setShowLogMode(true);
+      setLogLoading(true);
+      setLogError(null);
+
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API_BASE}/booking/log/${fiveLatestID}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (Array.isArray(data) && data.length === 0) {
+          setLogError("Ingen logg tilgjengelig")
+          setLogPositions([]);
+          return;
+        }
+
+        console.log(data);
+        setLogPositions(data);
+      } catch (err) {
+        console.error(err);
+        setLogError("Kunne ikke hente logg");
+      } finally {
+        setLogLoading(false);
+      }
+    };
+
+    handleShowLog();
+  }, [fiveLatestID, setLogPositions, setShowLogMode]);
+
+  // ----
+
+  const toggleRoute = () => {
+    if (
+      findEquipment &&
+      findEquipment.lat === lat &&
+      findEquipment.lng === lng
+    ) {
+      SetFindEquipment(null); // skjul ruten
+    } else {
+      SetFindEquipment({ lat, lng }); // vis ruten
+    }
+  };
+
   const statusLabel: Record<FunctionalStatus, string> = {
-  functional: "Alt i orden",
-  broken: "Ødelagt",
-  lost: "Tapt",
+    functional: "Alt i orden",
+    broken: "Ødelagt",
+    lost: "Tapt",
   };
 
   const formatClock = (value?: string | null) => {
@@ -80,6 +163,10 @@ export const EquipmentPopUp = ({
       ? `${minutes} min forsinket`
       : `${Math.abs(minutes)} min foran skjema`;
   };
+
+  useEffect(() => {
+    setLogError(null);
+  }, [id]);
 
   useEffect(() => {
     async function loadAddress() {
@@ -106,30 +193,67 @@ export const EquipmentPopUp = ({
         setLoading(false);
       }
     }
-
     loadAddress();
   }, [lat, lng]);
+
+  const [minimized, setMinimized] = useState(false);
+
 
   return (
     <Paper
       elevation={3}
-      className="fixed top-0 right-0 flex h-screen w-[30rem] flex-col items-center gap-4 overflow-y-auto bg-black pt-24 text-white"
+      className={`z-50 w-full ${minimized ? "max-h-[42vh] sm:max-h-[24vh]" : "max-h-[77vh]"} overflow-y-auto pl-2 pr-2 pb-70 sm:pb-2 bg-black text-white flex flex-col items-center gap-1 sm:gap-4 relative`}
+      onClick={(e) => e.stopPropagation()}
     >
-      <Typography variant="h4">{name}</Typography>
+      <Box className="flex flex-row relative self-end">
+        <IconButton
+          onClick={() => setMinimized(!minimized)}
+          className="absolute right-2 top-2"
+        >
+          <span className="text-black-300 text-xl top-6">
+            {minimized ? <CropSquareIcon/> : <MinimizeIcon/>}
+          </span>
+        </IconButton>
 
-      <Paper className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20">
+        <IconButton
+          onClick={() => {
+            SetFindEquipment(null);
+            setSelectedEquipmentId?.(null);
+            clearSelection();
+            setLogPositions([]);
+            onClose();
+          }}
+          className="absolute top-2 right-3 "
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <>
+        {/* Mobil */}
+        <Typography className="block sm:hidden text-lg font-semibold text-center" sx={{ fontWeight: 700 }}>
+          {name}
+        </Typography>
+
+        {/* PC */}
+        <Typography className="hidden sm:block" variant="h4">
+          {name}
+        </Typography>
+      </>
+      <Typography className="text-center">Type: {description}</Typography>
+
+      <Paper className="flex items-center gap-2 px-1.5 sm:px-4 py-2 rounded-full bg-black/20">
         {booked ? (
           <>
             <CancelIcon className="text-red-500" fontSize="small" />
-            <Typography className="text-red-500 font-semibold">
-              Booket
+            <Typography className="text-red-500 font-semibold text-center">
+              Status nå: Booket
             </Typography>
           </>
         ) : (
           <>
             <CheckCircleIcon className="text-green-500" fontSize="small" />
-            <Typography className="text-green-500 font-semibold">
-              Ledig
+            <Typography className="text-green-500 font-semibold text-center">
+              Status nå: Ledig
             </Typography>
           </>
         )}
@@ -145,12 +269,33 @@ export const EquipmentPopUp = ({
           </>
         )}
       </Typography>
-      <Typography>{description}</Typography>
+
+      <Button
+        variant="text"
+        onClick={() => { setFiveLatestID(id); }}
+        className="underline italic text-center cursor-pointer hover:text-blue-600 transition"
+        title="Trykk for å se siste 5 posisjoner"
+      >
+        {" "}Se posisjonslogg{" "}
+
+      </Button>
+      {logError && (
+        <p className="text-sm text-red-600"> Har ingen registrert logg
+          <Button
+            variant="text"
+            onClick={() => { setFiveLatestID(null); setLogError(null); setShowLogMode(false); }}
+            className="ml-2 cursor-pointer hover:text-red-800">
+            X
+          </Button>
+        </p>
+
+      )}
+
 
       <Link
         to={`/calendar/${id}/${name}`}
-        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-        hover:from-blue-600 hover:to-indigo-700
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+        hover:from-blue-600 hover:to-indigo-700 text-center
         text-white font-semibold rounded-xl shadow-lg
         transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
@@ -158,23 +303,25 @@ export const EquipmentPopUp = ({
       </Link>
 
       <Link
-          to={`/reportEquipment/${id}/${name}`}
-          className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-          hover:from-blue-600 hover:to-indigo-700
+        to={`/reportEquipment/${id}/${name}`}
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+          hover:from-blue-600 hover:to-indigo-700 text-center
           text-white font-semibold rounded-xl shadow-lg
           transition-all duration-300 hover:scale-105 hover:shadow-xl"
-        >
+      >
         Meld tapt/ødelagt
       </Link>
 
       <Button
-        onClick={() => SetFindEquipment({ lat, lng })}
-        className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
-  hover:from-blue-600 hover:to-indigo-700
+        onClick={toggleRoute}
+        className="mt-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 
+  hover:from-blue-600 hover:to-indigo-700 text-center
   text-white font-semibold rounded-xl shadow-lg
   transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer"
       >
-        Finn vei
+        {findEquipment && findEquipment.lat === lat && findEquipment.lng === lng
+          ? "Skjul vei"
+          : "Finn vei"}
       </Button>
 
       <div className="w-full max-w-[22rem] px-4 pb-10">
@@ -186,7 +333,7 @@ export const EquipmentPopUp = ({
         />
 
         {isRouteTarget ? (
-          <div className="mt-5 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner">
+          <div className="mt-2 rounded-xl border border-zinc-500/90 bg-zinc-950/90 p-4 text-left shadow-inner text-center">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold tracking-tight text-white">
                 Ruteinformasjon
@@ -200,17 +347,17 @@ export const EquipmentPopUp = ({
 
             {(routePanel.status === "idle" ||
               routePanel.status === "loading") && (
-              <p className="text-sm font-medium text-sky-200/90">
-                {routePanel.status === "loading"
-                  ? "Beregner rute…"
-                  : "Henter posisjon og rute…"}
-              </p>
-            )}
+                <p className="text-sm font-medium text-sky-200/90">
+                  {routePanel.status === "loading"
+                    ? "Beregner rute…"
+                    : "Henter posisjon og rute…"}
+                </p>
+              )}
 
             {routePanel.status === "ready" && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
+                  <div className="rounded-lg border text-center border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                       Tid
                     </div>
@@ -218,7 +365,7 @@ export const EquipmentPopUp = ({
                       {formatRouteDuration(routePanel.seconds)}
                     </div>
                   </div>
-                  <div className="rounded-lg border border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
+                  <div className="rounded-lg border text-center border-zinc-600/80 bg-zinc-900/80 px-3 py-2.5">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                       Avstand
                     </div>
@@ -256,20 +403,18 @@ export const EquipmentPopUp = ({
                       {routePanel.transit.legs.map((leg, index) => (
                         <div
                           key={`${leg.mode}-${leg.serviceJourneyId ?? index}`}
-                          className={`rounded-lg border px-3 py-2.5 ${
-                            leg.mode === "bus"
-                              ? "border-violet-400/50 bg-violet-950/40 shadow-[0_0_0_1px_rgba(139,92,246,0.12)]"
-                              : "border-sky-400/40 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.10)]"
-                          }`}
+                          className={`rounded-lg border px-3 py-2.5 ${leg.mode === "bus"
+                            ? "border-violet-400/50 bg-violet-950/40 shadow-[0_0_0_1px_rgba(139,92,246,0.12)]"
+                            : "border-sky-400/40 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.10)]"
+                            }`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
-                                  leg.mode === "bus"
-                                    ? "bg-violet-500/25 text-violet-100"
-                                    : "bg-sky-500/20 text-sky-100"
-                                }`}
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${leg.mode === "bus"
+                                  ? "bg-violet-500/25 text-violet-100"
+                                  : "bg-sky-500/20 text-sky-100"
+                                  }`}
                               >
                                 {leg.mode === "bus" ? (
                                   <DirectionsBusFilledIcon sx={{ fontSize: 14 }} />
@@ -355,20 +500,19 @@ export const EquipmentPopUp = ({
       </div>
 
       <div className="mt-auto w-full max-w-[22rem] px-4 pb-8">
-        <div className="rounded-xl border border-zinc-300 bg-white p-4 text-center shadow-sm">
+        <div className="rounded-xl border border-zinc-300 bg-white p-4 text-center shadow-sm mb-20">
           <div className="space-y-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                 Status
               </div>
               <div
-                className={`mt-1 text-sm font-semibold ${
-                  functional_status === "functional"
-                    ? "text-green-500"
-                    : functional_status === "broken"
-                      ? "text-red-500"
-                      : "text-amber-500"
-                }`}
+                className={`mt-1 text-sm font-semibold ${functional_status === "functional"
+                  ? "text-green-500"
+                  : functional_status === "broken"
+                    ? "text-red-500"
+                    : "text-amber-500"
+                  }`}
               >
                 {statusLabel[functional_status]}
               </div>
@@ -385,7 +529,7 @@ export const EquipmentPopUp = ({
           </div>
         </div>
       </div>
-    
+
     </Paper>
   );
 };

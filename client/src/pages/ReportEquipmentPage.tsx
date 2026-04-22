@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Paper, Typography, Button, Box, Divider, TextField, MenuItem, Alert, CircularProgress } from "@mui/material";
+import { Paper, Typography, Button, Box, Divider, TextField, MenuItem, Alert, CircularProgress, IconButton } from "@mui/material";
 import { NavBar } from "../components/NavBar";
 import { useParams } from "react-router-dom";
 import { API_BASE } from "@/apiBase";
 import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 type FunctionalStatus = "functional" | "lost" | "broken";
 
@@ -26,6 +28,7 @@ export const ReportEquipmentPage = () => {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -63,6 +66,10 @@ export const ReportEquipmentPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+    const handleGoBackToHomePage = () => {
+    navigate("/", {});
   };
 
   useEffect(() => {
@@ -110,12 +117,19 @@ export const ReportEquipmentPage = () => {
       <NavBar />
 
       <Box sx={{ mt: "8em", display: "flex", justifyContent: "center" }}>
-        <Paper sx={{ maxWidth: 700, width: "100%", p: 4 }}>
+        <Paper sx={{ maxWidth: 700, width: "90%", p: 4, position: "relative" }}>
+            <IconButton onClick={handleGoBackToHomePage} sx={{
+              position: "absolute",
+              top: 16,
+              left: 16,
+            }} >
+              <ArrowBackIcon />
+            </IconButton>
           <Typography
             variant="h5"
             sx={{
               px: 2,
-              py: 1,
+              py: 2,
               fontWeight: 600,
               letterSpacing: 0.3,
             }}

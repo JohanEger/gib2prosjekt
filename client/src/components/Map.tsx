@@ -5,6 +5,7 @@ import {
   GeoJSON,
   Polyline,
   Tooltip,
+  Circle,
   useMapEvents,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
@@ -30,6 +31,8 @@ import { useUserLocation } from "../hooks/useUserLocation";
 import { API_BASE } from "../apiBase";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import type { LogPosition } from "../types/logPositions";
+import { LogMapLayer } from "./LogMapLayer";
 import MapControl from "./MapControl";
 
 // --- Typer -------------------------------------------------------------------
@@ -55,9 +58,17 @@ interface MapProps {
   coordinates: Coordinates | null;
   travelMode: RouteTravelMode;
   onRoutePanelChange: Dispatch<SetStateAction<RoutePanelState>>;
+  selectedEquipmentId: string | null;
+  setSelectedEquipmentId: Dispatch<SetStateAction<string | null>>;
+  logPositions: { lat: number; lng: number; start_time: string }[];
+  LogPositions: LogPosition[];
+  currentPosition?: { lat: number; lng: number } | null;
+  showLogMode: boolean;
+  setShowLogMode: React.Dispatch<React.SetStateAction<boolean>>;
   activeEquipment: Equipment | null;
   setActiveEquipment: Dispatch<SetStateAction<Equipment | null>>;
   setSelectedClusterEquipmentIds: Dispatch<SetStateAction<string[] | null>>;
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 interface MarkerClusterLike extends L.Layer {
@@ -72,6 +83,13 @@ interface MarkerClusterLike extends L.Layer {
 // --- Statiske konstanter -----------------------------------------------------
 
 const TRONDHEIM_CENTER: [number, number] = [63.43, 10.4];
+
+// Flannery cluster Sizing:
+const CLUSTER_R_MIN = 10;
+
+const CLUSTER_R_MAX = 30;
+
+const FLANNERY_K = 0.57;
 
 const emptyRouteResponse = (): RouteResponse => ({
   type: "LineString",
@@ -96,7 +114,7 @@ const makeEquipmentIcon = (active: boolean) =>
   L.divIcon({
     className: "",
     html: `<div class="h-4 w-4 rounded-full border-2 border-black ${
-      active ? "bg-blue-600" : "bg-zinc-400"
+      active ? "bg-green-700" : "bg-blue-600"
     }"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
@@ -110,13 +128,6 @@ const makeLiveBusIcon = (linePublicCode?: string | null) =>
     html: `<div class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-violet-600 text-[11px] font-bold text-white shadow-lg">${linePublicCode ?? "B"}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
-  });
-
-const createClusterIcon = (cluster: MarkerClusterLike) =>
-  L.divIcon({
-    className: "marker-cluster marker-cluster-custom",
-    html: `<div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-blue-600 text-sm font-bold text-white shadow-md">${cluster.getChildCount()}</div>`,
-    iconSize: L.point(40, 40, true),
   });
 
 const TRANSIT_LEG_STYLE = {
@@ -154,19 +165,27 @@ export const Map = ({
   coordinates,
   travelMode,
   onRoutePanelChange,
+  selectedEquipmentId,
+  setSelectedEquipmentId,
+  LogPositions,
+  currentPosition,
   activeEquipment,
   setActiveEquipment,
   setSelectedClusterEquipmentIds,
+  setSidebarOpen,
 }: MapProps) => {
   const { latitude, longitude } = useUserLocation();
 
   const [markers, setMarkers] = useState<EquipmentMarker[]>([]);
   const [route, setRoute] = useState<RouteResponse>(emptyRouteResponse());
   const [routeVersion, setRouteVersion] = useState(0);
+  const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
+  const [mapType, setMapType] = useState<string>("alidade_smooth");
+  const [showLogMode, setShowLogMode] = useState(false);
 
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
-  const [mapType, setMapType] = useState<string>("alidade_smooth");
+  const maxClusterCountRef = useRef(1);
 
   const getEquipment = async (id: string) => {
     try {
@@ -187,7 +206,58 @@ export const Map = ({
     }
   };
 
-  // --- Effect 1: hent markers ----------------------------------------------
+  console.log(LogPositions);
+  const isClusterSelected = (cluster: MarkerClusterLike) => {
+    return cluster.getAllChildMarkers().some((m) => {
+      const data = markerDataRef.current.get(m);
+      return data?.id === selectedEquipmentId;
+    });
+  };
+
+  // --- Flannery-cluster-icon --------------------------------------------------
+
+  const createClusterIcon = (cluster: MarkerClusterLike) => {
+    const selected = isClusterSelected(cluster);
+    const count = cluster.getChildCount();
+
+    if (count === 1) {
+      return makeEquipmentIcon(selected);
+    }
+
+    if (count > maxClusterCountRef.current) {
+      maxClusterCountRef.current = count;
+    }
+    const vMax = maxClusterCountRef.current;
+
+    const ratio = vMax > 0 ? count / vMax : 1;
+    const radius = Math.max(
+      CLUSTER_R_MIN,
+      Math.pow(ratio, FLANNERY_K) * CLUSTER_R_MAX,
+    );
+    const diameter = Math.round(radius * 2);
+
+    const fontSize = Math.max(11, Math.round(diameter * 0.35));
+
+    return L.divIcon({
+      className: "",
+      html: `
+        <div
+          style="width:${diameter}px; height:${diameter}px; font-size:${fontSize}px;"
+          class="flex items-center justify-center rounded-full border-2 border-black
+          ${selected ? "bg-green-700" : "bg-blue-600"}
+          font-bold text-white shadow-md"
+        >
+          ${count}
+        </div>
+      `,
+      iconSize: L.point(diameter, diameter, true),
+    });
+  };
+
+  useEffect(() => {
+    maxClusterCountRef.current = 1;
+  }, [markers]);
+
   useEffect(() => {
     const ac = new AbortController();
 
@@ -243,6 +313,21 @@ export const Map = ({
     longitude,
   ]);
 
+  const fetchLog = async (equipmentId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/booking/log/${equipmentId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      const data = await res.json();
+      setLogPositions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // --- Effect 2: fly til markerte koordinater --------------------------------------
   useEffect(() => {
     if (!activeEquipment || !mapRef.current) return;
@@ -288,8 +373,12 @@ export const Map = ({
           }
           setRoute(emptyRouteResponse());
           onRoutePanelChange({ status: "error" });
+
+          /*         } else if (data.coordinates.length === 0 || (data.meters ?? 0) <= 0) {
+                    setRoute(emptyLineString()); OBS endra ved merging men usikker på denne eller den under*/
         } else if ((data.meters ?? 0) <= 0) {
           setRoute(emptyRouteResponse());
+
           onRoutePanelChange({ status: "no_route" });
         } else {
           setRoute(data);
@@ -325,6 +414,8 @@ export const Map = ({
     fetchRoute();
     return () => ac.abort();
   }, [coordinates, latitude, longitude, travelMode, onRoutePanelChange]);
+
+  // --- Log ------------------------------------------------------------------
 
   const liveVehicles: RouteLiveVehicle[] = route.transit
     ? route.transit.legs
@@ -370,13 +461,15 @@ export const Map = ({
           />
         )}
 
-        {travelMode !== "bus" && coordinates && route.coordinates.length > 0 && (
-          <GeoJSON
-            key={`${travelMode}-${routeVersion}`}
-            data={route}
-            style={ROUTE_LINE_STYLE[travelMode]}
-          />
-        )}
+        {travelMode !== "bus" &&
+          coordinates &&
+          route.coordinates.length > 0 && (
+            <GeoJSON
+              key={`${travelMode}-${routeVersion}`}
+              data={route}
+              style={ROUTE_LINE_STYLE[travelMode]}
+            />
+          )}
 
         {travelMode === "bus" &&
           transitLegs.map((leg, index) => {
@@ -385,13 +478,15 @@ export const Map = ({
             return (
               <Polyline
                 key={`${leg.mode}-${leg.serviceJourneyId ?? index}-${routeVersion}`}
-                positions={leg.coordinates.map(([lng, lat]) => [lat, lng] as [number, number])}
+                positions={leg.coordinates.map(
+                  ([lng, lat]) => [lat, lng] as [number, number],
+                )}
                 pathOptions={TRANSIT_LEG_STYLE[leg.mode]}
               >
                 <Tooltip direction="top" offset={[0, -6]} opacity={1}>
                   <div className="min-w-28 px-2 py-1 text-sm">
                     <div className="font-semibold">
-                      {leg.mode === "bus" ? leg.linePublicCode ?? "?" : "Gå"}
+                      {leg.mode === "bus" ? (leg.linePublicCode ?? "?") : "Gå"}
                     </div>
                     <div>
                       {leg.fromName ?? "Start"} til {leg.toName ?? "Mål"}
@@ -421,6 +516,7 @@ export const Map = ({
           ))}
 
         <MarkerClusterGroup
+          key={selectedEquipmentId ?? "none"}
           chunkedLoading
           showCoverageOnHover={false}
           spiderfyOnMaxZoom={false}
@@ -437,16 +533,25 @@ export const Map = ({
                 .filter((d): d is EquipmentMarker => Boolean(d));
 
               if (items.length === 0) return;
-
+              {
+                /* Hvis vi vil ha listen med alt utstyret: Så dumt ut nå det var mye utstyr og ikke hele syntes
               const html = `
-                <div class="min-w-52">
+                <div class="min-w-52 overflow-y-auto pointer-events-auto">
                   <ul class="space-y-1 text-sm">
                     ${items
-                      .map(
-                        (item) =>
-                          `<li class="rounded px-2 py-1">${item.name}</li>`,
-                      )
-                      .join("")}
+                  .map(
+                    (item) =>
+                      `<li class="rounded px-2 py-1">${item.name}</li>`).join("")}
+                  </ul>
+                </div>
+              `;
+              */
+              }
+
+              const html = `
+                <div class="min-w-52 overflow-y-auto pointer-events-auto">
+                  <ul class="space-y-1 text-sm">Trykk for å se i sidebar hvilket utstyr som finnes her
+                    
                   </ul>
                 </div>
               `;
@@ -456,6 +561,7 @@ export const Map = ({
                 offset: [0, -10],
                 opacity: 1,
                 sticky: false,
+                interactive: true,
               });
               cluster.openTooltip();
             },
@@ -475,32 +581,47 @@ export const Map = ({
                 .filter((d): d is EquipmentMarker => Boolean(d));
 
               setSelectedClusterEquipmentIds(items.map((item) => item.id));
+              setSidebarOpen(true);
             },
           }}
         >
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={[marker.lat, marker.lng]}
-              icon={activeEquipment?.id === marker.id ? ICON_ACTIVE : ICON_IDLE}
-              ref={(ref) => {
-                if (ref) markerDataRef.current.set(ref, marker);
-              }}
-              eventHandlers={{
-                click: () => {
-                  setSelectedClusterEquipmentIds(null);
-                  getEquipment(marker.id);
-                },
-              }}
-            >
-              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-                <div className="min-w-32 px-2 py-1 text-sm">{marker.name}</div>
-              </Tooltip>
-            </Marker>
-          ))}
+          {!showLogMode &&
+            markers.map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={
+                  activeEquipment?.id === marker.id ? ICON_ACTIVE : ICON_IDLE
+                }
+                ref={(ref) => {
+                  if (ref) markerDataRef.current.set(ref, marker);
+                }}
+                eventHandlers={{
+                  click: () => {
+                    setSelectedClusterEquipmentIds(null);
+                    setSelectedEquipmentId(marker.id);
+                    getEquipment(marker.id);
+                  },
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                  <div className="min-w-32 px-2 py-1 text-sm">
+                    {marker.name}
+                  </div>
+                </Tooltip>
+              </Marker>
+            ))}
         </MarkerClusterGroup>
 
+        <LogMapLayer
+          logPositions={LogPositions}
+          currentPosition={currentPosition}
+        />
+
         <UserLocationMarker />
+        {latitude != null && longitude != null && filters.distance > 0 && (
+          <Circle center={[latitude, longitude]} radius={filters.distance} />
+        )}
       </MapContainer>
     </div>
   );

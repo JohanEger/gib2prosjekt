@@ -60,11 +60,12 @@ export default function BookingPopup({
   const { createBooking } = useBookings();
 
   const handleBooking = async () => {
+    if (!startHour || !endHour) return;
     if (!Coordinates || !equipmentId) return;
 
     const newBooking = {
-      start: startDate.toDate("UTC"),
-      end: endDate.toDate("UTC"),
+      start,
+      end,
       equipmentId: equipmentId,
       lat: Coordinates.lat,
       lng: Coordinates.lng,
@@ -82,6 +83,22 @@ export default function BookingPopup({
   };
 
   if (!open) return null;
+
+  const hours = Array.from({ length: 24 }, (_, i) =>
+    i.toString().padStart(2, "0"));
+
+
+  const start = new Date(
+    `${startDate.year}-${String(startDate.month).padStart(2, "0")}-${String(startDate.day).padStart(2, "0")}T${startHour}:00`
+  );
+
+  const end = new Date(
+    `${endDate.year}-${String(endDate.month).padStart(2, "0")}-${String(endDate.day).padStart(2, "0")}T${endHour}:00`
+  );
+  const isValidBooking =
+    startHour != "" &&
+    endHour != "" &&
+    end > start;
 
   const startNumber =
     startHour === "hele dagen" ? -1 : startHour ? parseInt(startHour) : -1;
@@ -121,8 +138,8 @@ export default function BookingPopup({
 
             <p style={{ marginBottom: "20px" }}>
               Utstyret ble booket suksessfullt for {startDate.day}.
-              {startDate.month}.{startDate.year} til {endDate.day}.
-              {endDate.month}.{endDate.year}
+              {startDate.month}.{startDate.year} kl. {startHour}:00 til {endDate.day}.
+              {endDate.month}.{endDate.year} kl. {endHour}:00
             </p>
           </Box>
         </Box>
@@ -165,13 +182,11 @@ export default function BookingPopup({
                 value={startHour}
                 onChange={(e) => {
                   setStartHour(e.target.value);
-                  if (e.target.value === "hele dagen") setEndHour("hele dagen");
-                  else if (endHour === "hele dagen") setEndHour("");
                 }}
               >
                 {hours.map((h) => (
                   <MenuItem key={h} value={h}>
-                    {h}
+                    {h}:00
                   </MenuItem>
                 ))}
               </Select>
@@ -191,16 +206,16 @@ export default function BookingPopup({
                 }
               >
                 {hours.map((h) => {
-                  const endNumber = h === "hele dagen" ? -1 : parseInt(h);
                   const disabled =
-                    startHour !== "hele dagen" &&
                     startHour !== "" &&
-                    startNumber >= 0 &&
-                    endNumber >= 0 &&
-                    endNumber <= startNumber;
+                    isSameDay &&
+                    h !== "hele dagen" &&
+                    parseInt(h) <= parseInt(startHour);
+
+
                   return (
                     <MenuItem key={h} value={h} disabled={disabled}>
-                      {h}
+                      {h}:00
                     </MenuItem>
                   );
                 })}
@@ -213,12 +228,12 @@ export default function BookingPopup({
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "flex-end",
+                justifyContent: "center",
                 gap: 1,
                 mt: 2,
               }}
             >
-              <Button onClick={onClose} variant="outlined">
+              <Button onClick={onClose} variant="outlined" sx={{ mr: 1 }}>
                 Lukk
               </Button>
               <Button
@@ -226,7 +241,7 @@ export default function BookingPopup({
                 disabled={!startHour || !endHour}
                 onClick={handleBooking}
               >
-                Bekreft bokking
+                Bekreft booking
               </Button>
             </Box>
           </Box>

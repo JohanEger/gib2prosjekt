@@ -13,12 +13,10 @@ from geoalchemy2.shape import to_shape, from_shape
 from shapely.geometry import Point
 import uuid
 from datetime import datetime
+from app.services.booking import get_5_last_bookings_by_equipment
 
 
 router = APIRouter(prefix="/booking", tags=["booking"])
-
-
-
 
 
 @router.get("/booking_for_equipment/{equipment_id}", response_model=list[BookingSchema])
@@ -42,6 +40,32 @@ async def get_bookings_for_equipment(
         for b in bookings
     ]
 
+from shapely.geometry import Point
+
+@router.get("/log/{equipment_id}")
+async def get_5_latest_booking_for_equipment(
+    equipment_id: uuid.UUID,
+    session: AsyncSession = Depends(get_database),
+):
+    bookings = await get_5_last_bookings_by_equipment(equipment_id, session)
+
+    result = []
+    now = datetime.now()
+
+    for b in bookings:
+        if b.start_time > now:
+            continue
+        try:
+            p = to_shape(b.booking_destination)
+            result.append({
+                "lat": p.y,
+                "lng": p.x,
+                "started_at": b.start_time, 
+            })
+        except Exception:
+            continue
+
+    return result
 
 
 def to_naive(dt: datetime) -> datetime:
@@ -128,5 +152,6 @@ async def get_booking_for_date(
             "id": str(booking.user.id) if booking.user else None,
             "email": booking.user.email if booking.user else None,
             "name": booking.user.username if booking.user else None,
+            "phone_number": booking.user.phone_number if booking.user else None,
         },
     }
