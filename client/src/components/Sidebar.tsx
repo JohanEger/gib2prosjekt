@@ -70,6 +70,8 @@ interface SidebarProps {
   setSelectedClusterEquipmentIds: React.Dispatch<
     React.SetStateAction<string[] | null>
   >;
+  open : boolean;
+  setOpen : React.Dispatch<React.SetStateAction<boolean>>;
 
 }
 
@@ -93,10 +95,12 @@ export const Sidebar = ({
   setActiveEquipment,
   selectedClusterEquipmentIds,
   setSelectedClusterEquipmentIds,
+  open,
+  setOpen,
 }: SidebarProps) => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [open, setOpen] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const equipmentTypes = Array.from(
     new Set(equipment.map((eq) => eq.type_of_equipment)),
@@ -250,7 +254,6 @@ export const Sidebar = ({
     </div>
   );
 
-  const [showLegend, setShowLegend] = useState(false);
   const visibleEquipment =
     selectedClusterEquipmentIds === null
       ? equipment
