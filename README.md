@@ -1,4 +1,8 @@
-# TBA4250 GIB 2 Utstyrsoversikt
+# TBA4250 GIB 2 - GriffGear
+
+This is a project for the course TBA4250 at NTNU. The aim of the project is to develop a GIS-based web application. 
+
+For this project we have developed a solution for tracking, booking and registering equipment owned by non-governmental organizations.
 
 > [!NOTE]
 > This is a project that configures a React + Vite frontend, Python FastAPI backend with a PostgreSQL/PostGIS database based on the [template project](https://github.com/jathavaan/tba4250-gib-2-template.git/) published by jathavaan.
