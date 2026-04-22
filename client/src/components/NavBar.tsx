@@ -21,25 +21,34 @@ export const NavBar = () => {
             to="/"
             className="text-lg font-semibold tracking-wide text-white"
           >
-            UtstyrsApp
+            <img
+              src="logo.png"
+              alt="Logo"
+              className="h-12 relative bottom-[9px]"
+            />
           </Link>
 
-          <div className="flex items-center gap-6">
-            <Link to="/" className={linkStyle("/")}>
+          <div className="flex items-center gap-6 sm:gap-8">
+            <Link
+              to="/"
+              className={`text-base sm:text-lg font-medium transition-all duration-200 transform ${
+                location.pathname === "/"
+                  ? "text-white scale-105"
+                  : "text-gray-300 hover:text-white hover:scale-105"
+              }`}
+            >
               Hjem
-              {location.pathname === "/" && (
-                <span className="absolute-bottom-1 left-0 w-full h-[2px] bg-white rounded"></span>
-              )}
             </Link>
 
             <Link
               to="/registerequipment"
-              className={linkStyle("/registerequipment")}
+              className={`text-base sm:text-lg font-medium transition-all duration-200 transform ${
+                location.pathname === "/registerequipment"
+                  ? "text-white scale-105"
+                  : "text-gray-300 hover:text-white hover:scale-105"
+              }`}
             >
               Registrer utstyr
-              {location.pathname === "/registerequipment" && (
-                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-white rounded"></span>
-              )}
             </Link>
           </div>
         </div>

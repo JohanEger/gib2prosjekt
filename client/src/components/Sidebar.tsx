@@ -70,9 +70,8 @@ interface SidebarProps {
   setSelectedClusterEquipmentIds: React.Dispatch<
     React.SetStateAction<string[] | null>
   >;
-  open : boolean;
-  setOpen : React.Dispatch<React.SetStateAction<boolean>>;
-
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const Sidebar = ({
@@ -223,8 +222,11 @@ export const Sidebar = ({
     setFiveLatestID(null);
   };
 
-
-  const getMarkerStyle = (size: number, color: string, bordercolor: string) => ({
+  const getMarkerStyle = (
+    size: number,
+    color: string,
+    bordercolor: string,
+  ) => ({
     margin: 0.1,
     width: size,
     height: size,
@@ -245,11 +247,15 @@ export const Sidebar = ({
     bordercolor: string;
   };
 
-  const LegendItem = ({ color, size = 18, label, text, bordercolor }: LegendItemProps) => (
+  const LegendItem = ({
+    color,
+    size = 18,
+    label,
+    text,
+    bordercolor,
+  }: LegendItemProps) => (
     <div className="flex items-center gap-2 shrink-0 text-xs">
-      <div style={getMarkerStyle(size, color, bordercolor)}>
-        {label}
-      </div>
+      <div style={getMarkerStyle(size, color, bordercolor)}>{label}</div>
       <span className="text-xs">{text}</span>
     </div>
   );
@@ -259,24 +265,23 @@ export const Sidebar = ({
       ? equipment
       : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
 
-
-
   return (
     <>
       {/* Sidebar */}
       <div
         className={`fixed bottom-0 sm:bottom-auto sm:top-0 left-0 h-90 sm:h-screen w-45 sm:w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40 rounded sm:rounded-none
-        ${open
+        ${
+          open
             ? "translate-y-0 sm:translate-y-0 sm:translate-x-0"
-            : "translate-y-full sm:translate-y-0 sm:-translate-x-full"}`}
+            : "translate-y-full sm:translate-y-0 sm:-translate-x-full"
+        }`}
       >
         <Box className="flex justify-end relative top-4 sm:top-20 right-2">
           <Button onClick={() => setShowFilter(!showFilter)}>
             <TuneIcon className="text-blue-500 hover:scale-105 transition-transform" />
           </Button>
         </Box>
-        
 
         <ul className="relative flex flex-col gap-3 p-1 sm:p-4 mt-6 sm:mt-20 max-h-19/30 sm:max-h-45/64 sm:max-h-47/64 overflow-y-auto overflow-x-hidden">
           {visibleEquipment.map((item) => (
@@ -298,9 +303,10 @@ export const Sidebar = ({
                 }
               }}
               className={`text-black cursor-pointer transition-all duration-200 rounded p-2 
-                ${selectedEquipmentId === item.id
-                  ? "bg-green-800 text-white ring-2 ring-blue-100"
-                  : "bg-white text-black hover:scale-105 hover:shadow-lg"
+                ${
+                  selectedEquipmentId === item.id
+                    ? "bg-green-800 text-white"
+                    : "bg-white text-black hover:scale-105 hover:shadow-lg"
                 }`}
             >
               {item.name}
@@ -324,7 +330,6 @@ export const Sidebar = ({
             boxShadow: 0,
           }}
         >
-
           {showLegend && (
             <div className="sm:mt-0.5 ml-2 flex flex-col gap-0.5 ">
               <LegendItem
@@ -352,17 +357,16 @@ export const Sidebar = ({
                 text="Cluster med utstyr"
                 bordercolor="black"
               />
-            </div>)}
+            </div>
+          )}
           <button
-            onClick={() => setShowLegend(prev => !prev)}
+            onClick={() => setShowLegend((prev) => !prev)}
             className="ml-2 mt-0 text-xs text-black-100 underline cursor-pointer"
           >
             {showLegend ? "Skjul tegnforklaring" : "Vis tegnforklaring"}
           </button>
-
         </Box>
       </div>
-
 
       {/* Toggle button */}
       <button
@@ -371,10 +375,13 @@ export const Sidebar = ({
           setShowFilter(false);
         }}
         className={`fixed z-5 p-1 transition-all duration-300 cursor-pointer
-        ${open
+        ${
+          open
             ? "bottom-[22rem] mb-1 left-22 -translate-x-1/2 sm:top-1/2 sm:left-64 sm:translate-x-0 sm:-translate-y-1/2"
-            : "bottom-4 left-22 -translate-x-1/2 sm:top-1/2 sm:left-0 sm:translate-x-0 sm:-translate-y-1/2"}
-        `}>
+            : "bottom-4 left-22 -translate-x-1/2 sm:top-1/2 sm:left-0 sm:translate-x-0 sm:-translate-y-1/2"
+        }
+        `}
+      >
         <img
           src={arrow}
           alt="Toggle"
@@ -397,7 +404,9 @@ export const Sidebar = ({
             lng={activeEquipment.lng}
             description={activeEquipment.description}
             functional_status={activeEquipment.functional_status}
-            functional_status_comment={activeEquipment.functional_status_comment}
+            functional_status_comment={
+              activeEquipment.functional_status_comment
+            }
             func={() => console.log("Book equipment")}
             booked={activeEquipment.booked}
             findEquipment={findEquipment}
@@ -424,7 +433,7 @@ export const Sidebar = ({
       {/* Filters */}
       {showFilter && (
         <Box
-          className="fixed z-55 bottom-2 sm:top-20 left-50 sm:left-72 flex bg-white shadow-lg w-[11rem] sm:w-[16rem] p-4 flex flex-col gap-1 sm:gap-4"
+          className="fixed z-55 bottom-2 sm:top-22 left-50 sm:left-72 flex bg-white shadow-lg w-[11rem] sm:w-[16rem] p-4 flex flex-col gap-1 sm:gap-4 sm:h-min"
           sx={{ borderRadius: "0.5rem" }}
         >
           <Box className="flex items-center justify-between mb-1 ml-1">
@@ -489,18 +498,23 @@ export const Sidebar = ({
           </FormControl>
 
           <FormControlLabel
-            sx={{ "& .MuiFormControlLabel-label": { fontSize: { xs: 11, sm: 14 }, }, }}
+            sx={{
+              "& .MuiFormControlLabel-label": { fontSize: { xs: 11, sm: 14 } },
+            }}
             control={
               <Checkbox
                 checked={filters.available}
                 onChange={handleAvailableChange}
               />
             }
-
             label="Kun tilgjengelig"
           />
 
-          <Button variant="outlined" onClick={resetFilters} sx={{ fontSize: { xs: "10px", sm: "14px" } }}>
+          <Button
+            variant="outlined"
+            onClick={resetFilters}
+            sx={{ fontSize: { xs: "10px", sm: "14px" } }}
+          >
             Nullstill filtre
           </Button>
         </Box>
