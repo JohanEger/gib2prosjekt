@@ -8,6 +8,7 @@ import { useState, type SetStateAction } from "react";
 import type { EquipmentFilters } from "../types/equipmentFilters";
 import type { LogPosition } from "../types/logPositions";
 import type { Equipment } from "../types/equipment";
+import { API_BASE } from "../apiBase";
 
 export const HomePage = () => {
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(
@@ -47,8 +48,6 @@ export const HomePage = () => {
     lat: number;
     lng: number;
   };
-
-  const API_BASE = "http://localhost:5001";
 
   const handleShowLog = async (equipmentId: string) => {
     console.log("HENTER LOGG FOR:", equipmentId);

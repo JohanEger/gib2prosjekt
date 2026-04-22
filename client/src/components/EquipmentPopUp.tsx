@@ -16,6 +16,7 @@ import type { RoutePanelState } from "../types/routePanelState";
 import { formatRouteDistance, formatRouteDuration } from "../utils/formatRoute";
 import MinimizeIcon from "@mui/icons-material/Minimize";
 import CropSquareIcon from "@mui/icons-material/CropSquare";
+import { API_BASE } from "../apiBase";
 
 type FunctionalStatus = "functional" | "lost" | "broken";
 
@@ -81,7 +82,6 @@ export const EquipmentPopUp = ({
   const [fiveLatestID, setFiveLatestID] = useState<string | null>(null);
 
   // --- Se fem siste posisjoner logg -------
-  const API_BASE = "http://localhost:5001";
 
   useEffect(() => {
     if (!fiveLatestID) return; // viktig guard
