@@ -88,12 +88,11 @@ interface MarkerClusterLike extends L.Layer {
 const TRONDHEIM_CENTER: [number, number] = [63.43, 10.4];
 
 // Flannery cluster Sizing:
-const CLUSTER_R_MIN = 20;
+const CLUSTER_R_MIN = 10;
 
-const CLUSTER_R_MAX = 40;
+const CLUSTER_R_MAX = 30;
 
 const FLANNERY_K = 0.57;
-
 
 const emptyRouteResponse = (): RouteResponse => ({
   type: "LineString",
@@ -133,7 +132,6 @@ const makeLiveBusIcon = (linePublicCode?: string | null) =>
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   });
-
 
 const TRANSIT_LEG_STYLE = {
   foot: {
@@ -186,7 +184,7 @@ export const Map = ({
   const [logPositions, setLogPositions] = useState<LogPosition[]>([]);
   const [mapType, setMapType] = useState<string>("alidade_smooth");
   const [showLogMode, setShowLogMode] = useState(false);
- 
+
   const mapRef = useRef<L.Map | null>(null);
   const markerDataRef = useRef(new WeakMap<L.Marker, EquipmentMarker>());
   const maxClusterCountRef = useRef(1);
@@ -241,8 +239,6 @@ export const Map = ({
     const diameter = Math.round(radius * 2);
 
     const fontSize = Math.max(11, Math.round(diameter * 0.35));
-
-
 
     return L.divIcon({
       className: "",
@@ -539,7 +535,8 @@ export const Map = ({
                 .filter((d): d is EquipmentMarker => Boolean(d));
 
               if (items.length === 0) return;
-          {/* Hvis vi vil ha listen med alt utstyret: Så dumt ut nå det var mye utstyr og ikke hele syntes
+              {
+                /* Hvis vi vil ha listen med alt utstyret: Så dumt ut nå det var mye utstyr og ikke hele syntes
               const html = `
                 <div class="min-w-52 overflow-y-auto pointer-events-auto">
                   <ul class="space-y-1 text-sm">
@@ -550,7 +547,8 @@ export const Map = ({
                   </ul>
                 </div>
               `;
-              */}
+              */
+              }
 
               const html = `
                 <div class="min-w-52 overflow-y-auto pointer-events-auto">
@@ -559,7 +557,7 @@ export const Map = ({
                   </ul>
                 </div>
               `;
-              
+
               cluster.bindTooltip(html, {
                 direction: "top",
                 offset: [0, -10],
@@ -589,7 +587,7 @@ export const Map = ({
             },
           }}
         >
-        {!showLogMode &&
+          {!showLogMode &&
             markers.map((marker) => (
               <Marker
                 key={marker.id}
@@ -617,7 +615,9 @@ export const Map = ({
             ))}
         </MarkerClusterGroup>
 
-        <LogMapLayer logPositions={LogPositions} currentPosition={currentPosition}
+        <LogMapLayer
+          logPositions={LogPositions}
+          currentPosition={currentPosition}
         />
 
         <UserLocationMarker />
