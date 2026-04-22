@@ -22,7 +22,7 @@ export const NavBar = () => {
             className="text-lg font-semibold tracking-wide text-white"
           >
             <img
-              src="logo.png"
+              src="/logo.png"
               alt="Logo"
               className="h-8 sm:h-12 relative bottom-[6px] sm:bottom-[9px]"
             />
