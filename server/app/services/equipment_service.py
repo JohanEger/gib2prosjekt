@@ -191,3 +191,7 @@ async def update_equipment_status(
         "functional_status": equipment.functional_status.value,
         "functional_status_comment": equipment.functional_status_comment,
     }
+
+async def get_all_committees(session):
+    result = await session.execute(select(Group.name).order_by(Group.name))
+    return [row[0] for row in result.all()]

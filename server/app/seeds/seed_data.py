@@ -135,6 +135,67 @@ async def seed_equipment():
         session.add_all(equipment)
         await session.commit()
 
+async def seed_bookings():
+    async with SessionLocal() as session:
+        result = await session.execute(select(Booking))
+        if result.scalars().first():
+            return
+
+        result = await session.execute(select(User))
+        user = result.scalars().first()
+        if not user:
+            raise Exception("Ingen brukere i databasen")
+
+        result = await session.execute(
+            select(Equipment).where(Equipment.name == "Soundboks 4")
+        )
+        soundboks = result.scalar_one_or_none()
+        if not soundboks:
+            raise Exception("Soundboks 4 ikke funnet")
+
+        # 5 tidligere bookinger på ulike lokasjoner rundt Trondheim
+        past_bookings = [
+            {
+                "start": datetime.utcnow() - timedelta(days=30),
+                "end": datetime.utcnow() - timedelta(days=29),
+                "lon": 10.3919647, "lat": 63.4305132,  
+            },
+            {
+                "start": datetime.utcnow() - timedelta(days=20),
+                "end": datetime.utcnow() - timedelta(days=19),
+                "lon": 10.3606876, "lat": 63.3999616,
+            },
+            {
+                "start": datetime.utcnow() - timedelta(days=14),
+                "end": datetime.utcnow() - timedelta(days=13),
+                "lon": 10.4000233, "lat": 63.4061684,  
+            },
+            {
+                "start": datetime.utcnow() - timedelta(days=7),
+                "end": datetime.utcnow() - timedelta(days=6),
+                "lon": 10.4196534, "lat": 63.4075094, 
+            },
+            {
+                "start": datetime.utcnow() - timedelta(days=2),
+                "end": datetime.utcnow() - timedelta(days=1),
+                "lon": 10.4110457, "lat": 63.430932, 
+            },
+        ]
+
+        bookings = [
+            Booking(
+                equipment_id=soundboks.id,
+                user_id=user.id,
+                start_time=b["start"],
+                end_time=b["end"],
+                booking_destination=from_shape(Point(b["lon"], b["lat"]), srid=4326),
+            )
+            for b in past_bookings
+        ]
+
+        session.add_all(bookings)
+        await session.commit()
+
 """
 async def seed_Bookings():
     async with SessionLocal() as session:

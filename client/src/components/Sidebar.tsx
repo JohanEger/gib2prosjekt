@@ -104,6 +104,29 @@ export const Sidebar = ({
     new Set(equipment.map((eq) => eq.type_of_equipment)),
   );
 
+  const [committees, setCommittees] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function loadCommittees() {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API_BASE}/equipment/committees`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        const data = await res.json();
+
+          // assuming API returns array of committee names
+          setCommittees(Array.isArray(data) ? data.map((name: string) => name.charAt(0).toUpperCase() + name.slice(1)): []);
+      } catch (err) {
+        console.error("Error loading committees:", err);
+      }
+    }
+
+    loadCommittees();
+  }, []);
+
   const { latitude, longitude } = useUserLocation();
 
   useEffect(() => {
@@ -453,7 +476,7 @@ export const Sidebar = ({
               MenuProps={MenuProps}
               onChange={handleChangeCommittee}
             >
-              {committeeNames.map((name) => (
+              {committees.map((name) => (
                 <MenuItem key={name} value={name}>
                   <Checkbox checked={filters.committee.includes(name)} />
                   <ListItemText primary={name} />
