@@ -13,7 +13,7 @@ import {
   IconButton,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavBar } from "@/components/NavBar";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddressSearch from "@/components/calendar/AddressSearchBox";
@@ -25,14 +25,14 @@ type Coordinates = {
 };
 
 export default function RegisterEquipment() {
-  const committeeNames = ["Turingen", "Arrkom", "Bedkom", "Ståpels"];
+  const [committeeNames, setCommitteeNames] = useState<string[]>([]);
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [description, setDescription] = useState("");
   const [committee, setCommittee] = useState("");
   const [coords, setCoords] = useState<Coordinates | null>(null);
-  const [registeredName, setRegisteredName] = useState<String>("");
+  const [registeredName, setRegisteredName] = useState<string>("");
   const [successOpen, setSuccessOpen] = useState(false);
 
   const handleChangeCommittee = (event: SelectChangeEvent) => {
@@ -92,6 +92,26 @@ export default function RegisterEquipment() {
     }
   };
 
+  useEffect(() => {
+    async function loadCommittees() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE}/equipment/committees`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json();
+        setCommitteeNames(
+          Array.isArray(data)
+            ? data.map((name: string) => name.charAt(0).toUpperCase() + name.slice(1))
+            : []
+        );
+      } catch (err) {
+        console.error("Error loading committees:", err);
+      }
+    }
+    loadCommittees();
+  }, []);
+
   return (
     <>
       <NavBar></NavBar>
@@ -107,7 +127,7 @@ export default function RegisterEquipment() {
           variant="filled"
           sx={{ width: "100%" }}
         >
-          {registeredName} ble registrert 🎉
+          {registeredName} ble registrert!
         </Alert>
       </Snackbar>
       <Box className="flex justify-center items-start sm:items-center min-h-screen px-4 pt-20 sm:pt-0 bg-blue">
