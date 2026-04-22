@@ -68,16 +68,9 @@ interface SidebarProps {
   activeEquipment: Equipment | null;
   setActiveEquipment: React.Dispatch<React.SetStateAction<Equipment | null>>;
   selectedClusterEquipmentIds: string[] | null;
-<<<<<<< HEAD
   setSelectedClusterEquipmentIds: React.Dispatch<React.SetStateAction<string[] | null>>;
-
-=======
-  setSelectedClusterEquipmentIds: React.Dispatch<
-    React.SetStateAction<string[] | null>
-  >;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
->>>>>>> origin/dev
 }
 
 export const Sidebar = ({
@@ -270,11 +263,7 @@ export const Sidebar = ({
     selectedClusterEquipmentIds === null
       ? equipment
       : equipment.filter((eq) => selectedClusterEquipmentIds.includes(eq.id));
-
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/dev
+      
   return (
     <>
       {/* Sidebar */}
