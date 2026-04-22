@@ -29,7 +29,7 @@ export default function WelcomePage() {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center", // 🔥 dette sentrerer boksen
+              justifyContent: "center", // sentrerer boksen
               width: "100%",
             }}
           >
@@ -48,7 +48,7 @@ export default function WelcomePage() {
               <img src="logo.png" alt="Logo" className="h-14 sm:h-24" />
             </Box>
           </Box>
-          <Typography sx={{ mb: 2 }}>
+          <Typography sx={{ mt: 2, mb: 2 }}>
             Logg inn eller registrer bruker:
           </Typography>
 
