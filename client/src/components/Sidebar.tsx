@@ -291,7 +291,7 @@ export const Sidebar = ({
     <>
       {/* Sidebar */}
       <div
-        className={`fixed bottom-0 sm:bottom-auto sm:top-0 left-0 h-90 sm:h-screen w-45 sm:w-64 bg-gray-800 text-white
+        className={`fixed bottom-0 sm:bottom-auto sm:top-0 left-0 h-3/7 sm:h-screen w-45 sm:w-64 bg-gray-800 text-white
         transform transition-transform duration-300 z-40 rounded sm:rounded-none
         ${
           open
@@ -414,8 +414,8 @@ export const Sidebar = ({
 
       {/* Equipment popup */}
       <div
-        className={`fixed bottom-2 sm:top-24 right-1 sm:right-4 w-[12rem] sm:w-[30rem]
-                    max-h-[42vh] sm:max-h-[77vh] rounded-2xl overflow-y-auto duration-300 z-40 
+        className={`fixed rounded sm:rounded-none overflow-y-auto border-none h-3/7 sm:h-screen right-0 right-0 w-1/2 sm:w-2/7
+                      duration-300 z-40 sm:bottom-auto bottom-0 
         ${activeEquipment ? "translate-x-0 opacity-100 pointer-events-auto" : "translate-x-full opacity-0 pointer-events-none"}`}
         
       >
