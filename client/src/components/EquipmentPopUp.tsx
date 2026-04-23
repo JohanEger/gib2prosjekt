@@ -214,7 +214,7 @@ export const EquipmentPopUp = ({
         <div />
 
         {/* Tittel */}
-        <div className="min-w-200 text-center px-2">
+        <div className="min-w-0 text-center px-2">
           {/* Mobil */}
           <Typography className="block sm:hidden text-lg font-semibold break-words">
             {name}
