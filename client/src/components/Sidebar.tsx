@@ -414,7 +414,7 @@ export const Sidebar = ({
 
       {/* Equipment popup */}
       <div
-        className={`fixed rounded sm:rounded-none overflow-y-auto border-none h-3/7 sm:h-screen right-0 right-0 w-1/2 sm:w-2/7
+        className={`fixed rounded sm:rounded-none overflow-y-auto border-none h-3/7 sm:h-screen right-0 w-1/2 sm:w-2/7
                       duration-300 z-40 sm:bottom-auto bottom-0 
         ${activeEquipment ? "translate-x-0 opacity-100 pointer-events-auto" : "translate-x-full opacity-0 pointer-events-none"}`}
         
