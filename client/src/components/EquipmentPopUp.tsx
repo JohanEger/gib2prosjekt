@@ -241,7 +241,7 @@ export const EquipmentPopUp = ({
 
       </Box>
 
-      <Typography className="text-center">Type: {description}</Typography>
+      <Typography className="text-center">{description}</Typography>
 
       <Paper className="flex items-center gap-2 px-1.5 sm:px-4 py-2 rounded-full bg-black/20">
         {booked ? (
